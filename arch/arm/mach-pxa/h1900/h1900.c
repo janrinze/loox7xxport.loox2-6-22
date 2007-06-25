@@ -47,7 +47,6 @@
 #include <asm/arch/h1910.h>
 #include <asm/arch/h1900-asic.h>
 #include <asm/arch/h1900-gpio.h>
-#include <asm/arch/ipaq.h>
 #include <asm/arch/udc.h>
 #include <asm/arch/pxafb.h>
 #include <asm/arch/irda.h>

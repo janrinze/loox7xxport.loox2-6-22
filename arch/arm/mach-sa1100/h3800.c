@@ -3,9 +3,10 @@
  *
  * Copyright 2000,1 Compaq Computer Corporation.
  *
- * Use consistent with the GNU GPL is permitted,
- * provided that this copyright notice is
- * preserved in its entirety in all copies and derived works.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * COMPAQ COMPUTER CORPORATION MAKES NO WARRANTIES, EXPRESSED OR IMPLIED,
  * AS TO THE USEFULNESS OR CORRECTNESS OF THIS CODE OR ITS
@@ -43,11 +44,6 @@
 #include <linux/serial_core.h>
 
 #include <asm/arch/h3800.h>
-
-#if defined (CONFIG_SA1100_H3600) || defined (CONFIG_SA1100_H3100)
-#include <asm/arch/h3600_gpio.h>
-#endif
-
 
 #include "generic.h"
 
@@ -220,7 +216,7 @@ static void __init h3800_map_io(void)
 		GPIO_LDD15 | GPIO_LDD14 | GPIO_LDD13 | GPIO_LDD12 |
 		GPIO_LDD11 | GPIO_LDD10 | GPIO_LDD9  | GPIO_LDD8;
 	GPDR =  GPIO_H3800_CLK_OUT |
-		GPIO_H3600_COM_RTS  | GPIO_H3600_L3_CLOCK |
+		GPIO_GPIO(GPIO_NR_H3600_COM_RTS) | GPIO_H3600_L3_CLOCK |
 		GPIO_H3600_L3_MODE  | GPIO_H3600_L3_DATA  |
 		GPIO_LDD15 | GPIO_LDD14 | GPIO_LDD13 | GPIO_LDD12 |
 		GPIO_LDD11 | GPIO_LDD10 | GPIO_LDD9  | GPIO_LDD8;

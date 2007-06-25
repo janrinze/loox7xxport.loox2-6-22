@@ -14,6 +14,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
+#include <linux/dpm.h>
 #include <linux/leds.h>
 #include <linux/platform_device.h>
 
@@ -32,6 +33,13 @@ extern struct platform_device s3c_device_asic3;
 static void rx3000_bt_power(int power)
 {
     if (power) {
+	DPM_DEBUG("rx3000_bt: Turning on\n");
+	/* configre uart0 gpios */
+	s3c2410_gpio_cfgpin(S3C2410_GPH0, S3C2410_GPH0_nCTS0);
+	s3c2410_gpio_cfgpin(S3C2410_GPH1, S3C2410_GPH1_nRTS0);
+	s3c2410_gpio_cfgpin(S3C2410_GPH2, S3C2410_GPH2_TXD0);
+	s3c2410_gpio_cfgpin(S3C2410_GPH3, S3C2410_GPH3_RXD0);
+
 	/* enable bluetooth clk */
 	asic3_set_gpio_out_a(&s3c_device_asic3.dev, ASIC3_GPA15, ASIC3_GPA15);
 	asic3_set_gpio_alt_fn_a(&s3c_device_asic3.dev, ASIC3_GPA15, ASIC3_GPA15);
@@ -46,6 +54,7 @@ static void rx3000_bt_power(int power)
 	
 	led_trigger_event_shared(rx3000_radio_trig, LED_FULL);
     } else {
+	DPM_DEBUG("rx3000_bt: Turning off\n");
 	/* reset down */
 	s3c2410_gpio_setpin(S3C2410_GPA3, 0);
 	mdelay(5);
@@ -59,6 +68,12 @@ static void rx3000_bt_power(int power)
 	asic3_set_gpio_out_a(&s3c_device_asic3.dev, ASIC3_GPA15, 0);
 
 	led_trigger_event_shared(rx3000_radio_trig, LED_OFF);
+
+	/* configre uart0 gpios */
+	s3c2410_gpio_cfgpin(S3C2410_GPH0, S3C2410_GPH0_OUTP);
+	s3c2410_gpio_cfgpin(S3C2410_GPH1, S3C2410_GPH1_OUTP);
+	s3c2410_gpio_cfgpin(S3C2410_GPH2, S3C2410_GPH2_OUTP);
+	s3c2410_gpio_cfgpin(S3C2410_GPH3, S3C2410_GPH3_OUTP);
     }
 }
 
@@ -96,11 +111,6 @@ static DEVICE_ATTR(power_control, 0644, rx3000_bt_power_show, rx3000_bt_power_st
 static int rx3000_bt_probe(struct platform_device *pdev)
 {
 	int err;
-
-	s3c2410_gpio_cfgpin(S3C2410_GPH0, S3C2410_GPH0_nCTS0);
-	s3c2410_gpio_cfgpin(S3C2410_GPH1, S3C2410_GPH1_nRTS0);
-	s3c2410_gpio_cfgpin(S3C2410_GPH2, S3C2410_GPH2_TXD0);
-	s3c2410_gpio_cfgpin(S3C2410_GPH3, S3C2410_GPH3_RXD0);
 
 	rx3000_bt_power(0);
 

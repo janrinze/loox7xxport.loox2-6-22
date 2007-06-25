@@ -17,7 +17,6 @@
 #include <asm/hardware/ipaq-asic3.h>
 #include <linux/soc/asic3_base.h>
 #include <asm/mach-types.h>
-#include <asm/arch/ipaq.h>
 #include <asm/hardware/asic3_leds.h>
 
 DEFINE_LED_TRIGGER_SHARED_GLOBAL(hx4700_radio_trig);

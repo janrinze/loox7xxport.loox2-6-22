@@ -13,6 +13,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
+#include <linux/interrupt.h>
 #include <linux/tty.h>
 #include <linux/sched.h>
 #include <linux/delay.h>
@@ -40,7 +41,6 @@
 #include <asm/mach/irda.h>
 #include <asm/arch/h1900-asic.h>
 #include <asm/arch/h1900-gpio.h>
-#include <asm/arch/ipaq.h>
 #include <asm/arch/udc.h>
 #include <asm/arch/pxafb.h>
 

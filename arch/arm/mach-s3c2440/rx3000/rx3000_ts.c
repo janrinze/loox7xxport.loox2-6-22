@@ -23,7 +23,7 @@
 
 static struct s3c2410_ts_mach_info rx3000_ts_cfg __initdata = {
         .delay = 10000,
-        .presc = 48,
+        .presc = 49,
         .oversampling_shift = 2,
 };
 

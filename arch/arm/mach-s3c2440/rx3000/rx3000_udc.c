@@ -12,6 +12,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
+#include <linux/dpm.h>
 #include <linux/platform_device.h>
 
 #include <asm/io.h>
@@ -30,14 +31,14 @@ extern struct platform_device s3c_device_asic3;
 
 static void rx3000_udc_pullup(enum s3c2410_udc_cmd_e cmd)
 {
-        printk(KERN_DEBUG "udc: pullup(%d)\n",cmd);
-
         switch (cmd)
         {
                 case S3C2410_UDC_P_ENABLE :
+			DPM_DEBUG("rx3000_udc: Turning on port\n");        
                         asic3_set_gpio_out_a(&s3c_device_asic3.dev, ASIC3_GPA3, ASIC3_GPA3);
                         break;
                 case S3C2410_UDC_P_DISABLE :
+			DPM_DEBUG("rx3000_udc: Turning off port\n");        
                         asic3_set_gpio_out_a(&s3c_device_asic3.dev, ASIC3_GPA3, 0);
                         break;
                 case S3C2410_UDC_P_RESET :
@@ -47,7 +48,7 @@ static void rx3000_udc_pullup(enum s3c2410_udc_cmd_e cmd)
         }
 }
 
-static struct s3c2410_udc_mach_info rx3000_udc_cfg __initdata = {
+static struct s3c2410_udc_mach_info rx3000_udc_cfg = {
         .udc_command            = rx3000_udc_pullup,
         .vbus_pin               = S3C2410_GPG5,
         .vbus_pin_inverted      = 1,

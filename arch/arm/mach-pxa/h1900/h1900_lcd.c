@@ -44,7 +44,6 @@
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/h1900-asic.h>
 #include <asm/arch/h1900-gpio.h>
-#include <asm/arch/ipaq.h>
 
 #include <linux/soc/asic3_base.h>
 

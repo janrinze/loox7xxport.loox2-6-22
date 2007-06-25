@@ -13,6 +13,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
+#include <linux/dpm.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/platform_device.h>
@@ -28,15 +29,34 @@
 
 extern struct platform_device s3c_device_asic3;
 
+static void rx3000_serial_power(int power)
+{
+	if (power) {
+		DPM_DEBUG("rx3000_serial: Turning on\n");
+		/* configure uart1 gpios */
+		s3c2410_gpio_cfgpin(S3C2410_GPH4, S3C2410_GPH4_TXD1);
+		s3c2410_gpio_cfgpin(S3C2410_GPH5, S3C2410_GPH5_RXD1);
+
+		/* power on */
+    		asic3_set_gpio_out_b(&s3c_device_asic3.dev, ASIC3_GPB2, ASIC3_GPB2);
+	} else {
+		DPM_DEBUG("rx3000_serial: Turning off\n");
+		/* power off */
+    		asic3_set_gpio_out_b(&s3c_device_asic3.dev, ASIC3_GPB2, 0);
+
+		/* configure uart1 gpios */
+		s3c2410_gpio_cfgpin(S3C2410_GPH4, S3C2410_GPH4_OUTP);
+		s3c2410_gpio_cfgpin(S3C2410_GPH5, S3C2410_GPH5_OUTP);
+	}
+}
+
 static irqreturn_t rx3000_serial_cable(int irq, void *dev_id)
 {
 	int status;
 	
 	status = s3c2410_gpio_getpin(S3C2410_GPF6);
-	if (status)
-    		asic3_set_gpio_out_b(&s3c_device_asic3.dev, ASIC3_GPB2, ASIC3_GPB2);
-	else
-    		asic3_set_gpio_out_b(&s3c_device_asic3.dev, ASIC3_GPB2, 0);
+
+	rx3000_serial_power(status);
 
 	return IRQ_HANDLED;
 }
@@ -60,17 +80,19 @@ static int rx3000_serial_probe(struct platform_device *pdev)
 
 static int rx3000_serial_remove(struct platform_device *pdev)
 {
-	asic3_set_gpio_out_b(&s3c_device_asic3.dev, ASIC3_GPB2, 0);
         free_irq(IRQ_EINT6, NULL);
 	s3c2410_gpio_cfgpin(S3C2410_GPF6, S3C2410_GPF6_INP);
+
+	rx3000_serial_power(0);
         return 0;
 }
 
 #ifdef CONFIG_PM
 static int rx3000_serial_suspend(struct platform_device *pdev, pm_message_t state)
 {
-	asic3_set_gpio_out_b(&s3c_device_asic3.dev, ASIC3_GPB2, 0);
 	disable_irq(IRQ_EINT6);
+
+	rx3000_serial_power(0);
 	return 0;
 }
 
@@ -79,7 +101,7 @@ static int rx3000_serial_resume(struct platform_device *pdev)
 	enable_irq(IRQ_EINT6);
 	
 	if (s3c2410_gpio_getpin(S3C2410_GPF6))
-    		asic3_set_gpio_out_b(&s3c_device_asic3.dev, ASIC3_GPB2, ASIC3_GPB2);
+		rx3000_serial_power(1);
 
 	return 0;
 }
@@ -111,6 +133,6 @@ static void __exit rx3000_serial_exit(void)
 module_init(rx3000_serial_init);
 module_exit(rx3000_serial_exit);
 
-MODULE_AUTHOR("Roderick Taylor <myopiate@gmail.com>");
+MODULE_AUTHOR("Roderick Taylor <myopiate@gmail.com>, Roman Moravcik <roman.moravcik@gmail.com>");
 MODULE_DESCRIPTION("Serial port driver for HP iPAQ RX3000");
 MODULE_LICENSE("GPL");

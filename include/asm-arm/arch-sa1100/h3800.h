@@ -4,9 +4,10 @@
  *
  * Copyright 2000 Compaq Computer Corporation.
  *
- * Use consistent with the GNU GPL is permitted,
- * provided that this copyright notice is
- * preserved in its entirety in all copies and derived works.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * COMPAQ COMPUTER CORPORATION MAKES NO WARRANTIES, EXPRESSED OR IMPLIED,
  * AS TO THE USEFULNESS OR CORRECTNESS OF THIS CODE OR ITS
@@ -23,6 +24,8 @@
 
 #ifndef _INCLUDE_H3800_H_
 #define _INCLUDE_H3800_H_
+
+#include <asm/arch/ipaqsa.h>
 
 #define H3800_ASIC2_VIRT     0xf0000000 /* CS#5 + 0x01000000, same as EGPIO */
 #define GPIO_H3800_ASIC         	GPIO_GPIO (1)

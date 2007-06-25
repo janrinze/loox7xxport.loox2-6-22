@@ -26,7 +26,6 @@
 
 #include <asm/mach-types.h>
 #include <asm/hardware.h>
-#include <asm/arch/ipaq.h>
 #include <asm/arch/h5400-asic.h>
 #include <asm/hardware/samcop_base.h>
 

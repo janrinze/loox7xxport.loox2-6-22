@@ -12,14 +12,14 @@ config RX3000_LEDS
 
 config RX3000_BATTERY
 	tristate "Battery monitor for HP iPAQ RX3000"
-	depends on DS2760_BATTERY && PDA_POWER
+	depends on MACH_RX3715 && BATTERY_DS2760 && PDA_POWER
 	help
 	  Say Y here to enables support for HP iPAQ RX3000 series
 	  battery control.
                                             
 config RX3000_BLUETOOTH
         tristate "Bluetooth driver for the HP iPAQ RX3000"
-        depends on RX3000_LEDS
+        depends on MACH_RX3715 && RX3000_LEDS
         help
           Bluetooth driver for HP iPAQ RX3000.
 
@@ -43,7 +43,7 @@ config RX3000_TS
 
 config RX3000_UDC
         tristate "USB Device controler driver for the HP iPAQ RX3000"
-        depends MACH_RX3715 && USB_S3C2410 && HTC_ASIC3
+        depends MACH_RX3715 && USB_GADGET_S3C2410 && HTC_ASIC3
         help
           USB Device controler driver for HP iPAQ RX3000.
 

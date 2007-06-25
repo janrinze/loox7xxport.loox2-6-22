@@ -5,9 +5,10 @@
  * Copyright 2000-2002 Compaq Computer Corporation.
  * Copyright 2003 Hewlett-Packard Company.
  *
- * Use consistent with the GNU GPL is permitted,
- * provided that this copyright notice is
- * preserved in its entirety in all copies and derived works.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * COMPAQ COMPUTER CORPORATION MAKES NO WARRANTIES, EXPRESSED OR IMPLIED,
  * AS TO THE USEFULNESS OR CORRECTNESS OF THIS CODE OR ITS
@@ -24,62 +25,52 @@
 #ifndef _INCLUDE_H3600_H_
 #define _INCLUDE_H3600_H_
 
-#include <asm/ptrace.h>
 #include <linux/interrupt.h>
 
-#ifdef CONFIG_ARCH_SA1100
-#include <asm/arch-sa1100/ipaqsa.h>
-#endif
+#include <asm/arch/ipaqsa.h>
 
-/* generalized support for HP iPAQ Handheld Computers */
-#define machine_is_ipaq() (machine_is_h3100() || machine_is_h3600() || machine_is_h3800() || machine_is_h3900() || machine_is_h5400() || machine_is_h4700() || machine_is_hx2750())
+/* 
+ * GPIO lines that are common across ALL SA1100 iPAQ models are in "asm/arch-sa1100/ipaqsa.h" 
+ * This file contains machine-specific definitions
+ */
 
-/*
-   Machine-independent GPIO definitions
-   --- these are common across all current iPAQ platforms
-*/
+#define GPIO_H3600_MICROCONTROLLER	GPIO_GPIO (1)   /* From ASIC2 on H3800 */
 
-#define GPIO_NR_H3600_NPOWER_BUTTON	(0)   /* Also known as the "off button"  */
-#define GPIO_H3600_NPOWER_BUTTON	GPIO_GPIO (0)	/* Also known as the "off button"  */
+/* for H3600, audio sample rate clock generator */
+#define GPIO_H3600_CLK_SET0		GPIO_GPIO (12)
+#define GPIO_H3600_CLK_SET1		GPIO_GPIO (13)
 
-#define GPIO_H3600_PCMCIA_CD1		GPIO_GPIO (10)
-#define GPIO_H3600_PCMCIA_IRQ1		GPIO_GPIO (11)
+#define GPIO_H3600_ACTION_BUTTON	GPIO_GPIO (18)
+#define GPIO_H3600_SOFT_RESET           GPIO_GPIO (20)   /* Also known as BATT_FAULT */
+#define GPIO_H3600_OPT_LOCK		GPIO_GPIO (22)
+#define GPIO_H3600_OPT_DET		GPIO_GPIO (27)
 
-/* UDA1341 L3 Interface */
-#define GPIO_H3600_L3_DATA		GPIO_GPIO (14)
-#define GPIO_H3600_L3_MODE		GPIO_GPIO (15)
-#define GPIO_H3600_L3_CLOCK		GPIO_GPIO (16)
+/****************************************************/
 
-#define GPIO_H3600_PCMCIA_CD0		GPIO_GPIO (17)
-#define GPIO_H3600_SYS_CLK		GPIO_GPIO (19)
-#define GPIO_H3600_PCMCIA_IRQ0		GPIO_GPIO (21)
+#define GPIO_NR_H3600_ACTION_BUTTON	(18)
 
-#define GPIO_H3600_COM_DCD		GPIO_GPIO (23)
-#define GPIO_H3600_OPT_IRQ		GPIO_GPIO (24)
-#define GPIO_H3600_COM_CTS		GPIO_GPIO (25)
-#define GPIO_H3600_COM_RTS		GPIO_GPIO (26)
+#define IRQ_GPIO_H3600_MICROCONTROLLER  IRQ_GPIO1
+#define IRQ_GPIO_H3600_ACTION_BUTTON    IRQ_GPIO18
+#define IRQ_GPIO_H3600_OPT_DET		IRQ_GPIO27
 
-#define IRQ_GPIO_H3600_NPOWER_BUTTON	IRQ_GPIO0
-#define IRQ_GPIO_H3600_PCMCIA_CD1	IRQ_GPIO10
-#define IRQ_GPIO_H3600_PCMCIA_IRQ1	IRQ_GPIO11
-#define IRQ_GPIO_H3600_PCMCIA_CD0	IRQ_GPIO17
-#define IRQ_GPIO_H3600_PCMCIA_IRQ0	IRQ_GPIO21
-#define IRQ_GPIO_H3600_COM_DCD		IRQ_GPIO23
-#define IRQ_GPIO_H3600_OPT_IRQ		IRQ_GPIO24
-#define IRQ_GPIO_H3600_COM_CTS		IRQ_GPIO25
+/* H3100 / 3600 EGPIO pins */
+#define EGPIO_H3600_VPP_ON		(1 << 0)
+#define EGPIO_H3600_CARD_RESET		(1 << 1)   /* reset the attached pcmcia/compactflash card.  active high. */
+#define EGPIO_H3600_OPT_RESET		(1 << 2)   /* reset the attached option pack.  active high. */
+#define EGPIO_H3600_CODEC_NRESET	(1 << 3)   /* reset the onboard UDA1341.  active low. */
+#define EGPIO_H3600_OPT_NVRAM_ON	(1 << 4)   /* apply power to optionpack nvram, active high. */
+#define EGPIO_H3600_OPT_ON		(1 << 5)   /* full power to option pack.  active high. */
+#define EGPIO_H3600_LCD_ON		(1 << 6)   /* enable 3.3V to LCD.  active high. */
+#define EGPIO_H3600_RS232_ON		(1 << 7)   /* UART3 transceiver force on.  Active high. */
 
-
-#ifndef __ASSEMBLY__
-
-// Define this to see all suspend/resume init/cleanup messages
-#define DEBUG_INIT()  \
-        if (1) printk(KERN_NOTICE "%s\n", __FUNCTION__)
-
-#define PDEBUG(format,arg...) printk(KERN_DEBUG __FILE__ ":%s - " format "\n", __FUNCTION__ , ## arg )
-#define PALERT(format,arg...) printk(KERN_ALERT __FILE__ ":%s - " format "\n", __FUNCTION__ , ## arg )
-#define PERROR(format,arg...) printk(KERN_ERR __FILE__ ":%s - " format "\n", __FUNCTION__ , ## arg )
-
-
-#endif /* ASSEMBLY */
+/* H3600 only EGPIO pins */
+#define EGPIO_H3600_LCD_PCI		(1 << 8)   /* LCD control IC enable.  active high. */
+#define EGPIO_H3600_IR_ON		(1 << 9)   /* apply power to IR module.  active high. */
+#define EGPIO_H3600_AUD_AMP_ON		(1 << 10)  /* apply power to audio power amp.  active high. */
+#define EGPIO_H3600_AUD_PWR_ON		(1 << 11)  /* apply power to reset of audio circuit.  active high. */
+#define EGPIO_H3600_QMUTE		(1 << 12)  /* mute control for onboard UDA1341.  active high. */
+#define EGPIO_H3600_IR_FSEL		(1 << 13)  /* IR speed select: 1->fast, 0->slow */
+#define EGPIO_H3600_LCD_5V_ON		(1 << 14)  /* enable 5V to LCD. active high. */
+#define EGPIO_H3600_LVDD_ON		(1 << 15)  /* enable 9V and -6.5V to LCD. */
 
 #endif /* _INCLUDE_H3600_H_ */

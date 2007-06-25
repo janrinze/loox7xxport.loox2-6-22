@@ -36,7 +36,6 @@
 #include <linux/fb.h>
 #include <linux/gpio_keys.h>
 #include <linux/input.h>
-#include <linux/soc-old.h>
 #include <linux/soc/asic2_base.h>
 #include <linux/soc/asic3_base.h>
 #include <linux/soc/tmio_mmc.h>
@@ -51,9 +50,9 @@
 #include <asm/mach/map.h>
 #include <asm/hardware/ipaq-asic2.h>
 #include <asm/hardware/ipaq-asic3.h>
+#include <asm/arch/h3900-gpio.h>
 #include <asm/arch/h3900-init.h>
 #include <asm/arch/h3900-asic.h>
-#include <asm/arch/ipaq.h>
 #include <asm/arch/udc.h>
 #include <asm/arch/pxafb.h>
 
@@ -86,8 +85,6 @@ static void h3900_control_egpio( enum ipaq_egpio_type x, int setp )
 	}
 }
 
-
-
 static void h3900_set_led (enum led_color color, int duty_time, int cycle_time)
 {
 	if (duty_time) {
@@ -99,8 +96,6 @@ static void h3900_set_led (enum led_color color, int duty_time, int cycle_time)
 	}
 }
 #endif
-
-
 
 #if 0
 /*
@@ -418,6 +413,3 @@ MACHINE_START(H3900, "HP iPAQ H3900")
         .timer = &pxa_timer,
         .init_machine = h3900_init,
 MACHINE_END
-
-
-

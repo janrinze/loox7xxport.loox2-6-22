@@ -363,9 +363,14 @@ static void __init rx3715_init_machine(void)
 
 	s3c24xx_fb_set_platdata(&rx3715_lcdcfg);
 
+        /* turn on nand write protect */
+        s3c2410_gpio_setpin(S3C2410_GPA6, 0);
+
         /* configure wakeup source */
         s3c2410_gpio_cfgpin(S3C2410_GPF0, S3C2410_GPF0_EINT0);
         enable_irq_wake(IRQ_EINT0);
+        enable_irq_wake(IRQ_EINT2);
+        enable_irq_wake(IRQ_EINT13);
 }
 
 

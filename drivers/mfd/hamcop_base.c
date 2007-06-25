@@ -50,7 +50,6 @@
 #include <asm/arch/pxa-dmabounce.h>
 #include <asm/arch/irq.h>
 #include <asm/arch/clock.h>
-#include <asm/arch/ipaq.h>
 
 #include <asm/arch/h2200-asic.h>
 #include <asm/arch/h2200-gpio.h>

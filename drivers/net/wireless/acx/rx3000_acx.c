@@ -15,6 +15,7 @@
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
 #include <linux/delay.h>
+#include <linux/dpm.h>
 #include <linux/leds.h>
 
 #include <asm/hardware.h>
@@ -31,7 +32,7 @@ extern struct platform_device s3c_device_asic3;
 
 static int rx3000_wlan_start(void)
 {
-	printk("rx3000_wlan_start\n");
+	DPM_DEBUG("rx3000_acx: Turning on\n");
 	asic3_set_gpio_out_b(&s3c_device_asic3.dev, ASIC3_GPB3, ASIC3_GPB3);
 	mdelay(20);
 	asic3_set_gpio_out_c(&s3c_device_asic3.dev, ASIC3_GPC13, ASIC3_GPC13);
@@ -51,7 +52,7 @@ static int rx3000_wlan_start(void)
 
 static int rx3000_wlan_stop(void)
 {
-	printk("rx3000_wlan_stop\n");
+	DPM_DEBUG("rx3000_acx: Turning off\n");
 	s3c2410_gpio_setpin(S3C2410_GPA15, 1);
 	s3c2410_gpio_cfgpin(S3C2410_GPA15, S3C2410_GPA15_OUT);
 	asic3_set_gpio_out_b(&s3c_device_asic3.dev, ASIC3_GPB3, 0);

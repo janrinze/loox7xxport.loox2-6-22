@@ -4,9 +4,10 @@
  * Copyright 2000-2002 Compaq Computer Corporation.
  * Copyright 2002-2003 Hewlett-Packard Company.
  *
- * Use consistent with the GNU GPL is permitted,
- * provided that this copyright notice is
- * preserved in its entirety in all copies and derived works.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * COMPAQ COMPUTER CORPORATION MAKES NO WARRANTIES, EXPRESSED OR IMPLIED,
  * AS TO THE USEFULNESS OR CORRECTNESS OF THIS CODE OR ITS
@@ -29,6 +30,7 @@
 #include <linux/irq.h>
 
 #include <asm/irq.h>
+#include <asm/gpio.h>
 #include <asm/hardware.h>
 #include <asm/setup.h>
 
@@ -37,15 +39,12 @@
 #include <asm/mach/irda.h>
 #include <asm/mach/serial_sa1100.h>
 
-#include <asm/arch-sa1100/ipaqsa.h>
+#include <asm/arch/ipaqsa.h>
 
 #include <linux/serial_core.h>
 
-#if defined (CONFIG_SA1100_H3600) || defined (CONFIG_SA1100_H3100)
-#include <asm/arch/h3600_gpio.h>
-#endif
-
 #include "generic.h"
+
 struct ipaq_model_ops ipaq_model_ops;
 EXPORT_SYMBOL(ipaq_model_ops);
 
@@ -56,10 +55,7 @@ EXPORT_SYMBOL(ipaq_model_ops);
 static void ipaqsa_uart_set_mctrl(struct uart_port *port, u_int mctrl)
 {
 	if (port->mapbase == _Ser3UTCR0) {
-		if (mctrl & TIOCM_RTS)
-			GPCR = GPIO_H3600_COM_RTS;
-		else
-			GPSR = GPIO_H3600_COM_RTS;
+		gpio_set_value(GPIO_NR_H3600_COM_RTS, !(mctrl & TIOCM_RTS));
 	}
 }
 
@@ -68,11 +64,10 @@ static u_int ipaqsa_uart_get_mctrl(struct uart_port *port)
 	u_int ret = TIOCM_CD | TIOCM_CTS | TIOCM_DSR;
 
 	if (port->mapbase == _Ser3UTCR0) {
-		int gplr = GPLR;
                 /* DCD and CTS bits are inverted in GPLR by RS232 transceiver */
-		if (gplr & GPIO_H3600_COM_DCD)
+		if (gpio_get_value(GPIO_NR_H3600_COM_DCD))
 			ret &= ~TIOCM_CD;
-		if (gplr & GPIO_H3600_COM_CTS)
+		if (gpio_get_value(GPIO_NR_H3600_COM_CTS))
 			ret &= ~TIOCM_CTS;
 	}
 
@@ -121,10 +116,10 @@ struct egpio_irq_info {
 };
 
 static struct egpio_irq_info ipaqsa_egpio_irq_info[] = {
-	{ IPAQ_EGPIO_PCMCIA_CD0_N, GPIO_H3600_PCMCIA_CD0, IRQ_GPIO_H3600_PCMCIA_CD0 },
-	{ IPAQ_EGPIO_PCMCIA_CD1_N, GPIO_H3600_PCMCIA_CD1, IRQ_GPIO_H3600_PCMCIA_CD1 },
-	{ IPAQ_EGPIO_PCMCIA_IRQ0, GPIO_H3600_PCMCIA_IRQ0, IRQ_GPIO_H3600_PCMCIA_IRQ0 },
-	{ IPAQ_EGPIO_PCMCIA_IRQ1, GPIO_H3600_PCMCIA_IRQ1, IRQ_GPIO_H3600_PCMCIA_IRQ1 },
+	{ IPAQ_EGPIO_PCMCIA_CD0_N, GPIO_GPIO(GPIO_NR_H3600_PCMCIA_CD0), IRQ_GPIO_H3600_PCMCIA_CD0 },
+	{ IPAQ_EGPIO_PCMCIA_CD1_N, GPIO_GPIO(GPIO_NR_H3600_PCMCIA_CD1), IRQ_GPIO_H3600_PCMCIA_CD1 },
+	{ IPAQ_EGPIO_PCMCIA_IRQ0, GPIO_GPIO(GPIO_NR_H3600_PCMCIA_IRQ0), IRQ_GPIO_H3600_PCMCIA_IRQ0 },
+	{ IPAQ_EGPIO_PCMCIA_IRQ1, GPIO_GPIO(GPIO_NR_H3600_PCMCIA_IRQ1), IRQ_GPIO_H3600_PCMCIA_IRQ1 },
 	{ 0, 0 }
 };
 
@@ -278,13 +273,13 @@ unsigned long ipaqsa_common_read_egpio( enum ipaq_egpio_type x)
 {
 	switch (x) {
 	case IPAQ_EGPIO_PCMCIA_CD0_N:
-		return(GPLR & GPIO_H3600_PCMCIA_CD0);
+		return gpio_get_value(GPIO_NR_H3600_PCMCIA_CD0);
 	case IPAQ_EGPIO_PCMCIA_CD1_N:
-		return(GPLR & GPIO_H3600_PCMCIA_CD1);
+		return gpio_get_value(GPIO_NR_H3600_PCMCIA_CD1);
 	case IPAQ_EGPIO_PCMCIA_IRQ0:
-		return(GPLR & GPIO_H3600_PCMCIA_IRQ0);
+		return gpio_get_value(GPIO_NR_H3600_PCMCIA_IRQ0);
 	case IPAQ_EGPIO_PCMCIA_IRQ1:
-		return(GPLR & GPIO_H3600_PCMCIA_IRQ1);
+		return gpio_get_value(GPIO_NR_H3600_PCMCIA_IRQ1);
 	default:
 		printk("%s: unhandled egpio_nr=%d\n", __FUNCTION__, x);
 		return 0;

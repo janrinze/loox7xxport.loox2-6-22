@@ -17,7 +17,6 @@
 #include <linux/device.h>
 #include <asm/hardware.h>
 #include <asm/io.h>
-#include <asm/arch/ipaq.h>
 #include <asm/arch/h5400-asic.h>
 #include <linux/platform_device.h>
 

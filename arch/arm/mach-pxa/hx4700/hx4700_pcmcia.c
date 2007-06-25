@@ -19,7 +19,6 @@
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/delay.h>
-#include <linux/soc-old.h>
 
 #include <asm/mach-types.h>
 #include <asm/hardware.h>

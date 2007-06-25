@@ -55,7 +55,6 @@
 #include <asm/arch/h5400-gpio.h>
 #include <asm/arch/h5400-asic.h>
 #include <asm/arch/h5400-init.h>
-#include <asm/arch/ipaq.h>
 #include <asm/arch/udc.h>
 
 #include <asm/arch/pxa-pm_ll.h>

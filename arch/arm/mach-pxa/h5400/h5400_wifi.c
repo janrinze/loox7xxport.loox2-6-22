@@ -24,7 +24,6 @@
 #include <linux/version.h>
 #include <linux/init.h>
 #include <linux/device.h>
-#include <linux/soc-old.h>
 #include <linux/usb.h>
 #include <linux/slab.h>
 #define CONFIG_PCI
@@ -105,8 +104,6 @@ h5400_ohci_resume (struct device *dev)
 {
 	return 0;
 }
-
-static platform_device_id h5400_usb_device_ids[] = { {IPAQ_SAMCOP_USBH_DEVICE_ID}, {0} };
 
 struct device_driver h5400_usb_device_driver = {
 	.name     = "h5400 wifi",

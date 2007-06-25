@@ -19,7 +19,6 @@
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/delay.h>
-#include <linux/soc-old.h>
 
 #include <asm/hardware.h>
 #include <asm/irq.h>
