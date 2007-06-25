@@ -1,0 +1,919 @@
+#!/bin/sh
+
+set -x -e
+
+tmpdir=`pwd`/kernel-packages.$$
+
+kernel_src_tree=$1
+kernel_version=$2
+mach_type=$3
+suffix=
+
+kernel_major=`egrep '^VERSION = ' $kernel_src_tree/Makefile | sed 's/VERSION = //'`
+kernel_minor=`egrep '^PATCHLEVEL = ' $kernel_src_tree/Makefile | sed 's/PATCHLEVEL = //'`
+kernel_micro=`egrep '^SUBLEVEL = ' $kernel_src_tree/Makefile | sed 's/SUBLEVEL = //'`
+kernel_extra=`egrep '^EXTRAVERSION = ' $kernel_src_tree/Makefile | sed 's/EXTRAVERSION = //'`
+kernel_version="$kernel_major.$kernel_minor.$kernel_micro$kernel_extra"
+echo "kernel_version=$kernel_version"
+
+. $kernel_src_tree/.config
+if [ "$CONFIG_ARCH_SA1100" = "y" ] ; then
+    if [ "$CONFIG_SA1100_JORNADA720" = "y" ] ; then
+	mach_type="j720"
+	architecture="j720"
+    elif [ "$CONFIG_SA1100_JORNADA56X" = "y" ] ; then
+        mach_type="j56x"
+	architecture="j56x"
+    else
+	mach_type="sa"
+	architecture="ipaqsa"
+    fi
+fi
+if [ "$CONFIG_ARCH_PXA" = "y" ] ; then
+    architecture="ipaqpxa"
+    mach_type="pxa"
+fi
+echo "mach_type=$mach_type"
+echo "architecture=$architecture"
+
+case "$architecture" in
+    ipaqsa) ;;
+    ipaqpxa*) ;;
+    j720) ;;
+    j56x) ;;
+    *)
+	echo "usage: $0 kernel_dir kernel_version architecture"
+	echo "       where architecture is one of ipaqsa, ipaqpxa, or j720"
+	exit -1
+	;;
+esac
+
+kernel_priority=`echo $kernel_version | sed 's/2.4.//' |  sed 's/2.6.//' | sed 's/-.*$//'`
+kernel_major=`echo $kernel_version | sed 's/\([0-9]\).*/\1/'`
+kernel_minor=`echo $kernel_version | sed 's/[0-9].\([[:digit:]]\).*/\1/'`
+kernel_micro=`echo $kernel_version | sed 's/[0-9].[0-9].\([0-9]*\).*/\1/'`
+#rmk_version=`echo $kernel_version | sed -e 's/.*rmk\([0-9]*\).*/\1/'`
+rmk_version=0
+#pxa_version=`echo $kernel_version | sed -e 's/.*pxa\([0-9]*\).*/\1/'`
+pxa_version=0
+hh_version=`echo $kernel_version | sed -e 's/.*hh\([0-9]*\).*/\1/'`
+echo 
+echo $kernel_major $kernel_minor $kernel_micro $rmk_version $pxa_version $hh_version
+kernel_priority=`expr $kernel_major "*" 100000000 "+" $kernel_minor "*" 1000000 "+" $kernel_micro "*" 10000 "+" $rmk_version "*" 1000 "+" $pxa_version "*" 100 "+" $hh_version`
+echo kernel_priority=$kernel_priority
+
+if [ -z "$kernel_version" -o ! -d "$kernel_src_tree" ]; then
+	echo "Usage: $0 <kernel_src_tree> <kernel_version> <ipkg_version>"
+	exit 1
+fi
+
+cp $kernel_src_tree/arch/arm/boot/zImage zImage-$architecture-$kernel_version$suffix
+cp $kernel_src_tree/System.map System-map-$architecture-$kernel_version$suffix.txt
+tar -jcvf kernel-headers-$architecture-$kernel_version$suffix.tar.bz2 -C $kernel_src_tree include
+cp $kernel_src_tree/.config config-$architecture-$kernel_version$suffix.txt
+
+package_srcs=""
+mkdir -p $tmpdir
+
+pushd $tmpdir
+
+
+##
+## category_modules <categoryname> <description> <moredepends> <moddir1> <moddir2> ... 
+##
+category_modules () {
+    local category
+    local description
+    local otherdepends
+    category=$1
+    shift
+    description=$1
+    shift
+    otherdepends=$1
+    shift
+    mod_dirs="$*"
+
+    local cm_ipkg_src
+    cm_ipkg_src=$tmpdir/$category-modules-$kernel_version
+
+    package_srcs="$package_srcs $cm_ipkg_src"
+
+    mkdir $cm_ipkg_src
+    pushd $cm_ipkg_src
+
+    mkdir CONTROL
+
+    moredepends=""
+    if [ ! "$otherdepends" = "nodepends" ] ; then
+      for od in $otherdepends ; do
+        moredepends="$moredepends, $od-modules(>= $kernel_version)"
+      done
+    fi
+
+    echo moredepends=$moredepends
+    cat <<EOF | sed "s/@@KERNELVERSION@@/$kernel_version$suffix/g; s/@@KERNELPRIORITY@@/$kernel_priority/g; s/@@CATEGORY@@/$category/g; s/@@MOREDEPENDS@@/$moredepends/g; s/@@MACHTYPE@@/$mach_type/g; s/@@ARCHITECTURE@@/$architecture/g; s/@@REPLACES@@/$replaces/g;" > CONTROL/control
+Package: @@CATEGORY@@-modules
+Section: kernel
+Essential: no
+Priority: optional
+Version: @@KERNELVERSION@@
+Source: cvs://pserver:anoncvs@handhelds.org:/cvs;module=linux/kernel
+Architecture: @@ARCHITECTURE@@
+Maintainer: Jamey Hicks <jamey.hicks@hp.com>
+Depends: kernel-modules(>= @@KERNELVERSION@@)@@MOREDEPENDS@@
+Replaces: @@CATEGORY@@-modules-@@MACHTYPE@@ @@REPLACES@@
+Provides: @@CATEGORY@@-modules
+Description: @@CATEGORY@@ modules for kernel @@KERNELVERSION@@
+EOF
+    echo "  " $description >> CONTROL/control
+
+    controldir=$PWD/CONTROL
+
+    mkdir -p etc/modutils
+
+    mod_base=lib/modules/$kernel_version
+    mkdir -p $mod_base
+    cd $mod_base
+
+    for mod in $mod_dirs; do
+      mod_dir1=`dirname $mod`
+      if [ -d $module_source/$mod -o -f $module_source/$mod ] ; then
+        mkdir -p $mod_dir1
+        mv $module_source/$mod $mod_dir1
+      fi
+    done
+
+    cat <<EOF > $controldir/postinst
+#!/bin/sh
+
+if [ \`uname -r\` = $kernel_version ]; then
+  depmod -a
+fi
+
+if [ -x /usr/bin/update-modules ] ; then
+   /usr/bin/update-modules
+fi
+EOF
+    ## find . -name '*.ko' -exec echo  /$mod_base/{} \\ \; >> $controldir/postinst
+    ## echo >> $controldir/postinst
+    chmod agu+rx $controldir/postinst
+
+    popd
+}
+
+##
+## autoload <categoryname> modules ...
+##
+autoload() {
+	category=$1
+	insmod=""
+	shift
+	cat <<EOF >> $category-modules-$kernel_version/CONTROL/postinst
+if [ ! -x /usr/bin/update-modules ]; then
+EOF
+	while [ $# -gt 0 ]; do
+		echo $1 >> $category-modules-$kernel_version/etc/modutils/$category-modules
+		cat <<EOF >> $category-modules-$kernel_version/CONTROL/postinst
+   if ! grep -q $1 \$IPKG_OFFLINE_ROOT/etc/modules ; then
+      echo $1 >> \$IPKG_OFFLINE_ROOT/etc/modules
+   fi
+EOF
+		insmod="modprobe $1 || true\n$insmod"
+		shift
+	done
+
+	echo "fi" >> $category-modules-$kernel_version/CONTROL/postinst
+        if [ "x$insmod" != "x" ]; then
+		echo "if [ \`uname -r\` = $kernel_version ]; then" >> $category-modules-$kernel_version/CONTROL/postinst
+		echo -e $insmod >> $category-modules-$kernel_version/CONTROL/postinst
+		echo "fi" >> $category-modules-$kernel_version/CONTROL/postinst
+	fi
+}
+
+##
+## modconf <categoryname> <string> ...
+##
+modconf() {
+	category=$1
+	shift
+	cat <<EOF >> $category-modules-$kernel_version/CONTROL/postinst
+if [ ! -x /usr/bin/update-modules ]; then
+EOF
+	while [ $# -gt 0 ]; do
+		theline=$1
+		echo $theline >> $category-modules-$kernel_version/etc/modutils/$category-modules.conf
+cat <<EOF >> $category-modules-$kernel_version/CONTROL/postinst
+  if ! grep -q "$theline" \$IPKG_OFFLINE_ROOT/etc/modules.conf ; then
+     echo "$theline" >> $IPKG_OFFLINE_ROOT/etc/modules.conf
+  fi
+EOF
+		shift
+	done
+	cat <<EOF >> $category-modules-$kernel_version/CONTROL/postinst
+fi
+EOF
+}
+
+############################################################ 
+
+kernel_ipkg_src=$tmpdir/kernel-$kernel_version
+
+mkdir $kernel_ipkg_src
+pushd $kernel_ipkg_src
+
+mkdir CONTROL
+
+cat <<EOF | sed "s/@@KERNELVERSION@@/$kernel_version$suffix/g; s/@@MACHTYPE@@/$mach_type/g; s/@@ARCHITECTURE@@/$architecture/g;" > CONTROL/control
+Package: kernel
+Provides: kernel
+Section: kernel
+Essential: no
+Priority: required
+Version: @@KERNELVERSION@@
+Source: cvs://pserver:anoncvs@handhelds.org:/cvs;module=linux/kernel
+Architecture: @@ARCHITECTURE@@
+Replaces: kernel-@@MACHTYPE@@
+Maintainer: Jamey Hicks <jamey.hicks@hp.com>
+Depends: kernel-modules(>= @@KERNELVERSION@@)
+Description: kernel for kernel @@KERNELVERSION@@
+  This package contains the kernel image built for
+  useful within familiar. 
+EOF
+
+cat <<EOF | sed "s/@@KERNELVERSION@@/$kernel_version$suffix/g; s/@@KERNELPRIORITY@@/$kernel_priority/g; s/@@MACHTYPE@@/$mach_type/g; s/@@ARCHITECTURE@@/$architecture/g;" > CONTROL/postinst
+#!/bin/sh
+
+zimage="zImage-@@KERNELVERSION@@"
+tmpkernelfile="/boot/$zimage"
+if [ -d /boot ] ; then
+    update-alternatives --install /boot/zImage zImage /boot/zImage-@@KERNELVERSION@@ @@KERNELPRIORITY@@ || true
+else
+  cat /proc/mtd | while read mtddev size esize quotedename ; do
+    echo $mtddev | sed "s/mtd//" | sed "s/://" | read mtddevnum
+    echo $quotedname | sed "s/\"//g" | read name
+    if [ "$name" = "kernel" ] ; then
+      mknod /tmp/mtdblock$mtddevnum b 31 $mtddevnum
+      cat /boot/zImage-@@KERNELVERSION@@ > /dev/mtdblock/$mtddevnum
+      rm /boot/zImage-@@KERNELVERSION@@
+    fi
+  done
+fi
+
+update-rc.d mountsysfs start 40 S .
+EOF
+chmod agu+rx CONTROL/postinst
+
+mkdir -p etc/init.d
+mkdir -p sys
+cat <<EOF >etc/init.d/mountsysfs
+#!/bin/sh
+
+if uname -r | grep -q "^2\.6"; then
+  mount sysfs /sys -t sysfs
+fi
+EOF
+chmod a+x etc/init.d/mountsysfs
+
+cat <<EOF | sed "s/@@KERNELVERSION@@/$kernel_version$suffix/g; s/@@KERNELPRIORITY@@/$kernel_priority/g; s/@@MACHTYPE@@/$mach_type/g; s/@@ARCHITECTURE@@/$architecture/g;" > CONTROL/postrm
+#!/bin/sh
+
+zimage="zImage-@@KERNELVERSION@@"
+tmpkernelfile="/boot/$zimage"
+if [ -d /boot ] ; then
+    update-alternatives --remove zImage /boot/zImage-@@KERNELVERSION@@ || true
+fi 
+update-rc.d mountsysfs remove
+EOF
+chmod agu+rx CONTROL/postrm
+
+############################################################
+
+#
+# Pull the modules out of the kernel.
+#
+mkdir boot
+
+cp $kernel_src_tree/arch/arm/boot/zImage boot/zImage-$kernel_version$suffix
+popd
+
+############################################################ 
+
+km_ipkg_src=$tmpdir/kernel-modules-$kernel_version
+
+mkdir $km_ipkg_src
+pushd $km_ipkg_src
+
+mkdir CONTROL
+
+cat <<EOF | sed "s/@@KERNELVERSION@@/$kernel_version$suffix/g; s/@@MACHTYPE@@/$mach_type/g; s/@@ARCHITECTURE@@/$architecture/g;" > CONTROL/control
+Package: kernel-modules
+Provides: kernel-modules
+Section: kernel
+Essential: no
+Priority: required
+Version: @@KERNELVERSION@@
+Architecture: @@ARCHITECTURE@@
+Source: cvs://pserver:anoncvs@handhelds.org:/cvs;module=linux/kernel
+Maintainer: Jamey Hicks <jamey.hicks@hp.com>
+Depends: modutils, kernel (>= @@KERNELVERSION@@)
+Replaces: kernel-modules-@@MACHTYPE@@
+Description: kernel modules for kernel @@KERNELVERSION@@
+  This package contains almost all of the kernel modules that might be
+  useful within familiar. Eventually I would like to split many of
+  these modules off into their own packages that would have dependency
+  links from the programs that need them. For example, e2fsprogs could
+  depend on e2fs-kernel-modules or something like that. I have already
+  split off cpu-scale and the pcmcia modules into their own packages.
+EOF
+
+mkdir -p etc/init.d
+cat <<EOF > etc/init.d/kernel-modules
+#!/bin/sh
+
+module_id() {
+    awk 'BEGIN { FS=": " } /Hardware/ { print \$2 } ' </proc/cpuinfo
+}
+
+case \$(module_id) in
+"HP iPAQ H2200")
+
+	modprobe h2200_lcd
+	modprobe mq11xx_base
+	modprobe mq1100fb
+	modprobe fbcon
+	modprobe shamcop_base
+	modprobe shamcop_adc
+	modprobe shamcop_ts
+	modprobe fbcon
+	modprobe h2200_ts
+	;;
+"HP iPAQ H3900")
+	modprobe pxafb
+	modprobe h3900_lcd
+	modprobe fbcon
+	modprobe asic2_base
+	modprobe asic2_adc
+	modprobe asic2_ts
+	;;
+"HP iPAQ H4000")
+	modprobe pxafb
+	modprobe h4000_lcd
+	modprobe fbcon
+	;;
+"HP iPAQ H5400")
+	modprobe mq1100fb-platform
+	modprobe h5400_lcd
+	modprobe fbcon
+	modprobe samcop_base
+	modprobe samcop_adc
+	modprobe samcop_ts
+	;;
+esac
+EOF
+chmod a+x etc/init.d/kernel-modules
+
+cat <<EOF | sed "s/@@KERNELVERSION@@/$kernel_version$suffix/g; s/@@MACHTYPE@@/$mach_type/g; s/@@ARCHITECTURE@@/$architecture/g;" > CONTROL/postinst
+#!/bin/sh
+
+if [ -x /usr/bin/update-modules ] ; then
+    update-modules
+else
+   if grep -q ipaq-sleeve $IPKG_OFFLINE_ROOT/etc/modules ; then
+       true
+   else
+       echo ipaq-sleeve >> $IPKG_OFFLINE_ROOT/etc/modules
+   fi
+   if grep -q usbnet $IPKG_OFFLINE_ROOT/etc/modules.conf ; then
+       true
+   else
+       echo 'alias usb0 usbnet' >> $IPKG_OFFLINE_ROOT/etc/modules.conf
+   fi
+fi
+
+update-rc.d kernel-modules start 15 S .
+EOF
+chmod agu+rx CONTROL/postinst
+
+cat <<EOF >CONTROL/postrm
+#!/bin/sh
+update-rc.d kernel-modules remove
+EOF
+chmod agu+rx CONTROL/postrm
+
+
+mod_base=lib/modules/$kernel_version
+
+
+#
+# Pull the modules out of the kernel.
+#
+pushd $kernel_src_tree 
+
+  INSTALL_MOD_PATH=$km_ipkg_src
+  export INSTALL_MOD_PATH
+
+  ( make -k modules_install )
+
+  ## remove the obsolete pcmcia/foo.o symbolic links
+  rm -fr $km_ipkg_src/$mod_base/pcmcia
+
+  ## but keep the packages insmoded by cardmgr  
+  mkdir -p $km_ipkg_src/$mod_base/pcmcia
+  pushd $km_ipkg_src/$mod_base/pcmcia
+    ln -s ../kernel/drivers/pcmcia/ds.ko .
+    if [ -e ../kernel/drivers/pcmcia/sa1100_cs.ko ]; then
+      ln -s ../kernel/drivers/pcmcia/sa1100_cs.ko .
+    fi
+    if [ -e ../kernel/drivers/pcmcia/pxa/pxa.ko ]; then
+      ln -s ../kernel/drivers/pcmcia/pxa/pxa.ko .
+    fi
+    ln -s ../kernel/drivers/pcmcia/pcmcia_core.ko .
+  popd
+
+popd
+
+#
+# Clean up kernel-modules
+# 
+
+module_source=$km_ipkg_src/$mod_base
+
+cd $module_source
+
+pwd
+rm -f build
+
+for file in modules.*
+do
+    rm -f $file
+    ln -s /var/run/$file $file
+done
+
+popd
+
+## let's keep hwtimer and profiler in kernel-modules
+category_modules hwtimer "SA1100 hwtimer support." nodepends kernel/arch/arm/mach-sa1100/hwtimer.ko
+category_modules profiler "Sampling profiler support." hwtimer kernel/drivers/char/profiler.ko
+category_modules devmapper "Device mapper support." nodepends kernel/drivers/md/dm-mod.ko kernel/mm/mempool.ko
+category_modules lvm "Logical volume manager support." nodepends kernel/drivers/md/lvm-mod.ko
+
+# Modules for chips that can be found in several devices
+
+category_modules shamcop \
+  "Samsung HAMCOP (iPAQ H2200) and SAMCOP Asic (H5400... not ready yet) companion chip driver modules" soc-device \
+  kernel/arch/arm/common/ipaq/shamcop_base.ko \
+  kernel/arch/arm/common/ipaq/shamcop_adc.ko \
+  kernel/arch/arm/common/ipaq/shamcop_ts.ko
+
+category_modules shamcop-nand \
+  "Samsung HAMCOP (iPAQ H2200) nand flash interface driver module" shamcop \
+  kernel/arch/arm/common/ipaq/shamcop_nand.ko
+
+category_modules samcop "Samsung SAMCOP (H5400) companion chip driver modules" soc-device \
+  kernel/arch/arm/common/ipaq/samcop_base.ko \
+  kernel/arch/arm/common/ipaq/samcop_adc.ko \
+  kernel/arch/arm/common/ipaq/samcop_ts.ko
+
+category_modules mq11xx "mq11xx graphics processor chip support (iPAQ H2200, H5400, Dell AximX5)" "fb lcd soc-device" \
+  kernel/drivers/misc/soc/mq11xx_base.ko kernel/drivers/video/mq1100fb.ko
+
+# FIXME: list all the devices using these 2 driver module packages
+
+category_modules ipaq-asic2 "iPAQ Asic2 companion chip driver modules (H3900)" soc-device \
+  kernel/arch/arm/common/ipaq/asic2_base.ko \
+  kernel/arch/arm/common/ipaq/asic2_adc.ko \
+  kernel/arch/arm/common/ipaq/asic2_ts.ko
+
+category_modules ipaq-asic3 "iPAQ Asic3 companion chip driver modules (H3900)" nodepends \
+  kernel/arch/arm/common/ipaq/asic3_base.ko
+
+category_modules ipaq-sleeve "iPAQ sleeve driver module" nodepends \
+  kernel/arch/arm/common/ipaq/ipaq-sleeve.ko
+
+# Device specific modules 
+
+if [ "$architecture" = "ipaqsa" ] ; then
+
+  # H3800 specifics
+
+  category_modules h3800 "iPAQ H3800 specific driver modules" nodepends \
+    kernel/arch/arm/mach-sa1100/h3600_asic.ko \
+    kernel/drivers/serial/serial_h3800.ko
+
+else
+
+  # H2200, H3900, H3900, H4000, H5400, Dell Axim specifics
+
+  category_modules h2200 "iPAQ H2200 specific driver modules" "lcd soc-device" \
+    kernel/arch/arm/mach-pxa/h2200_pcmcia.ko kernel/arch/arm/mach-pxa/h2200_lcd.ko kernel/arch/arm/mach-pxa/h2200_ts.ko
+
+  category_modules h3900 "iPAQ H3900 specific driver modules" "ipaq-asic2 ipaq-asic3" \
+    kernel/arch/arm/common/ipaq/h3900_lcd.ko
+
+  category_modules h4000 "iPAQ H4000 specific driver modules" nodepends \
+    kernel/arch/arm/common/ipaq/h4000_lcd.ko
+
+  # FIXME: add aximx5_misc when it can be compiled again
+
+  category_modules aximx5 "Dell Axim X5 specific driver modules" mq11xx \
+    kernel/arch/arm/mach-pxa/aximx5_pcmcia.ko kernel/arch/arm/mach-pxa/aximx5_lcd.ko \
+    kernel/arch/arm/mach-pxa/aximx5_buttons.ko
+
+  category_modules h5400 "iPAQ H5400 specific driver modules" samcop \
+    kernel/arch/arm/common/ipaq/h5400_lcd.ko
+fi
+
+# Soc modules
+
+  category_modules soc-device "Generic soc-device driver modules" nodepends \
+    kernel/drivers/base/soc-device.ko
+
+# Framebuffer modules
+
+category_modules lcd "Generic lcd driver modules" nodepends \
+  kernel/drivers/video/lcd.ko \
+  kernel/drivers/video/backlight.ko
+
+category_modules fb "Generic framebuffer driver modules" nodepends \
+  kernel/drivers/video/cfbcopyarea.ko \
+  kernel/drivers/video/cfbfillrect.ko \
+  kernel/drivers/video/cfbimgblt.ko
+
+category_modules fbcon "Generic framebuffer console driver modules" nodepends \
+  kernel/drivers/video/console/font.ko \
+  kernel/drivers/video/console/fbcon.ko
+  
+category_modules pxafb "pxa processor framebuffer driver module" "fb lcd" \
+  kernel/drivers/video/pxafb.ko
+
+# MMC/SD
+
+category_modules mmc "Generic mmc/sd support" nodepends \
+  kernel/drivers/media/mmc/mmc_core.ko kernel/drivers/media/mmc/mmc_block.ko
+
+category_modules pxammc "pxa processor mmc/sd interface support" mmc \
+  kernel/drivers/media/mmc/pxamci.ko
+
+# irda-modules
+
+category_modules irda "The entire suite of kernel modules required to use both SIR and FIR
+  IrDA.  This includes IrCOMM, and IrLAN support." nodepends \
+ kernel/drivers/net/irda \
+ kernel/net/irda
+
+if [ "$architecture" = "ipaqsa" ] ; then
+modconf irda "alias irda0 sa1100_ir"
+else
+modconf irda "alias irda0 pxa_ir"
+fi
+autoload irda ircomm-tty
+
+category_modules smbfs "SMB filesystem support." nodepends kernel/fs/smbfs
+category_modules nfs "NFS filesystem client support." nodepends \
+  kernel/net/sunrpc kernel/fs/nfs \
+  kernel/fs/lockd kernel/fs/exportfs/exportfs.ko
+category_modules nfsd "NFS filesystem server support." nfs kernel/fs/nfsd 
+category_modules cramfs "CRAMFS filesystem support." nodepends kernel/fs/cramfs
+category_modules romfs "ROMFS filesystem support." nodepends kernel/fs/romfs
+category_modules jffs2 "JFFS2 filesystem support." nodepends kernel/fs/jffs2
+category_modules isofs "ISO filesystem support." nodepends kernel/fs/isofs
+category_modules loopback "Loopback device support." nodepends kernel/drivers/block/loop.ko
+category_modules mbd "Network block device support." nodepends kernel/drivers/block/nbd.ko
+
+category_modules backpaq "Mercury BackPAQ driver support." "pcmcia videodev" \
+    kernel/drivers/pcmcia/h3600_backpaq.ko \
+    kernel/drivers/char/h3600_backpaq_accel.ko \
+    kernel/drivers/char/h3600_backpaq_sram.ko \
+    kernel/arch/arm/mach-sa1100/h3600_backpaq_fpga.ko \
+    kernel/drivers/char/h3600_backpaq_fpga.ko \
+    kernel/drivers/char/h3600_backpaq_gasgauge.ko \
+    kernel/drivers/mtd/h3600_backpaq_flash.ko \
+    kernel/drivers/media/video/h3600_backpaq_camera.ko
+
+autoload backpaq h3600_backpaq
+
+# Input devices
+
+category_modules evdev "Event interface device module for input devices" nodepends kernel/drivers/input/evdev.ko
+category_modules tsdev "Touchscreen device module" nodepends kernel/drivers/input/tsdev.ko
+category_modules tslibdev "tslib device module" nodepends kernel/drivers/input/tslibdev.ko
+category_modules stowaway "Stowaway keyboard support." nodepends kernel/drivers/char/h3600_stowaway.ko
+category_modules microkbd "Compaq Microkeyboard support." nodepends kernel/drivers/char/h3600_microkbd.ko
+category_modules input-serio "Linux serial i/o input (mice, keyboards, joysticks) support" nodepends \
+  kernel/drivers/input/serio/serio.ko kernel/drivers/input/serio/serport.ko
+category_modules newtonkbd "Newton keyboard support." input-serio kernel/drivers/input/keyboard/newtonkbd.ko
+
+# Filesystems
+
+category_modules ext2 "EXT2 filesystem support." nodepends kernel/fs/ext2
+category_modules ext3 "EXT3 filesystem support." nodepends kernel/fs/ext3 kernel/fs/jbd
+category_modules reiserfs "Reiser journaling filesystem support" nodepends kernel/fs/reiserfs
+category_modules vfat "VFAT filesystem support." nls-base kernel/fs/fat kernel/fs/vfat
+category_modules msdos "MSDOS filesystem support." vfat kernel/fs/msdos
+# No Kconfig file for umsdos in the Linux 2.6 stock kernel so far (checked with 2.6.5)
+#category_modules umsdos "Unix MSDOS filesystem support." vfat kernel/fs/umsdos
+category_modules nls-base "NLS codepage for nls-base" nodepends kernel/fs/nls/nls_base.ko
+category_modules nls-big5 "NLS codepage for nls-big5" nls-base kernel/fs/nls/nls_big5.ko
+category_modules nls-cp1250 "NLS codepage for nls-cp1250" nls-base kernel/fs/nls/nls_cp1250.ko
+category_modules nls-cp1251 "NLS codepage for nls-cp1251" nls-base kernel/fs/nls/nls_cp1251.ko
+category_modules nls-cp1255 "NLS codepage for nls-cp1255 / nls-iso8859-8" nls-base kernel/fs/nls/nls_cp1255.ko
+category_modules nls-cp437 "NLS codepage for nls-cp437" nls-base kernel/fs/nls/nls_cp437.ko
+category_modules nls-cp737 "NLS codepage for nls-cp737" nls-base kernel/fs/nls/nls_cp737.ko
+category_modules nls-cp775 "NLS codepage for nls-cp775" nls-base kernel/fs/nls/nls_cp775.ko
+category_modules nls-cp850 "NLS codepage for nls-cp850" nls-base kernel/fs/nls/nls_cp850.ko
+category_modules nls-cp852 "NLS codepage for nls-cp852" nls-base kernel/fs/nls/nls_cp852.ko
+category_modules nls-cp855 "NLS codepage for nls-cp855" nls-base kernel/fs/nls/nls_cp855.ko
+category_modules nls-cp857 "NLS codepage for nls-cp857" nls-base kernel/fs/nls/nls_cp857.ko
+category_modules nls-cp860 "NLS codepage for nls-cp860" nls-base kernel/fs/nls/nls_cp860.ko
+category_modules nls-cp861 "NLS codepage for nls-cp861" nls-base kernel/fs/nls/nls_cp861.ko
+category_modules nls-cp862 "NLS codepage for nls-cp862" nls-base kernel/fs/nls/nls_cp862.ko
+category_modules nls-cp863 "NLS codepage for nls-cp863" nls-base kernel/fs/nls/nls_cp863.ko
+category_modules nls-cp864 "NLS codepage for nls-cp864" nls-base kernel/fs/nls/nls_cp864.ko
+category_modules nls-cp865 "NLS codepage for nls-cp865" nls-base kernel/fs/nls/nls_cp865.ko
+category_modules nls-cp866 "NLS codepage for nls-cp866" nls-base kernel/fs/nls/nls_cp866.ko
+category_modules nls-cp869 "NLS codepage for nls-cp869" nls-base kernel/fs/nls/nls_cp869.ko
+category_modules nls-cp874 "NLS codepage for nls-cp874" nls-base kernel/fs/nls/nls_cp874.ko
+category_modules nls-cp932 "NLS codepage for nls-cp932" nls-base kernel/fs/nls/nls_cp932.ko
+category_modules nls-cp936 "NLS codepage for nls-cp936" nls-base kernel/fs/nls/nls_cp936.ko
+category_modules nls-cp949 "NLS codepage for nls-cp949" nls-base kernel/fs/nls/nls_cp949.ko
+category_modules nls-cp950 "NLS codepage for nls-cp950" nls-base kernel/fs/nls/nls_cp950.ko
+category_modules nls-euc-jp "NLS codepage for nls-euc-jp" nls-base kernel/fs/nls/nls_euc-jp.ko
+category_modules nls-euc-kr "NLS codepage for nls-euc-kr" nls-base kernel/fs/nls/nls_euc-kr.ko
+category_modules nls-gb2312 "NLS codepage for nls-gb2312" nls-base kernel/fs/nls/nls_gb2312.ko
+category_modules nls-iso8859-13 "NLS codepage for nls-iso8859-13" nls-base kernel/fs/nls/nls_iso8859-13.ko
+category_modules nls-iso8859-14 "NLS codepage for nls-iso8859-14" nls-base kernel/fs/nls/nls_iso8859-14.ko
+category_modules nls-iso8859-15 "NLS codepage for nls-iso8859-15" nls-base kernel/fs/nls/nls_iso8859-15.ko
+category_modules nls-iso8859-1 "NLS codepage for nls-iso8859-1" nls-base kernel/fs/nls/nls_iso8859-1.ko
+category_modules nls-iso8859-2 "NLS codepage for nls-iso8859-2" nls-base kernel/fs/nls/nls_iso8859-2.ko
+category_modules nls-iso8859-3 "NLS codepage for nls-iso8859-3" nls-base kernel/fs/nls/nls_iso8859-3.ko
+category_modules nls-iso8859-4 "NLS codepage for nls-iso8859-4" nls-base kernel/fs/nls/nls_iso8859-4.ko
+category_modules nls-iso8859-5 "NLS codepage for nls-iso8859-5" nls-base kernel/fs/nls/nls_iso8859-5.ko
+category_modules nls-iso8859-6 "NLS codepage for nls-iso8859-6" nls-base kernel/fs/nls/nls_iso8859-6.ko
+category_modules nls-iso8859-7 "NLS codepage for nls-iso8859-7" nls-base kernel/fs/nls/nls_iso8859-7.ko
+category_modules nls-iso8859-9 "NLS codepage for nls-iso8859-9" nls-base kernel/fs/nls/nls_iso8859-9.ko
+category_modules nls-koi8-r "NLS codepage for nls-koi8-r" nls-base kernel/fs/nls/nls_koi8-r.ko
+category_modules nls-koi8-ru "NLS codepage for nls-koi8-ru" nls-base kernel/fs/nls/nls_koi8-ru.ko
+category_modules nls-koi8-u "NLS codepage for nls-koi8-u" nls-base kernel/fs/nls/nls_koi8-u.ko
+category_modules nls-sjis "NLS codepage for nls-sjis" nls-base kernel/fs/nls/nls_sjis.ko
+category_modules nls-tis-620 "NLS codepage for nls-tis-620" nls-base kernel/fs/nls/nls_tis-620.ko
+category_modules nls-utf8 "NLS codepage for nls-utf8" nls-base kernel/fs/nls/nls_utf8.ko
+
+# Networking
+
+category_modules mipv6 "IPv6 mobility support." ipv6 kernel/net/ipv6/mobile_ip6
+category_modules ipv6 "IPv6 networking support." nodepends kernel/net/ipv6
+autoload ipv6 ipv6
+category_modules ipsec "ipsec support." nodepends kernel/net/ipsec
+category_modules tun "ethertun/tap support." nodepends kernel/drivers/net/tun.ko
+category_modules bridge "Ethernet bridging support." nodepends kernel/net/bridge/bridge.ko
+category_modules iptables "ipv4 netfilter and iptables support." nodepends kernel/net/ipv4/netfilter
+category_modules iptables-ipv6 "ipv6 netfilter and iptables support." ipv6 kernel/net/ipv6/netfilter
+category_modules netlink "Netlink support." nodepends kernel/net/netlink
+category_modules packet "Raw IP packet support." nodepends kernel/net/packet
+category_modules crc32 "crc32 module" nodepends kernel/lib/crc32.ko 
+
+modconf packet "alias net-pf-17 af_packet"
+
+category_modules ppp "PPP support" nodepends \
+    kernel/drivers/net/ppp_generic.ko \
+    kernel/drivers/net/slhc.ko \
+    kernel/drivers/net/ppp_async.ko \
+    kernel/drivers/net/ppp_deflate.ko \
+    kernel/drivers/net/bsd_comp.ko
+modconf ppp "alias tty-ldisc-3 ppp_async"
+modconf ppp "alias tty-ldisc-4 ppp_synctty"
+modconf ppp "alias ppp0 ppp_async"
+
+# Memory tecnnology devices
+
+category_modules mtd "Common mtd modules" nodepends \
+  kernel/drivers/mtd/mtdpart.ko kernel/drivers/mtd/mtdcore.ko \
+  kernel/drivers/mtd/mtdconcat.ko kernel/drivers/mtd/mtdchar.ko \
+  kernel/drivers/mtd/chips/chipreg.ko
+
+category_modules mtd-nand "Common NAND flash mtd modules" nodepends \
+  kernel/drivers/mtd/nand/nand_ecc.ko kernel/drivers/mtd/nand/nand_ids.ko \
+  kernel/drivers/mtd/nand/nand.ko
+
+# Cryptographic modules
+
+category_modules aes "Cryptographic aes module" nodepends kernel/crypto/aes.ko
+category_modules blowfish "Cryptographic blowfish module" nodepends kernel/crypto/blowfish.ko
+category_modules cast5 "Cryptographic cast5 module" nodepends kernel/crypto/cast5.ko
+category_modules cast6 "Cryptographic cast6 module" nodepends kernel/crypto/cast6.ko
+category_modules crypto-null "Cryptographic crypto-null module" nodepends kernel/crypto/crypto_null.ko
+category_modules des "Cryptographic des module" nodepends kernel/crypto/des.ko
+category_modules md4 "Cryptographic md4 module" nodepends kernel/crypto/md4.ko
+category_modules md5 "Cryptographic md5 module" nodepends kernel/crypto/md5.ko
+category_modules serpent "Cryptographic serpent module" nodepends kernel/crypto/serpent.ko
+category_modules sha1 "Cryptographic sha1 module" nodepends kernel/crypto/sha1.ko
+category_modules sha256 "Cryptographic sha256 module" nodepends kernel/crypto/sha256.ko
+category_modules sha512 "Cryptographic sha512 module" nodepends kernel/crypto/sha512.ko
+category_modules twofish "Cryptographic twofish module" nodepends kernel/crypto/twofish.ko
+
+# USB modules
+
+category_modules usbcore "USB core support" nodepends kernel/drivers/usb/core/usbcore.ko
+category_modules ohci "OHCI drivers" usbcore kernel/drivers/usb/usb-ohci.ko kernel/drivers/usb/usb-ohci-h5400.ko
+autoload ohci usb-ohci-h5400
+category_modules usb-hid "USB HID drivers" usbcore kernel/drivers/usb/input/hid.ko
+autoload usb-hid hid keybdev mousedev
+category_modules usb-storage "USB storage drivers" scsi kernel/drivers/usb/storage/usb-storage.ko
+autoload usb-storage usb-storage sd_mod
+category_modules usbvideo "USB video support" "usbcore videodev" kernel/drivers/usb/media/usbvideo.ko
+category_modules pwc "PWC Video For Linux driver" "videodev usbcore" kernel/drivers/usb/media/pwc.ko
+category_modules ov511 "OV511 Video For Linux driver" "videodev usbcore" kernel/drivers/usb/media/ov511.ko
+category_modules ibmcam "IBM C-it Video For Linux driver" "videodev usbcore usbvideo" kernel/drivers/usb/media/ibmcam.ko
+category_modules vicam "3Com HomeConnect Video For Linux driver" "videodev usbcore" kernel/drivers/usb/media/vicam.ko
+category_modules stv680 "STV680 Video For Linux driver" "videodev usbcore" kernel/drivers/usb/media/stv680.ko
+category_modules se401 "SE401 Video For Linux driver" "videodev usbcore" kernel/drivers/usb/media/se401.ko
+category_modules ultracam "Ultracam Video For Linux driver" "videodev usbcore usbvideo" kernel/drivers/usb/media/ultracam.ko
+category_modules konicawc "Konica Webcam Video For Linux driver" "videodev usbcore usbvideo" kernel/drivers/usb/media/konicawc.ko
+category_modules w9968cf "USB W996[87]CF JPEG Dual Mode Camera support" "videodev usbcore i2c" kernel/drivers/usb/media/w9968cf.ko
+category_modules usb-gadget "USB gadget support" soc-device kernel/drivers/usb/gadget
+autoload usb-gadget pxa2xx_udc g_ether
+
+category_modules hamradio "Hamradio AX.25 support." nodepends kernel/drivers/net/hamradio
+
+
+category_modules videodev "Video For Linux driver." nodepends kernel/drivers/media/video/videodev.ko \
+  kernel/drivers/media/video/v4l2-common.ko kernel/drivers/media/video/v4l1-compat.ko 
+category_modules winnov "Winnov Videum PCMCIA Video For Linux driver." nodepends kernel/drivers/media/video/wnv_cs.ko
+category_modules cpia "CPiA Video For Linux driver" videodev kernel/drivers/media/video/cpia.ko
+category_modules cpia-usb "CPiA USB Video For Linux driver" "videodev usbcore" kernel/drivers/media/video/cpia_usb.ko
+
+category_modules lirc "Linux Consumer IR drivers." nodepends kernel/drivers/char/lirc_sir.ko
+
+## pcmcia ethernet cards
+category_modules 3c589 "3COM 3c589_cs driver." "packet pcmcia" kernel/drivers/net/pcmcia/3c589_cs.ko pcmcia/3c589_cs.ko
+category_modules 3c574 "3COM 3c574_cs driver." "packet pcmcia" kernel/drivers/net/pcmcia/3c574_cs.ko pcmcia/3c574_cs.ko
+category_modules 8390 "8390 network device driver." crc32 kernel/drivers/net/8390.ko
+category_modules pcnet "pcnet_cs (NE2000 compatible) driver." "packet pcmcia 8390 crc32" kernel/drivers/net/pcmcia/pcnet_cs.ko pcmcia/pcnet_cs.ko
+category_modules fmvj18x "fjvj18x_cs driver." "packet pcmcia crc32" kernel/drivers/net/pcmcia/fmvj18x_cs.ko pcmcia/fmvj18x_cs.ko
+category_modules nmclan "nmclan driver" "packet pcmcia" kernel/drivers/net/pcmcia/nmclan_cs.ko pcmcia/nmclan_cs.ko
+category_modules smc91c92 "smc91c92 driver" "packet pcmcia crc32" kernel/drivers/net/pcmcia/smc91c92_cs.ko pcmcia/smc91c92_cs.ko
+category_modules xirc2ps "xirc2ps driver" "packet pcmcia" kernel/drivers/net/pcmcia/xirc2ps_cs.ko pcmcia/xirc2ps_cs.ko
+
+## pcmcia serial cards
+category_modules serial "serial_cs driver" pcmcia kernel/drivers/char/pcmcia/serial_cs.ko pcmcia/serial_cs.ko
+category_modules parport "parport_cs driver" nodepends kernel/drivers/parport
+
+## 802.11b cards 
+category_modules wvlan "Lucent 802.11b (wvlan) drivers." "netlink packet pcmcia" kernel/drivers/net/wireless/wvlan_cs.ko pcmcia/wvlan_cs.ko
+category_modules mwvlan "Lucent 802.11b (mwvlan) monitor-mode drivers." "netlink packet pcmcia" kernel/drivers/net/wireless/mwvlan_cs.ko pcmcia/mwvlan_cs.ko
+replaces=prism2-modules
+category_modules hostap "Hostap 802.11b drivers." "netlink packet pcmcia" \
+    kernel/drivers/net/wireless/hostap/hostap.ko \
+    kernel/drivers/net/wireless/hostap/hostap_crypt.ko \
+    kernel/drivers/net/wireless/hostap/hostap_crypt_wep.ko \
+    kernel/drivers/net/wireless/hostap/hostap_cs.ko
+unset replaces
+modconf hostap "options hostap_cs ignore_cis_vcc=1"
+
+category_modules orinoco "802.11b (orinoco) drivers should support both Lucent and Intersil chipsets." "netlink packet pcmcia" \
+    kernel/drivers/net/wireless/orinoco_cs.ko \
+    kernel/drivers/net/wireless/orinoco.ko \
+    kernel/drivers/net/wireless/hermes.ko
+modconf orinoco "options orinoco_cs ignore_cis_vcc=1"
+
+category_modules aironet "aironet driver" "packet pcmcia" kernel/drivers/net/wireless/airo.ko kernel/drivers/net/wireless/airo_cs.ko
+category_modules spectrum24 "spectrum24" "packet pcmcia" kernel/drivers/net/wireless/spectrum24t_cs.ko
+category_modules mwavelan "mwavelan" "packet pcmcia" kernel/drivers/net/wireless/mwavelan_cs.ko
+
+category_modules axnet "axnet drivers." "packet pcmcia" kernel/drivers/net/wireless/axnet_cs.ko
+category_modules ray "ray drivers." "packet pcmcia" kernel/drivers/net/wireless/ray_cs.ko
+category_modules netwave "netwave drivers." "packet pcmcia" kernel/drivers/net/wireless/netwave_cs.ko
+category_modules wavelan "non-802.11 wavelan drivers." "packet pcmcia" kernel/drivers/net/wireless/wavelan_cs.ko
+
+category_modules bluetooth-bt3c "3Com bt3c support" "bluetooth" kernel/drivers/bluetooth/bt3c_cs.ko
+category_modules bluetooth-dtl1 "DTL1 support" "bluetooth" kernel/drivers/bluetooth/dtl1_cs.ko
+category_modules bluetooth-bluecard "Anycom Bluecard support" "bluetooth" kernel/drivers/bluetooth/bluecard_cs.ko
+category_modules bluetooth-uart "Generic UART HCI support" "bluetooth" kernel/drivers/bluetooth/hci_uart.ko
+category_modules bluetooth-btuart "PC Card UART HCI support" "bluetooth" kernel/drivers/bluetooth/btuart_cs.ko
+
+category_modules bluetooth "bluetooth support" "" \
+    kernel/net/bluetooth \
+    kernel/drivers/bluetooth
+
+autoload bluetooth hci_uart l2cap bnep bluez
+modconf bluetooth "alias net-pf-31 bluez"
+modconf bluetooth "alias bt-proto-0 l2cap"
+modconf bluetooth "alias bt-proto-2 sco"
+modconf bluetooth "alias bt-proto-3 rfcomm"
+modconf bluetooth "alias bt-proto-4 bnep"
+modconf bluetooth "alias tty-ldisc-15 hci_uart"
+
+# Multimedia
+
+category_modules sound "Sound support" nodepends kernel/sound/core/snd.ko kernel/sound/soundcore.ko
+if [ "$architecture" = "ipaqpxa" -o "$architecture" = "ipaqpxa255" ] ; then
+   # don't autoload h3900-uda1380, we will use alsa on those machines
+   autoload sound h5400-audio
+   modconf sound "options i2c-algo-pxa pxa_scan=0"
+else
+   autoload sound h3600-uda1341
+fi
+
+category_modules i2c "i2c modules" nodepends \
+    kernel/drivers/i2c/i2c-core.ko \
+    kernel/drivers/i2c/i2c-dev.ko
+
+category_modules l3 "l3 modules" nodepends kernel/drivers/l3/l3-core.ko
+category_modules pxa-ac97 "pxa generic ac97 support" sound kernel/sound/pci/ac97/snd-ac97-codec.ko
+ 
+# Disks
+
+category_modules cdrom "CD-ROM driver" nodepends kernel/drivers/cdrom/cdrom.ko
+category_modules scsi "SCSI support" cdrom kernel/drivers/scsi
+
+## must be after individual pcmcia driver packages
+category_modules pcmcia "Miscellaneous PCMCIA drivers." nodepends \
+ pcmcia \
+ kernel/drivers/pcmcia \
+ kernel/drivers/char/pcmcia \
+ kernel/drivers/net/pcmcia \
+ kernel/drivers/char/serial.ko
+
+if [ "$architecture" = "ipaqsa" ] ; then
+   autoload pcmcia sa1100_cs h3600_generic_sleeve ds
+else
+   autoload pcmcia pxa_cs h3600_generic_sleeve ds
+fi
+
+## after pcmcia modules
+category_modules ide-nondisk "IDE cd, tape, and floppy support" pcmcia cdrom \
+    kernel/drivers/ide/ide-cd.ko \
+    kernel/drivers/ide/ide-tape.ko \
+    kernel/drivers/ide/ide-floppy.ko
+category_modules ide "IDE support" pcmcia kernel/drivers/ide kernel/drivers/cdrom kernel/drivers/ide/ide-cs.ko
+
+############################################################
+
+task_b=$tmpdir/task-bootstrap-$kernel_version
+mkdir $task_b
+pushd $task_b 
+
+mkdir CONTROL
+
+if [ "$architecture" = "ipaqsa" ] ; then
+  extra_bootstrap=", h3800-modules(>= $kernel_version)"
+else
+  ## for h5400 internal wifi
+  extra_bootstrap=", ohci-modules, at76c503a-modules"
+fi
+
+cat <<EOF | sed "s/@@SOUNDMODULES@@/$sound_modules/g; s/@@KERNELVERSION@@/$kernel_version$suffix/g; s/@@MACHTYPE@@/$mach_type/g; s/@@ARCHITECTURE@@/$architecture/g; s/@@EXTRA_BOOTSTRAP@@/$extra_bootstrap/g;" > CONTROL/control
+Package: task-bootstrap
+Provides: task-bootstrap
+Section: kernel
+Essential: no
+Priority: optional
+Version: @@KERNELVERSION@@
+Architecture: @@ARCHITECTURE@@
+Source: cvs://pserver:anoncvs@handhelds.org:/cvs;module=linux/kernel
+Replaces: task-bootstrap-@@MACHTYPE@@
+Maintainer: Jamey Hicks <jamey.hicks@hp.com>
+Depends: task-essential-to-boot, familiar-base, ipkg, ipkg-arch, ipkg-conf, diff, hostname, kernel, lrzsz, hotplug, ppp, dropbear
+Recommends: pcnet-modules, wvlan-modules, orinoco-modules, hostap-modules, ide-modules, nfs-modules, ppp-modules, @@SOUNDMODULES@@, vfat-modules, aironet-modules, irda-modules, pcmcia-cs, wireless-tools, scp, bluetooth-modules, ipv6-modules, bluetooth-uart-modules@@EXTRA_BOOTSTRAP@@, portmap, module-init-tools
+Description: kernel and modules required to bootstrap and install more packages
+EOF
+
+package_srcs="$package_srcs $task_b"
+popd 
+
+############################################################
+
+task_i=$tmpdir/task-intimate-modules-$kernel_version
+mkdir $task_i
+pushd $task_i 
+
+mkdir CONTROL
+
+cat <<EOF | sed "s/@@KERNELVERSION@@/$kernel_version$suffix/g; s/@@MACHTYPE@@/$mach_type/g; s/@@ARCHITECTURE@@/$architecture/g;" > CONTROL/control
+Package: task-intimate-modules
+Section: kernel
+Essential: no
+Priority: optional
+Version: @@KERNELVERSION@@
+Architecture: @@ARCHITECTURE@@
+Source: cvs://pserver:anoncvs@handhelds.org:/cvs;module=linux/kernel
+Maintainer: Jamey Hicks <jamey.hicks@hp.com>
+Replaces: task-intimate-@@MACHTYPE@@
+Depends: task-bootstrap, wvlan-modules, pcnet-modules, reiserfs-modules, nfs-modules, ide-modules
+Description: kernel and modules required to run Intimate
+EOF
+
+package_srcs="$package_srcs $task_i"
+popd
+
+############################################################
+popd
+
+ipkg-build -o root -g root $kernel_ipkg_src 
+ipkg-build -o root -g root $km_ipkg_src 
+
+for package_src in $package_srcs; do
+  ipkg-build -o root -g root $package_src 
+done
+
+rm -rf $tmpdir
