@@ -147,8 +147,10 @@ static pxa_freqs_t pxa2xx_freqs[] =
     {208000, 208000, PXA27x_CCCR(0, 16, 2), 1, PXA27x_CCLKCFG(0, 0, 1)},
     {312000, 208000, PXA27x_CCCR(1, 16, 3), 1, PXA27x_CCLKCFG(1, 0, 1)},
     {416000, 208000, PXA27x_CCCR(1, 16, 4), 1, PXA27x_CCLKCFG(1, 0, 1)},
-    {520000, 208000, PXA27x_CCCR(1, 16, 5), 1, PXA27x_CCLKCFG(1, 0, 1)},
-    {624000, 208000, PXA27x_CCCR(1, 16, 6), 1, PXA27x_CCLKCFG(1, 0, 1)}
+    {520000, 208000, PXA27x_CCCR(1, 16, 5), 1, PXA27x_CCLKCFG(1, 0, 1)}
+#if !defined(CONFIG_LOOX720_LIMIT_CPUFREQ)
+    ,{624000, 208000, PXA27x_CCCR(1, 16, 6), 1, PXA27x_CCLKCFG(1, 0, 1)}
+#endif
 #endif
 };
 #define NUM_FREQS (sizeof(pxa2xx_freqs)/sizeof(pxa_freqs_t))

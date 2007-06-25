@@ -181,6 +181,8 @@
 #define NR_IRQS			(IRQ_BOARD_END)
 #elif defined(CONFIG_BOARD_IRQ_MAP_BIG)
 #define NR_IRQS			(IRQ_BOARD_START + 96)
+#elif defined(CONFIG_MACH_LOOX720)
+#define NR_IRQS			(IRQ_BOARD_START + 70)
 #else
 #define NR_IRQS			(IRQ_BOARD_START)
 #endif

@@ -174,7 +174,7 @@ core-$(CONFIG_ARCH_S3C2410)	+= arch/arm/mach-s3c2440/
 core-$(CONFIG_ARCH_S3C2410)	+= arch/arm/mach-s3c2442/
 core-$(CONFIG_ARCH_S3C2410)	+= arch/arm/mach-s3c2443/
 core-$(CONFIG_FPE_NWFPE)	+= arch/arm/nwfpe/
-core-$(CONFIG_FPE_FASTFPE)	+= $(FASTFPE_OBJ)
+##core-$(CONFIG_FPE_FASTFPE)	+= $(FASTFPE_OBJ)
 core-$(CONFIG_VFP)		+= arch/arm/vfp/
 
 # If we have a common platform directory, then include it in the build.

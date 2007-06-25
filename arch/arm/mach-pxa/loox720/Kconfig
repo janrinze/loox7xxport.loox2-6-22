@@ -1,0 +1,38 @@
+menuconfig MACH_LOOX720
+	bool "FSC Loox 720 (non-functional)"
+	select PXA27x
+	select GPIO_KEYS
+	select IPAQ_HANDHELD
+	depends HTC_ASIC3
+	help
+	  Enable this if you plan to boot the kernel on the Loox 720
+	  series of PDAs. Currently there is only basic support for this
+	  type of PDAs.
+
+config LOOX720_LCD
+	tristate "FSC Loox 720 LCD"
+	depends on MACH_LOOX720 
+	help
+	  This driver provides support for changing power and brightness
+	  on Loox 720 LCD display.
+
+config LOOX720_TS
+    tristate "FSC Loox 720 Touchscreen"
+    depends on MACH_LOOX720
+    help
+      This driver provides support for touchscreen.
+
+config DRAM_BASE
+	hex '(S)DRAM Base Address'
+	depends on MACH_LOOX720
+	default 0xaa000000
+	help
+		On the Loox 720, RAM starts at 0xaa000000. You should not
+		need to modify this value.
+
+config CONFIG_LOOX720_LIMIT_CPUFREQ
+	bool 'Limit high CPU frequency to 520MHz'
+	depends on MACH_LOOX720
+	default yes
+	help
+		Not all LOOX pdas work on 624MHz. So, to avoid hangs, enable this.
