@@ -6,5 +6,7 @@ obj-$(CONFIG_MACH_LOOX720)	+= loox720.o
 #obj-$(CONFIG_LOOX720_CORE)	+= loox720_core.o
 obj-$(CONFIG_LOOX720_LCD)	+= loox720_lcd.o
 obj-$(CONFIG_LOOX720_TS)       += loox720_ts.o
+obj-$(CONFIG_LOOX720_BUTTONS)	+= loox720_buttons.o
+
 
 

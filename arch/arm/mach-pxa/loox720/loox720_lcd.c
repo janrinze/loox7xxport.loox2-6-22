@@ -95,7 +95,6 @@ loox720_lcd_init (void)
 {
 //	if (! machine_is_loox720 ())
 //		return -ENODEV;
-        printk("loox720_lcd: init\n");
 	set_pxa_fb_info(&loox720_fb_info);
 	pxafb_lcd_device = lcd_device_register("pxafb", NULL, &loox720_lcd_properties);
 //	if (IS_ERR (pxafb_lcd_device))

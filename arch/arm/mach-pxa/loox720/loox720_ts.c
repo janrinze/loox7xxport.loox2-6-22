@@ -50,6 +50,7 @@ static struct tsadc_platform_data loox720_ts_params = {
     .z2_pin = "ads7846-ssp:z2",
     .pressure_factor = 100000,
     .min_pressure = 2,
+    .delayed_pressure=1,
     .max_jitter = 8,
 };
 static struct resource loox720_pen_irq = {

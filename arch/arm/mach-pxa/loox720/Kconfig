@@ -22,6 +22,14 @@ config LOOX720_TS
     help
       This driver provides support for touchscreen.
 
+config LOOX720_BUTTONS
+    tristate "FSC Loox 720 Buttons"
+    depends on MACH_LOOX720
+#    select KEYBOARD_PXA27x
+    help
+      FSC Loox 720 buttons support.
+    
+    
 config DRAM_BASE
 	hex '(S)DRAM Base Address'
 	depends on MACH_LOOX720
