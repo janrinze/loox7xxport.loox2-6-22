@@ -28,34 +28,27 @@
 
 #include <asm/arch/aximx3-init.h>
 #include <asm/arch/aximx3-gpio.h>
+#include <asm/arch/loox720-gpio.h>
 #include <linux/fb.h>
 #include <asm/mach-types.h>
 #include "asm/arch/pxa-regs.h"
 #include "asm/arch/pxafb.h"
-
-static int loox720_lcd_set_power (struct lcd_device *lm, int setp)
-{
-	return 0;
-}
-
-static int loox720_lcd_get_power (struct lcd_device *lm)
-{
-	return 0;
-}
+#include <linux/platform_device.h>
+#include <linux/corgi_bl.h>
 
 static struct pxafb_mode_info loox720_lcd_modes[] = {
 {
-	.pixclock = 0,
+	.pixclock = 96153,
 	.bpp = 16,
 	.xres = 480,
 	.yres = 640,
-	.hsync_len = 4,
-	.vsync_len = 1,
-	.left_margin = 20,
-	.upper_margin = 8,
-	.right_margin = 8,
-	.lower_margin = 9,
-	.sync = 0,
+	.hsync_len = 64,
+	.vsync_len = 5,
+	.left_margin = 17,
+	.upper_margin = 1,
+	.right_margin = 87,
+	.lower_margin = 4,
+//	.sync = 0,
 }
 };
 
@@ -68,23 +61,12 @@ static struct pxafb_mach_info loox720_fb_info =
 	.lccr3 = 0x04700007
 };
 
-struct lcd_properties loox720_lcd_properties =
+static struct lcd_properties loox720_lcd_properties =
 { 0,
 //	.owner = THIS_MODULE,
 //	.set_power = loox720_lcd_set_power,
 //	.get_power = loox720_lcd_get_power,
 	/* @@ more here @@ */
-};
-
-static int loox720_backlight_update_status (struct backlight_device *bm)
-{
-	return 0;
-}
-
-static struct backlight_properties loox720_backlight_properties =
-{ 0,
-//	.owner         = THIS_MODULE,
-//	.update_status = loox720_backlight_update_status,
 };
 
 static struct lcd_device *pxafb_lcd_device;
@@ -93,16 +75,18 @@ static struct backlight_device *pxafb_backlight_device;
 static int __init
 loox720_lcd_init (void)
 {
-//	if (! machine_is_loox720 ())
-//		return -ENODEV;
+	if (! machine_is_loox720 ())
+		return -ENODEV;
+
 	set_pxa_fb_info(&loox720_fb_info);
 	pxafb_lcd_device = lcd_device_register("pxafb", NULL, &loox720_lcd_properties);
+	
 //	if (IS_ERR (pxafb_lcd_device))
 //		return PTR_ERR (pxafb_lcd_device);
 	//possible BUG location, dunno what to pass as 2nd param
-	pxafb_backlight_device = backlight_device_register("pxafb",
-		pxafb_lcd_device->class_dev.dev, NULL,
-		&loox720_backlight_properties);
+//	pxafb_backlight_device = backlight_device_register("pxafb",
+//		pxafb_lcd_device->class_dev.dev, NULL,
+//		&loox720_backlight_properties);
 //	if (IS_ERR (pxafb_backlight_device)) {
 //		lcd_device_unregister (pxafb_lcd_device);
 //		return PTR_ERR (pxafb_backlight_device);
@@ -115,7 +99,7 @@ static void __exit
 loox720_lcd_exit (void)
 {
 	lcd_device_unregister (pxafb_lcd_device);
-	backlight_device_unregister (pxafb_backlight_device);
+//	backlight_device_unregister (pxafb_backlight_device);
 }
 
 module_init (loox720_lcd_init);
