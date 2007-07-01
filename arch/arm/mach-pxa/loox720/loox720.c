@@ -45,6 +45,8 @@
 #include <asm/hardware/ipaq-asic3.h>
 #include <linux/soc/asic3_base.h>
 
+#include <linux/corgi_bl.h>
+
 #include "../generic.h"
 
 /* Initialization code */
@@ -203,8 +205,42 @@ static struct platform_device pxa_spi_nssp = {
 
 // SPI END
 
-static struct platform_device loox720_ts                = {
-        .name = "loox720-ts",
+static struct platform_device loox720_ts = {
+	.name = "loox720-ts",
+};
+
+#define LOOX720_MAX_INTENSITY 0xff
+#define LOOX720_DEFAULT_INTENSITY (LOOX720_MAX_INTENSITY / 4)
+
+static void loox720_set_bl_intensity(int intensity)
+{
+	printk("intensity=0x%x\n", intensity);
+
+//	pxa_gpio_mode(GPIO_NR_LOOX720_BACKLIGHT_ON | GPIO_OUT);
+//	SET_LOOX720_GPIO(BACKLIGHT_ON, intensity != 0);
+	PWM_CTRL0 = 1;
+	PWM_PWDUTY0 = intensity;
+	PWM_PERVAL0 = LOOX720_MAX_INTENSITY;
+
+	if (intensity > 0) {
+		pxa_set_cken(CKEN0_PWM0, 1);
+	} else {
+                pxa_set_cken(CKEN0_PWM0, 0);
+	}
+}
+
+static struct corgibl_machinfo loox720_bl_machinfo = {
+        .default_intensity = LOOX720_DEFAULT_INTENSITY,
+        .limit_mask = 0xff,
+        .max_intensity = LOOX720_MAX_INTENSITY,
+        .set_bl_intensity = loox720_set_bl_intensity,
+};
+
+struct platform_device loox720_bl = {
+        .name = "corgi-bl",
+        .dev = {
+    		.platform_data = &loox720_bl_machinfo,
+	},
 };
 
 static struct platform_device *devices[] __initdata = {
@@ -212,6 +248,7 @@ static struct platform_device *devices[] __initdata = {
 	&loox720_pxa_keys,
 	&pxa_spi_nssp,
 	&loox720_ts,
+	&loox720_bl,
 };
 
 static void __init loox720_init( void )
