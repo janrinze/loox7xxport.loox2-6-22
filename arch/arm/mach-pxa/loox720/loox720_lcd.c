@@ -36,9 +36,21 @@
 #include <linux/platform_device.h>
 #include <linux/corgi_bl.h>
 
+
 static struct pxafb_mode_info loox720_lcd_modes[] = {
 {
 	.pixclock = 96153,
+	.bpp = 16,
+	.xres = 480,
+	.yres = 640,
+	.hsync_len = 4,
+	.vsync_len = 1,
+	.left_margin = 20,
+	.upper_margin = 8,
+	.right_margin = 8,
+	.lower_margin = 9,
+//	.sync = 0,
+/*	.pixclock = 96153,
 	.bpp = 16,
 	.xres = 480,
 	.yres = 640,
@@ -48,7 +60,7 @@ static struct pxafb_mode_info loox720_lcd_modes[] = {
 	.upper_margin = 1,
 	.right_margin = 87,
 	.lower_margin = 4,
-//	.sync = 0,
+//	.sync = 0,*/
 }
 };
 
@@ -70,7 +82,6 @@ static struct lcd_properties loox720_lcd_properties =
 };
 
 static struct lcd_device *pxafb_lcd_device;
-static struct backlight_device *pxafb_backlight_device;
 
 static int __init
 loox720_lcd_init (void)
@@ -99,7 +110,6 @@ static void __exit
 loox720_lcd_exit (void)
 {
 	lcd_device_unregister (pxafb_lcd_device);
-//	backlight_device_unregister (pxafb_backlight_device);
 }
 
 module_init (loox720_lcd_init);
