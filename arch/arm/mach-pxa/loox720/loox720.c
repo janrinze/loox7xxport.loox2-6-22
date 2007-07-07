@@ -247,6 +247,10 @@ static struct platform_device loox720_buttons = {
 	.name = "loox720-buttons",
 };
 
+static struct platform_device loox720_battery = {
+	.name = "loox720-battery",
+};
+
 
 static struct platform_device *devices[] __initdata = {
 	&pxa_spi_nssp,
@@ -255,6 +259,7 @@ static struct platform_device *devices[] __initdata = {
 	&loox720_ts,
 	&loox720_pxa_keys,
 	&loox720_bl,
+	&loox720_battery,
 };
 
 static void __init loox720_init( void )
