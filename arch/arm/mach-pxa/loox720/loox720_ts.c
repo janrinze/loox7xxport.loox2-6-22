@@ -41,8 +41,8 @@ static struct platform_device ads7846_ssp     = {
 };
 
 static struct tsadc_platform_data loox720_ts_params = {
-    .pen_irq = IRQ_GPIO(GPIO_NR_LOOX720_TOUCHPANEL_IRQ_N),
-    .pen_gpio = GPIO_NR_LOOX720_TOUCHPANEL_IRQ_N,
+    .pen_irq = LOOX720_IRQ(TOUCHPANEL_IRQ_N),
+//    .pen_gpio = GPIO_NR_LOOX720_TOUCHPANEL_IRQ_N,
     .x_pin = "ads7846-ssp:x",
     .y_pin = "ads7846-ssp:y",
     .z1_pin = "ads7846-ssp:z1",

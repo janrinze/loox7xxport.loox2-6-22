@@ -209,12 +209,12 @@ static struct platform_device loox720_ts = {
 	.name = "loox720-ts",
 };
 
-#define LOOX720_MAX_INTENSITY 0xff
+#define LOOX720_MAX_INTENSITY 0xc8
 #define LOOX720_DEFAULT_INTENSITY (LOOX720_MAX_INTENSITY / 4)
 
 static void loox720_set_bl_intensity(int intensity)
 {
-	printk("intensity=0x%x\n", intensity);
+	if (intensity < 7) intensity = 0;
 
 //	pxa_gpio_mode(GPIO_NR_LOOX720_BACKLIGHT_ON | GPIO_OUT);
 //	SET_LOOX720_GPIO(BACKLIGHT_ON, intensity != 0);
@@ -243,11 +243,17 @@ struct platform_device loox720_bl = {
 	},
 };
 
+static struct platform_device loox720_buttons = {
+	.name = "loox720-buttons",
+};
+
+
 static struct platform_device *devices[] __initdata = {
-	&loox720_asic3,
-	&loox720_pxa_keys,
 	&pxa_spi_nssp,
+	&loox720_asic3,
+	&loox720_buttons,
 	&loox720_ts,
+	&loox720_pxa_keys,
 	&loox720_bl,
 };
 

@@ -69,10 +69,6 @@ static struct platform_device loox720_pxa_keyboard = {
 	},
 };
 
-static struct platform_device *devices[] = {
-	&loox720_pxa_keyboard,
-};
-
 static int __devinit loox720_buttons_probe(struct platform_device *dev)
 {
 	platform_device_register(&loox720_pxa_keyboard);
@@ -88,9 +84,9 @@ static struct platform_driver loox720_buttons_driver = {
 
 static int __init loox720_buttons_init(void)
 {
-//	if (!machine_is_loox720())
-//		return -ENODEV;
-	platform_add_devices(devices, 1);
+	if (!machine_is_loox720())
+		return -ENODEV;
+
 	return platform_driver_register(&loox720_buttons_driver);
 }
 
