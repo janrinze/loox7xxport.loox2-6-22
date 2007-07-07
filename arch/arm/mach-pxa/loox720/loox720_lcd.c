@@ -73,11 +73,21 @@ static struct pxafb_mach_info loox720_fb_info =
 	.lccr3 = 0x04700007
 };
 
-static struct lcd_properties loox720_lcd_properties =
-{ 0,
+static int loox720_lcd_set_power(struct lcd_device *dev, int power)
+{
+    return 0;
+}
+
+static int loox720_lcd_get_power(struct lcd_device *dev)
+{
+    return 0;
+}
+
+static struct lcd_ops loox720_lcd_properties =
+{
 //	.owner = THIS_MODULE,
-//	.set_power = loox720_lcd_set_power,
-//	.get_power = loox720_lcd_get_power,
+	.set_power = loox720_lcd_set_power,
+	.get_power = loox720_lcd_get_power,
 	/* @@ more here @@ */
 };
 
