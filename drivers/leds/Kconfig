@@ -63,12 +63,6 @@ config LEDS_S3C24XX
 	  This option enables support for LEDs connected to GPIO lines
 	  on Samsung S3C24XX series CPUs, such as the S3C2410 and S3C2440.
 
-config LEDS_H2200
-	tristate "LED Support for HP iPAQ H2200 (DEPRECATED)"
-	depends LEDS_CLASS && ARCH_H2200
-	help
-	  This option enables support for the LEDs on the HP iPAQ H2200.
-
 config LEDS_MAGICIAN
 	tristate "LED Support for the HTC Magician"
 	depends LEDS_CLASS && MACH_MAGICIAN && HTC_EGPIO

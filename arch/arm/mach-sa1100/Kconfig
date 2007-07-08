@@ -115,6 +115,16 @@ config SA1100_JORNADA720_FLASH
 	help
 	  Say Y here if your Jornada 720 has a flash board
 
+config SA1100_JORNADA820
+	bool "HP Jornada 820"
+	help
+	  The HP Jornada 820 computer is a no-compromise PDA from late 1998,
+	  with full-size keyboard and full-size VGA LCD.
+	  Visit our project site <http://jornada820.sourceforge.net>.
+	  
+	  Say Y here if you want to build a kernel specifically
+	  for the HP Jornada 820. Otherwise say N.
+
 config SA1100_XDA
 	bool "HTC Wallaby"
 	help

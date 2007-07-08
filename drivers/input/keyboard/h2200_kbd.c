@@ -27,7 +27,7 @@
 #include <asm/arch/h2200-asic.h>
 
 #include <asm/hardware/ipaq-hamcop.h>
-#include <asm/hardware/hamcop_base.h>
+#include <linux/soc/hamcop_base.h>
 
 #define JOYPAD_FILTER_WIDTH	(32768 / 20)	/* 1/20 second, using RTC */
 #define JOYPAD_REPEAT_DELAY	250		/* 250ms delay before repeat */

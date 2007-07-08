@@ -16,10 +16,12 @@
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
 #include <linux/pm.h>
+#include <linux/miscdevice.h>
 #include <linux/backlight.h>
 #include <linux/corgi_bl.h>
 #include <linux/mtd/partitions.h>
 #include <linux/proc_fs.h>
+#include <linux/irq.h>
 
 #include <asm/mach-types.h>
 #include <asm/gpio.h>
@@ -52,23 +54,6 @@ static void __init ghi270_map_io(void)
 
 	MSC0 = 0x11d036d8;
 }
-
-/* buttons */
-static struct gpio_keys_button ghi270_pxa_buttons[] = {
-	{ KEY_POWER,	 GHI270_GPIO0_KEY_nON, 1, "Power button" },
-};
-
-static struct gpio_keys_platform_data ghi270_pxa_keys_data = {
-	.buttons = ghi270_pxa_buttons,
-	.nbuttons = ARRAY_SIZE(ghi270_pxa_buttons),
-};
-
-static struct platform_device ghi270_pxa_keys = {
-	.name = "gpio-keys",
-	.dev = {
-		.platform_data = &ghi270_pxa_keys_data,
-	},
-};
 
 /* bootloader flash */
 static struct platform_device ghi270_flash = {
@@ -470,7 +455,6 @@ static struct pxaohci_platform_data ghi270_ohci_platform_data = {
 };
 
 static struct platform_device *ghi270_devices[] __initdata = {
-	&ghi270_pxa_keys,
 	&ghi270_flash,
 	&ghi270_nand,
 	&ghi270_audio,
@@ -503,7 +487,7 @@ static int ghi270_pm_enter(suspend_state_t state)
 
 	PWER = PWER_RTC   | PWER_GPIO0;
 	PFER = PWER_GPIO0;		// Falling Edge Detect
-	PRER = PWER_GPIO0;		// Rising Edge Detect
+	PRER = 0;			// Rising Edge Detect
 
 	/*
 	 * Save the GPIO settings for resume.  We do this by anding the
@@ -738,12 +722,6 @@ static void __init ghi270_init(void)
 	pxa_gpio_mode(GPIO46_STRXD_MD);
 	pxa_gpio_mode(GPIO47_STTXD_MD);
 	pxa_set_stuart_info(&ghi270_gps_funcs);
-
-	/* Compass  (I think this is unneeded. (aric) */
-	/* pxa_set_i2c_info(&ghi270_compass_funcs); */
-
-	/* Wake on power key. */
-	enable_irq_wake(gpio_to_irq(GHI270_GPIO0_KEY_nON));
 
 	/* Hook into pm_enter. */
 	pm_enter_orig = pxa_pm_ops.enter;

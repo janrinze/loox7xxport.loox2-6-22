@@ -52,7 +52,7 @@
 #include <asm/arch/h5400-asic.h>
 #include <asm/arch/h5400-gpio.h>
 #include <asm/hardware/ipaq-samcop.h>
-#include <asm/hardware/samcop_base.h>
+#include <linux/soc/samcop_base.h>
 #include <asm/hardware/samcop-sdi.h>
 #include <asm/hardware/samcop-dma.h>
 #include <asm/arch/pxa-dmabounce.h>
@@ -1302,6 +1302,10 @@ static int samcop_probe(struct platform_device *pdev)
 	platform_data->gpiodev_ops.get = samcop_get_gpio_bit;
 	platform_data->gpiodev_ops.set = samcop_set_gpio_bit;
 	platform_data->gpiodev_ops.to_irq = samcop_gpio_to_irq;
+
+        if (platform_data && platform_data->num_child_platform_devs != 0)
+                platform_add_devices(platform_data->child_platform_devs,
+                                     platform_data->num_child_platform_devs);
 
 	return 0;
 

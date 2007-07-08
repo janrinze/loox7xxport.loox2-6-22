@@ -33,7 +33,7 @@
 #include <asm/mach-types.h>
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/h2200-gpio.h>
-#include <asm/hardware/hamcop_base.h>
+#include <linux/soc/hamcop_base.h>
 #include <asm/hardware/ipaq-hamcop.h>
 #include <asm/arch/h2200-asic.h>
 

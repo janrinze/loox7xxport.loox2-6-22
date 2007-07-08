@@ -32,7 +32,7 @@
 #include <asm/irq.h>
 #include <asm/io.h>
 
-#include <asm/hardware/hamcop_base.h>
+#include <linux/soc/hamcop_base.h>
 #include <asm/hardware/ipaq-hamcop.h>
 
 

@@ -29,7 +29,6 @@
 #include <asm/arch/hardware.h>	/* for CLPS7111_VIRT_BASE */
 #include <asm/sizes.h>
 #include <asm/arch/h1900-gpio.h>
-#include <asm/arch/ipaq.h>
 #include <asm/arch/pxa-regs.h>
 #include <asm/setup.h>
 #include <asm/memory.h>

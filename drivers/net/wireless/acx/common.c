@@ -50,6 +50,7 @@
 #include <linux/vmalloc.h>
 #include <net/iw_handler.h>
 
+#include "acx_hw.h"
 #include "acx.h"
 
 
@@ -7320,7 +7321,7 @@ acx_s_parse_configoption(acx_device_t *adev, const acx111_ie_configoption_t *pcf
 static int __init
 acx_e_init_module(void)
 {
-	int r1,r2,r3;
+	int r1,r2,r3,r4;
 
 	acx_struct_size_check();
 
@@ -7344,7 +7345,12 @@ acx_e_init_module(void)
 #else
 	r3 = -EINVAL;
 #endif
-	if (r2 && r1  && r3) { /* all failed! */
+#if defined(CONFIG_ACX_CS)
+	r4 = acx_cs_init();
+#else
+	r4 = -EINVAL;
+#endif
+	if (r2 && r1  && r3 && r4) { /* all failed! */
 	  if (r3 || r1)
 		return r3 ? r3 : r1;
 	  else
@@ -7352,6 +7358,7 @@ acx_e_init_module(void)
 	}
 	/* return success if at least one succeeded */
 	return 0;
+
 }
 
 static void __exit
@@ -7365,6 +7372,9 @@ acx_e_cleanup_module(void)
 #endif
 #if defined(CONFIG_ACX_USB)
 	acxusb_e_cleanup_module();
+#endif
+#if defined(CONFIG_ACX_CS)
+	acx_cs_cleanup();
 #endif
 }
 

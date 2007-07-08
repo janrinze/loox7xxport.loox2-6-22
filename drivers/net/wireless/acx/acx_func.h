@@ -706,3 +706,5 @@ int __init acxusb_e_init_module(void);
 void __exit acxpci_e_cleanup_module(void);
 void __exit acxusb_e_cleanup_module(void);
 #endif
+int __init acx_cs_init(void);
+void __exit acx_cs_cleanup(void);

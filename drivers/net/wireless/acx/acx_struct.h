@@ -106,8 +106,8 @@ enum { acx_debug = 0 };
 #define DEVTYPE_USB		1
 #define DEVTYPE_MEM             2
 
-#if !defined(CONFIG_ACX_PCI) && !defined(CONFIG_ACX_USB) && !defined(CONFIG_ACX_MEM)
-#error Driver must include PCI, USB or memory mapped interface support. You selected none of them.
+#if !defined(CONFIG_ACX_PCI) && !defined(CONFIG_ACX_USB) && !defined(CONFIG_ACX_MEM) && !defined(CONFIG_ACX_CS)
+#error Driver must include PCI, USB, PCMCIA or memory mapped interface support. You selected none of them.
 #endif
 
 #if defined(CONFIG_ACX_PCI)
@@ -130,7 +130,7 @@ enum { acx_debug = 0 };
  #define IS_USB(adev)	0
 #endif
 
-#if defined(CONFIG_ACX_MEM)
+#if defined(CONFIG_ACX_MEM) || defined(CONFIG_ACX_CS)
  #define IS_MEM(adev)  1
 #else
  #define IS_MEM(adev)   0

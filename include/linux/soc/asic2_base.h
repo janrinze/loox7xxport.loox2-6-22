@@ -3,10 +3,11 @@
 *
 * Copyright 2001 Compaq Computer Corporation.
 *
-* Use consistent with the GNU GPL is permitted,
-* provided that this copyright notice is
-* preserved in its entirety in all copies and derived works.
-*
+* This program is free software; you can redistribute it and/or modify 
+* it under the terms of the GNU General Public License as published by 
+* the Free Software Foundation; either version 2 of the License, or 
+* (at your option) any later version. 
+* 
 * COMPAQ COMPUTER CORPORATION MAKES NO WARRANTIES, EXPRESSED OR IMPLIED,
 * AS TO THE USEFULNESS OR CORRECTNESS OF THIS CODE OR ITS
 * FITNESS FOR ANY PARTICULAR PURPOSE.
@@ -18,6 +19,13 @@
 
 #ifndef ASIC2_SHARED_H
 #define ASIC2_SHARED_H
+
+struct asic2_platform_data
+{
+	int irq_base;
+        struct platform_device **child_platform_devs;
+        int num_child_platform_devs;
+};
 
 enum ASIC_SHARED {
 	ASIC_SHARED_CLOCK_EX1 = 1,  /* Bit fields */

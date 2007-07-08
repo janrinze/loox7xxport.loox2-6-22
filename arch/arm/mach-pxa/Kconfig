@@ -57,6 +57,10 @@ config MACH_GHI270
 	select PXA27x
 	select MACH_GHI270HG
 
+config MACH_LOOXC550
+	bool "FSC LOOX C550"
+	select PXA27x
+
 config PXA_SHARPSL
 	bool "SHARP Zaurus SL-5600, SL-C7xx and SL-Cxx00 Models"
 	select SHARP_SCOOP

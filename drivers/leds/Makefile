@@ -17,7 +17,6 @@ obj-$(CONFIG_LEDS_WRAP)			+= leds-wrap.o
 obj-$(CONFIG_LEDS_H1940)		+= leds-h1940.o
 obj-$(CONFIG_LEDS_COBALT)		+= leds-cobalt.o
 # Handhelds.org drivers
-obj-$(CONFIG_LEDS_H2200)		+= h2200_leds.o
 obj-$(CONFIG_LEDS_MAGICIAN)		+= leds-magician.o
 obj-$(CONFIG_LEDS_ASIC3)		+= leds-asic3.o
 obj-$(CONFIG_LEDS_SAMCOP)		+= leds-samcop.o

@@ -61,11 +61,11 @@ struct platform_device *soc_add_devices(struct platform_device *dev,
 		sdev->num_resources = blk->num_resources;
 
 		/* Allocate space for the subdevice resources */
-		res = kzalloc (blk->num_resources * sizeof (struct resource), GFP_KERNEL);
+		res = kzalloc(blk->num_resources * sizeof (struct resource), GFP_KERNEL);
 		if (!res)
 			goto fail;
 
-		for (r = 0 ; r < blk->num_resources ; r++) {
+		for (r = 0; r < blk->num_resources; r++) {
 			res[r].name = blk->res[r].name; // Fixme - should copy
 
 			/* Find out base to use */

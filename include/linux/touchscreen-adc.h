@@ -30,6 +30,8 @@ struct tsadc_platform_data {
 	// Debouncing parameters
 	/* Number of X/Y samplings done for one measurement */
 	int num_xy_samples;
+	/* Number of Z1/Z2 samplings done for one measurement */
+	int num_z_samples;
 	/* Samples during measurement must converge to be within bounds
 	   of this value, or the whole measurement will be discarded. */
 	int max_jitter;

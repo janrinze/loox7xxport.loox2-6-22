@@ -4,7 +4,7 @@ menu "ALSA ARM devices"
 	depends on SND!=n && ARM
 
 config SND_A620
-	bool "Asus MyPal 620 driver"
+	tristate "Asus MyPal 620 driver"
 	depends on MACH_A620 && SND && I2C
 	select SND_PXA2xx_I2SOUND
 	select SND_UDA1380
@@ -12,7 +12,7 @@ config SND_A620
 	  Say Y or M if you have a Asus MyPal 620 and want audio support
 
 config SND_A716
-	bool "Asus MyPal 716 driver"
+	tristate "Asus MyPal 716 driver"
 	depends on MACH_A716 && SND && I2C
 	select SND_PXA2xx_I2SOUND
 	select SND_UDA1380
@@ -20,7 +20,7 @@ config SND_A716
 	  Say Y or M if you have a Asus MyPal 716 and want audio support
 
 config SND_H1910
-	bool "iPAQ h1910 driver"
+	tristate "iPAQ h1910 driver"
 	depends on ARCH_H1900 && SND && I2C
 	select SND_PXA2xx_I2SOUND
 	select SND_UDA1380

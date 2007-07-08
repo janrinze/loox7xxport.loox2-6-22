@@ -67,7 +67,7 @@ static int hamcop_leds_probe(struct platform_device *pdev)
 
 	machinfo->leds_clk = clk_get(&pdev->dev, "led");
 	if (IS_ERR(machinfo->leds_clk)) {
-		printk("%s: failed to get clock\n", __FUNCTION__);
+		printk(KERN_ERR "%s: failed to get clock\n", __FUNCTION__);
 		ret = PTR_ERR(machinfo->leds_clk);
 		goto clk_get_failed;
 	}
@@ -75,7 +75,7 @@ static int hamcop_leds_probe(struct platform_device *pdev)
 	/* Turn on clocks early, for the case if trigger would enable
 	 * led immediately after led_classdev_register(). */
 	if (clk_enable(machinfo->leds_clk)) {
-		printk("%s: failed to enable clock\n", __FUNCTION__);
+		printk(KERN_ERR "%s: failed to enable clock\n", __FUNCTION__);
 		goto clk_enable_failed;
 	}
 
@@ -84,13 +84,13 @@ static int hamcop_leds_probe(struct platform_device *pdev)
 		leds[i].led_cdev.brightness_set = hamcop_leds_set;
 		ret = led_classdev_register(&pdev->dev, &leds[i].led_cdev);
 		if (ret) {
-			printk("can't register %s led\n",
+			printk(KERN_ERR "can't register %s led\n",
 			       leds[i].led_cdev.name);
 			goto classdev_register_failed;
 		}
 	}
 
-	goto success;
+	return 0;
 
 classdev_register_failed:
 	while (--i >= 0)
@@ -99,7 +99,6 @@ classdev_register_failed:
 clk_enable_failed:
 	clk_put(machinfo->leds_clk);
 clk_get_failed:
-success:
 	return ret;
 }
 
@@ -150,8 +149,7 @@ static int hamcop_leds_resume(struct platform_device *pdev)
 }
 #endif /* CONFIG_PM */
 
-static
-struct platform_driver hamcop_leds_driver = {
+static struct platform_driver hamcop_leds_driver = {
 	.probe = hamcop_leds_probe,
 	.remove = hamcop_leds_remove,
 #ifdef CONFIG_PM

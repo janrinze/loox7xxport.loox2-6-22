@@ -1972,6 +1972,7 @@
 #define CKEN1_PWM1	(1 << 1)	/* PWM1 Clock Enable */
 #define CKEN0_PWM0	(1 << 0)	/* PWM0 Clock Enable */
 
+#define OSCC_TOUT_EN    (1 << 2)	/* 32.768kHz Output enable */
 #define OSCC_OON	(1 << 1)	/* 32.768kHz OON (write-once only bit) */
 #define OSCC_OOK	(1 << 0)	/* 32.768kHz OOK (read-only bit) */
 

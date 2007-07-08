@@ -164,7 +164,7 @@ static struct platform_driver ghi270_led_driver = {
 
 static int ghi270_led_init(void)
 {
-	if (!machine_is_ghi270())
+	if (!(machine_is_ghi270() || machine_is_ghi270hg()))
 		return -ENODEV;
 
 	return platform_driver_register(&ghi270_led_driver);

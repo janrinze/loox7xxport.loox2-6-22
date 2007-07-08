@@ -27,7 +27,7 @@
 #include <asm/mach-types.h>
 #include <asm/hardware.h>
 #include <asm/arch/h5400-asic.h>
-#include <asm/hardware/samcop_base.h>
+#include <linux/soc/samcop_base.h>
 
 static struct lcd_device *mqfb_lcd_device;
 struct mediaq11xx_base *mq_base;

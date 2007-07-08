@@ -144,6 +144,9 @@ static void ghi270_pcmcia_socket_suspend(struct soc_pcmcia_socket *skt)
 {
 	gpio_set_value(skt->nr == 0 ? GHI270_GPIO19_PCMCIA_PRESET1 :
 				      GHI270_GPIO20_PCMCIA_PRESET2, 0);
+	if(skt->nr == 0) {
+		gpio_set_value(GHI270_GPIO37_PCMCIA_nPWR1, 1);
+	}
 }
 
 static struct pcmcia_low_level ghi270_pcmcia_ops = {

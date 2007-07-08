@@ -3,10 +3,11 @@
  *
  * Copyright 2000-2003 Hewlett-Packard Company.
  *
- * Use consistent with the GNU GPL is permitted,
- * provided that this copyright notice is
- * preserved in its entirety in all copies and derived works.
- *
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation; either version 2 of the License, or 
+ * (at your option) any later version. 
+ * 
  * COMPAQ COMPUTER CORPORATION MAKES NO WARRANTIES, EXPRESSED OR IMPLIED,
  * AS TO THE USEFULNESS OR CORRECTNESS OF THIS CODE OR ITS
  * FITNESS FOR ANY PARTICULAR PURPOSE.
@@ -23,6 +24,17 @@
 #ifndef HAMCOP_BASE_H
 #define HAMCOP_BASE_H
 
+struct hamcop_platform_data
+{
+        struct gpiodev_ops gpiodev_ops;
+        int irq_base;
+        struct platform_device **child_platform_devs;
+        int num_child_platform_devs;
+
+        u16 clocksleep;
+        u16 pllcontrol;
+}
+
 extern void hamcop_set_gpio_a (struct device *dev, u32 mask, u16 bits);
 extern void hamcop_set_gpio_b (struct device *dev, u32 mask, u16 bits);
 extern void hamcop_set_gpio_c (struct device *dev, u32 mask, u16 bits);
@@ -36,13 +48,13 @@ extern u16 hamcop_get_gpio_d (struct device *dev);
 extern void hamcop_set_gpio_a_con (struct device *dev, u16 mask, u16 bits);
 extern u16  hamcop_get_gpio_a_con (struct device *dev);
 extern void hamcop_set_gpio_a_int (struct device *dev, u32 mask, u32 bits);
-extern u16  hamcop_get_gpio_a_int (struct device *dev);
+extern u32  hamcop_get_gpio_a_int(struct device *dev);
 extern void hamcop_set_gpio_a_flt (struct device *dev, int gpa_n, u16 ctrl, u16 width);
 
 extern void hamcop_set_gpio_b_con (struct device *dev, u16 mask, u16 bits);
 extern u16  hamcop_get_gpio_b_con (struct device *dev);
 extern void hamcop_set_gpio_b_int (struct device *dev, u32 mask, u32 bits);
-extern u16  hamcop_get_gpio_b_int (struct device *dev);
+extern u32  hamcop_get_gpio_b_int(struct device *dev);
 extern void hamcop_set_gpio_b_flt (struct device *dev, int gpa_n, u16 ctrl, u16 width);
 
 extern u16  hamcop_get_gpiomon (struct device *dev);

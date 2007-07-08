@@ -413,12 +413,4 @@
 
 #define IPAQ_ASIC2_MAP_SIZE	     0x2000
 
-#ifndef _ASM_ONLY
-struct asic2_platform_data
-{
-        struct platform_device **child_platform_devs;
-        int num_child_platform_devs;
-};
-#endif
-
 #endif

@@ -37,7 +37,6 @@
 #include <linux/interrupt.h>
 #include <linux/proc_fs.h>
 #include <linux/sysctl.h>
-#include <linux/h3600_keyboard.h>
 #include <linux/pm.h>
 
 #include <asm/bitops.h>

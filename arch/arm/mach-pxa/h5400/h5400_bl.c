@@ -19,7 +19,7 @@
 #include <linux/mq11xx.h>
 
 #include <asm/arch/h5400-asic.h>
-#include <asm/hardware/samcop_base.h>
+#include <linux/soc/samcop_base.h>
 
 extern struct mediaq11xx_base *mq_base;
 

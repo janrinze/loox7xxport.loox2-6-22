@@ -18,7 +18,7 @@ obj-$(CONFIG_PXA_SHARP_Cxx00)	+= spitz.o corgi_ssp.o corgi_lcd.o sharpsl_pm.o sp
 obj-$(CONFIG_MACH_AKITA)	+= akita-ioexp.o
 obj-$(CONFIG_MACH_POODLE)	+= poodle.o corgi_ssp.o
 obj-$(CONFIG_MACH_TOSA)         += tosa.o
-obj-$(CONFIG_MACH_GHI270)       += ghi270.o ghi270_power.o ghi270hg_barometer.o
+obj-$(CONFIG_MACH_GHI270)       += ghi270.o ghi270_power.o ghi270hg_barometer.o ghi270_pbto.o
 obj-$(CONFIG_ARCH_ESERIES)      += eseries/
 obj-$(CONFIG_MACH_A620)         += asus620/
 obj-$(CONFIG_MACH_A716)         += ssp.o asus716/
@@ -50,6 +50,7 @@ obj-$(CONFIG_MACH_X50)			+= aximx50/
 obj-$(CONFIG_MACH_T3XSCALE)	+= palmt3/
 obj-$(CONFIG_MACH_XSCALE_PALMLD)	+= palmld/
 obj-$(CONFIG_MACH_RECON)        += plat-recon/
+obj-$(CONFIG_MACH_LOOXC550)	+= looxc550/
 
 # Support for blinky lights
 led-y := leds.o

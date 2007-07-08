@@ -250,7 +250,7 @@ static int egpio_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, ei);
 
 	/* Go through list of pins. */
-	ei->irqStart = pdata->irqStart;
+	ei->irqStart = pdata->irq_base;
 	ei->maxRegs = pdata->nrRegs - 1;
 	ei->ackRegister = pdata->ackRegister;
 	for (i = 0; i < pdata->nr_pins; i++)

@@ -731,10 +731,4 @@
 
 #define HAMCOP_NR_IRQS			HAMCOP_IC_IRQ_COUNT
 
-struct hamcop_platform_data
-{
-	u16 clocksleep;
-	u16 pllcontrol;
-};
-
 #endif

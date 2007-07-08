@@ -35,8 +35,6 @@
 #include <asm/irq.h>
 #include <asm/mach/irq.h>
 
-#define Z_READINGS 2
-
 #define BIG_VALUE 999999
 
 #define SAMPLE_TIMEOUT 20	/* sample every 20ms */
@@ -98,16 +96,16 @@ void debounce_samples(struct tsadc_platform_data *params, struct adc_sense *pins
 	for (i = 0; i < params->num_xy_samples; i++) {
 		printk("%04d ", pins[ptr++].value);
 	}
-	pr_debug("| ");
+	printk("| ");
 	for (i = 0; i < params->num_xy_samples; i++) {
 		printk("%04d ", pins[ptr++].value);
 	}
-	pr_debug("| ");
-	for (i = 0; i < Z_READINGS; i++) {
+	printk("| ");
+	for (i = 0; i < params->num_z_samples; i++) {
 		printk("%04d ", pins[ptr++].value);
 	}
-	pr_debug("| ");
-	for (i = 0; i < Z_READINGS; i++) {
+	printk("| ");
+	for (i = 0; i < params->num_z_samples; i++) {
 		printk("%04d ", pins[ptr++].value);
 	}
 	printk("\n");
@@ -116,36 +114,44 @@ void debounce_samples(struct tsadc_platform_data *params, struct adc_sense *pins
 	/* X-axis */
 	ptr = 0;
 	x = pins[ptr++].value;
-	/* Run thru samples and see if they converge */
-	for (i = params->num_xy_samples - 1; i > 0; i--) {
-		t = x;
-		x = pins[ptr++].value;
-		if (delta_within_bounds(t, x, d))
-			break;
+	/* Do real debouncing only if multiple xy samples requested. */
+	if (params->num_xy_samples > 1) {
+		/* Run thru samples and see if they converge */
+		for (i = params->num_xy_samples - 1; i > 0; i--) {
+			t = x;
+			x = pins[ptr++].value;
+			if (delta_within_bounds(t, x, d))
+				break;
+		}
+		/* If we exhausted loop, it means the samples unconverged */
+		if (i == 0)
+			tp->err = 1;
 	}
-	/* If we exhausted loop, it means the samples unconverged */
-	if (i == 0)
-		tp->err = 1;
 
 	/* Y-axis */
 	ptr = params->num_xy_samples;
 	y = pins[ptr++].value;
-	for (i = params->num_xy_samples - 1; i > 0; i--) {
-		t = y;
-		y = pins[ptr++].value;
-		if (delta_within_bounds(t, y, d))
-			break;
+	/* Do real debouncing only if multiple xy samples requested. */
+	if (params->num_xy_samples > 1) {
+		for (i = params->num_xy_samples - 1; i > 0; i--) {
+			t = y;
+			y = pins[ptr++].value;
+			if (delta_within_bounds(t, y, d))
+				break;
+		}
+		if (i == 0)
+			tp->err = 1;
 	}
-	if (i == 0)
-		tp->err = 1;
 
 	/* Pressure */
 	ptr = params->num_xy_samples * 2;
-	/* Discard first sample as unstable */
-	ptr++;
+	/* Discard first sample as unstable if more than one z reading requested */ 
+	if (params->num_z_samples > 1) 
+		ptr++;
 	z1 = pins[ptr++].value;
 
-	ptr++;
+	if (params->num_z_samples > 1) 
+		ptr++;
 	z2 = pins[ptr++].value;
 
 	// RTOUCH = (RXPlate) x (XPOSITION /4096) x [(Z2/Z1) - 1]
@@ -270,17 +276,18 @@ static int ts_adc_debounce_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, ts);
 
 	pdata->num_xy_samples = pdata->num_xy_samples ?: 10;
+	pdata->num_z_samples  = pdata->num_xy_samples ?: 2;
 
-	ts->pins = kmalloc(sizeof(*ts->pins) * (pdata->num_xy_samples*2 + Z_READINGS*2), GFP_KERNEL);
+	ts->pins = kmalloc(sizeof(*ts->pins) * (pdata->num_xy_samples*2 + pdata->num_z_samples*2), GFP_KERNEL);
 	ts->req.senses = ts->pins;
-	ts->req.num_senses = (pdata->num_xy_samples*2 + Z_READINGS*2);
+	ts->req.num_senses = (pdata->num_xy_samples*2 + pdata->num_z_samples*2);
 	i = 0;
 	fill_pins(ts->pins, i, pdata->num_xy_samples, pdata->x_pin);
 	fill_pins(ts->pins, i += pdata->num_xy_samples, 
 		pdata->num_xy_samples, pdata->y_pin);
 	fill_pins(ts->pins, i += pdata->num_xy_samples,  
-		Z_READINGS, pdata->z1_pin);
-	fill_pins(ts->pins, i +=  Z_READINGS,  Z_READINGS, pdata->z2_pin);
+		pdata->num_z_samples, pdata->z1_pin);
+	fill_pins(ts->pins, i +=  pdata->num_z_samples,  pdata->num_z_samples, pdata->z2_pin);
 	adc_request_register(&ts->req);
 
 	ts->work.pdev = pdev;

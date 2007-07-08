@@ -75,6 +75,18 @@ config ACX_MEM
 	Firmware files are not covered by GPL and are not distributed
 	with this driver for legal reasons.
 
+config ACX_CS
+	bool "TI acx100/acx111 802.11b/g cardbus interface"
+	depends on ACX
+	---help---
+	acx chipsets need their firmware loaded at startup.
+	You will need to provide a firmware image via hotplug.
+	
+	This driver is based on memory mapped driver.
+
+	Firmware files are not covered by GPL and are not distributed
+	with this driver for legal reasons.
+
 config ACX_HX4700
 	tristate "ACX support for the iPAQ hx4700 using ACX_MEM"
 	depends on HX4700_CORE && ACX_MEM

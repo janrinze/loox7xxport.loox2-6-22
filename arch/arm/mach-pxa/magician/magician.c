@@ -196,7 +196,7 @@ struct htc_egpio_pinInfo egpio_pins[] = {
 
 struct htc_egpio_platform_data egpio_data = {
 	.bus_shift   = 1,			/* 32bit alignment instead of 16bit */
-	.irqStart    = IRQ_BOARD_START,		/* 16 IRQs, we only have 4 though */
+	.irq_base    = IRQ_BOARD_START,		/* 16 IRQs, we only have 4 though */
 	.nrRegs      = 7,
 	.ackRegister = 3,
 	.pins        = egpio_pins,

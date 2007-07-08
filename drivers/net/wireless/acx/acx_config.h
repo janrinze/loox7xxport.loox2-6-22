@@ -1,9 +1,3 @@
-/* temporary hack until proper Kconfig integration */
-#ifndef CONFIG_ACX_MEM
-#define CONFIG_ACX_PCI 1
-#define CONFIG_ACX_USB 1
-#endif
-
 #define ACX_RELEASE "v0.3.36"
 
 /*

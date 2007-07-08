@@ -5,10 +5,11 @@
  * Copyright 2003 Hewlett-Packard Company.
  * Copyright 2003, 2004, 2005 Phil Blundell
  *
- * Use consistent with the GNU GPL is permitted,
- * provided that this copyright notice is
- * preserved in its entirety in all copies and derived works.
- *
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation; either version 2 of the License, or 
+ * (at your option) any later version. 
+ * 
  * COMPAQ COMPUTER CORPORATION MAKES NO WARRANTIES, EXPRESSED OR IMPLIED,
  * AS TO THE USEFULNESS OR CORRECTNESS OF THIS CODE OR ITS
  * FITNESS FOR ANY PARTICULAR PURPOSE.

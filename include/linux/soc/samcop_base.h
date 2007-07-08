@@ -64,6 +64,9 @@ struct samcop_platform_data
 		u32 gpioflt[7];
 		u32 gpioenint[2];
 	} gpio_pdata;
+
+        struct platform_device **child_platform_devs;
+        int num_child_platform_devs;
 };
 
 #endif

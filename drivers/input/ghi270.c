@@ -27,6 +27,9 @@
 #include <linux/leds.h>
 
 #define KEY_LED_DURATION    (2 * HZ)
+static int keylight_duration = KEY_LED_DURATION;
+module_param(keylight_duration, int, 0644);
+MODULE_PARM_DESC(keylight_duration, "How long (jiffies) to keep keyboard lit");
 
 static struct input_handler ghi270_handler;
 static unsigned long jiffies_last_event;
@@ -41,15 +44,16 @@ static void ledtrig_keylight_timerfunc(unsigned long data)
 
 static DEFINE_TIMER(ledtrig_keylight_timer, ledtrig_keylight_timerfunc, 0, 0);
 
-/* Turn on the keypad backlight and leave it on until at least two seconds
- * have passed without a keypress. */
+/* Turn on the keypad backlight and leave it on until keylight_duration
+ * expires.
+ */
 static void ghi270_event(struct input_handle *handle, unsigned int type,
 		         unsigned int code, int down)
 {
 	if (type == EV_KEY) {
 		jiffies_last_event = jiffies;
 		led_trigger_event(ledtrig_keylight, LED_FULL);
-		mod_timer(&ledtrig_keylight_timer, jiffies + KEY_LED_DURATION);
+		mod_timer(&ledtrig_keylight_timer, jiffies + keylight_duration);
 	}
 	return;
 }

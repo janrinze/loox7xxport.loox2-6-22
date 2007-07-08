@@ -213,10 +213,8 @@ static void __init blueangel_map_io(void)
 extern struct platform_device blueangel_bl;
 static struct platform_device blueangel_lcd = { .name = "blueangel-lcd", };
 static struct platform_device blueangel_leds = { .name = "blueangel-leds", };
-#ifdef CONFIG_BLUEANGEL_PCMCIA
-static struct platform_device htcblueangel_pcmcia    = { .name =
-                                            "htcblueangel_pcmcia", };
-#endif
+static struct platform_device blueangel_pcmcia    = { .name =
+                                            "blueangel-pcmcia", };
 
 /*
  *  ASIC3 buttons
@@ -274,9 +272,7 @@ static struct platform_device *blueangel_asic3_devices[] __initdata = {
 #endif
 	&blueangel_asic3_keys,
 	&blueangel_leds,
-#ifdef CONFIG_BLUEANGEL_PCMCIA
 	&blueangel_pcmcia,
-#endif
 };
 
 

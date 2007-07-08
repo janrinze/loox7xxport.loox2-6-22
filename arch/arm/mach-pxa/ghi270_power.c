@@ -404,13 +404,22 @@ detach_client(struct i2c_client *client)
 	return 0;
 }
 
+static int
+suspend(struct i2c_client *i2cc, pm_message_t mesg)
+{
+	/* Make sure we get a fresh read on resume. */
+	last_update = 0;
+	return 0;
+}
+
 static struct i2c_driver ghi270_driver = {
 	.driver = {
 		.name = "ghi270_battery",
 	},
-	.id = 0xfefe,
+	.id 		= 0xfefe,	/* This ID is apparently unused. */
 	.attach_adapter = attach_adapter,
-	.detach_client = detach_client,
+	.detach_client 	= detach_client,
+	.suspend 	= suspend,
 };
 
 static int __init mod_init(void)

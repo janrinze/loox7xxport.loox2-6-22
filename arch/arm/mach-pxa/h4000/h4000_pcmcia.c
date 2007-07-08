@@ -23,8 +23,8 @@
 
 extern struct platform_device h4000_asic3;
 
-static struct pcmcia_irqs irqs[] = {
-	{0, IRQ_GPIO(GPIO_NR_H4000_WLAN_MAC_IRQ_N), "PCMCIA0"},
+static struct pcmcia_irqs socket_state_irqs[] = {
+//	{0, IRQ_GPIO(GPIO_NR_H4000_WLAN_MAC_IRQ_N), "PCMCIA0"},
 };
 
 static int h4000_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
@@ -39,19 +39,19 @@ static int h4000_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 	pxa_gpio_mode(GPIO55_nPREG_MD);
 	pxa_gpio_mode(GPIO56_nPWAIT_MD);
 
-	asic3_set_clock_cdex(&h4000_asic3.dev, CLOCK_CDEX_EX1, CLOCK_CDEX_EX1);
+/*	asic3_set_clock_cdex(&h4000_asic3.dev, CLOCK_CDEX_EX1, CLOCK_CDEX_EX1);
 	asic3_set_gpio_out_d(&h4000_asic3.dev, GPIOD_WLAN_MAC_RESET,
 				  GPIOD_WLAN_MAC_RESET);
-	asic3_set_gpio_out_d(&h4000_asic3.dev, GPIOD_WLAN_MAC_RESET, 0);
+	asic3_set_gpio_out_d(&h4000_asic3.dev, GPIOD_WLAN_MAC_RESET, 0);*/
 
-	skt->irq = irqs[0].irq;
+	skt->irq = IRQ_GPIO(GPIO_NR_H4000_WLAN_MAC_IRQ_N);
 
-	return soc_pcmcia_request_irqs(skt, irqs, ARRAY_SIZE(irqs));
+	return soc_pcmcia_request_irqs(skt, socket_state_irqs, ARRAY_SIZE(socket_state_irqs));
 }
 
 static void h4000_pcmcia_hw_shutdown(struct soc_pcmcia_socket *skt)
 {
-	soc_pcmcia_free_irqs(skt, irqs, ARRAY_SIZE(irqs));
+	soc_pcmcia_free_irqs(skt, socket_state_irqs, ARRAY_SIZE(socket_state_irqs));
 }
 
 static void h4000_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
@@ -70,6 +70,11 @@ static void h4000_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
 static int h4000_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 					 const socket_state_t * state)
 {
+	printk("%s\n", __FUNCTION__);
+	/* Silently ignore Vpp, output enable, speaker enable. */
+	printk( "Reset:%d Vcc:%d\n",
+	    (state->flags & SS_RESET) ? 1 : 0, state->Vcc);
+
 	switch (state->Vcc) {
 	case 0:
 		asic3_set_gpio_out_c(&h4000_asic3.dev, GPIOC_WLAN_POWER_ON,
@@ -77,8 +82,9 @@ static int h4000_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 		break;
 	case 50:
 	case 33:
-		asic3_set_gpio_out_c(&h4000_asic3.dev, GPIOC_WLAN_POWER_ON,
-					  GPIOC_WLAN_POWER_ON);
+		return h4000_wlan_start();
+/*		asic3_set_gpio_out_c(&h4000_asic3.dev, GPIOC_WLAN_POWER_ON,
+					  GPIOC_WLAN_POWER_ON);*/
 		break;
 	default:
 		printk(KERN_ERR "%s: Unsupported Vcc:%d\n", __FUNCTION__,
@@ -90,12 +96,14 @@ static int h4000_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 
 static void h4000_pcmcia_socket_init(struct soc_pcmcia_socket *skt)
 {
-	soc_pcmcia_enable_irqs(skt, irqs, ARRAY_SIZE(irqs));
+	printk("%s\n", __FUNCTION__);
+	soc_pcmcia_enable_irqs(skt, socket_state_irqs, ARRAY_SIZE(socket_state_irqs));
 }
 
 static void h4000_pcmcia_socket_suspend(struct soc_pcmcia_socket *skt)
 {
-	soc_pcmcia_disable_irqs(skt, irqs, ARRAY_SIZE(irqs));
+	printk("%s\n", __FUNCTION__);
+	soc_pcmcia_disable_irqs(skt, socket_state_irqs, ARRAY_SIZE(socket_state_irqs));
 }
 
 static struct pcmcia_low_level h4000_pcmcia_ops = {

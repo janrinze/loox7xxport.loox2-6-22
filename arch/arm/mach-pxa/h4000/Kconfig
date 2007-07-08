@@ -22,14 +22,12 @@ config IPAQ_H4000_BACKLIGHT
         depends on MACH_H4000 && HTC_ASIC3 && BACKLIGHT_CLASS_DEVICE
 
 config IPAQ_H4000_PCMCIA
-        tristate "PCMCIA support (UNUSED)"
+        tristate "PCMCIA support"
 	default n
         depends on MACH_H4000 && HTC_ASIC3 && PCMCIA_PXA2XX
         help
           Enables h4000 specific functions for the PXA2xx PCMCIA driver.
-	  As h4000 doesn't have external CF/PCMCIA sockets, this driver is 
-	  mostly useful for hacking and as the reference for other handhelds.
-	  It conflicts with h4000_acx (WiFi driver).
+	  This driver is required to get builtin WiFi working.
 
 config IPAQ_H4000_BUTTONS
         tristate "Buttons support"

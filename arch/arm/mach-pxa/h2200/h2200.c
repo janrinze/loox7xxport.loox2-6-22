@@ -52,7 +52,7 @@
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 
-#include <asm/hardware/hamcop_base.h>
+#include <linux/soc/hamcop_base.h>
 #include <asm/hardware/ipaq-hamcop.h>
 #include <asm/hardware/hamcop_leds.h>
 #include <asm/arch/serial.h>

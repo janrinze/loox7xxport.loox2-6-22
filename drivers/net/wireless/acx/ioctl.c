@@ -2481,7 +2481,7 @@ acx100_ioctl_set_phy_amp_bias(
 		printk("acx: set_phy_amp_bias() is not supported on USB\n");
 		return OK;
 	}
-#ifdef CONFIG_ACX_MEM
+#ifdef ACX_MEM
 	return acx100mem_ioctl_set_phy_amp_bias(ndev, info, vwrq, extra);
 #else
 	return acx100pci_ioctl_set_phy_amp_bias(ndev, info, vwrq, extra);

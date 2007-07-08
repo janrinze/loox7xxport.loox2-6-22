@@ -80,7 +80,7 @@ struct htc_egpio_pinInfo pins[] = {
 
 struct htc_egpio_platform_data egpio_data = {
 	.invertAcks = 1,
-	.irqStart = IRQ_BOARD_START,
+	.irq_base = IRQ_BOARD_START,
 	.nrRegs = 3,
 	.pins = pins,
 	.nr_pins = ARRAY_SIZE(pins),

@@ -34,6 +34,7 @@
 #include <linux/dma-mapping.h>
 #include <linux/clk.h>
 #include <linux/ds1wm.h>
+#include <linux/soc/hamcop_base.h>
 #include <linux/soc/samcop_adc.h>
 #include <linux/touchscreen-adc.h>
 
@@ -349,8 +350,7 @@ hamcop_set_gpio_a_int (struct device *dev, u32 mask, u32 bits)
 }
 EXPORT_SYMBOL(hamcop_set_gpio_a_int);
 
-u32
-hamcop_get_gpio_a_int (struct device *dev)
+u32 hamcop_get_gpio_a_int(struct device *dev)
 {
 	struct hamcop_data *hamcop = dev->driver_data;
 
@@ -440,8 +440,7 @@ hamcop_set_gpio_b_int (struct device *dev, u32 mask, u32 bits)
 }
 EXPORT_SYMBOL(hamcop_set_gpio_b_int);
 
-u32
-hamcop_get_gpio_b_int (struct device *dev)
+u32 hamcop_get_gpio_b_int(struct device *dev)
 {
 	struct hamcop_data *hamcop = dev->driver_data;
 
@@ -1111,6 +1110,9 @@ static struct tsadc_platform_data tsadc_pdata = {
 	.y_pin = "samcop adc:y",
 	.z1_pin = "samcop adc:z1",
 	.z2_pin = "samcop adc:z2",
+	.num_xy_samples = 1,
+	.num_z_samples = 1,
+	.delayed_pressure = 1,
 	.max_jitter = 10,
 };
 
@@ -1157,6 +1159,8 @@ static struct hamcop_block hamcop_blocks[] = {
 		.irq   = _IRQ_HAMCOP_ONEWIRE,
 		.platform_data = &hamcop_ds1wm_plat_data,
 	},
+#if 0
+// LEDs device must be defined and parametrized by machine
 	{
 		.id    = { -1 },
 		.name  = "hamcop leds",
@@ -1164,6 +1168,7 @@ static struct hamcop_block hamcop_blocks[] = {
 		.end   = _HAMCOP_LED_Base + _HAMCOP_LED_Size,
 		.irq   = -1,
 	},
+#endif
 	{
 		.id    = { -1 },
 		.name  = "samcop dma",
@@ -1319,6 +1324,10 @@ static int hamcop_probe (struct platform_device *pdev)
 		}
 		hamcop->devices[i] = sdev;
 	}
+
+        if (platform_data && platform_data->num_child_platform_devs != 0) 
+                platform_add_devices(platform_data->child_platform_devs, 
+                                     platform_data->num_child_platform_devs); 
 
 	return 0;
 
