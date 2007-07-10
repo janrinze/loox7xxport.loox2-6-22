@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
-# Linux kernel version: 2.6.21-hh8
-# Wed Jun 20 16:24:41 2007
+# Linux kernel version: 2.6.21-hh11
+# Mon Jul  9 06:52:11 2007
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -187,6 +187,7 @@ CONFIG_HX4700_POWER2=y
 # CONFIG_MACH_RECON is not set
 # CONFIG_MACH_GHI270HG is not set
 # CONFIG_MACH_GHI270 is not set
+# CONFIG_MACH_LOOXC550 is not set
 # CONFIG_PXA_SHARPSL is not set
 # CONFIG_MACH_TRIZEPS4 is not set
 CONFIG_PXA27x=y
@@ -746,6 +747,7 @@ CONFIG_NET_RADIO=y
 CONFIG_ACX=m
 # CONFIG_ACX_USB is not set
 CONFIG_ACX_MEM=y
+# CONFIG_ACX_CS is not set
 CONFIG_ACX_HX4700=m
 CONFIG_NET_WIRELESS=y
 

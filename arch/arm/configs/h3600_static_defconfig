@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
-# Linux kernel version: 2.6.21-hh8
-# Wed Jun 20 16:24:32 2007
+# Linux kernel version: 2.6.21-hh11
+# Mon Jul  9 06:52:08 2007
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -154,6 +154,7 @@ CONFIG_SA1100_H3XXX=y
 # CONFIG_SA1100_BADGE4 is not set
 # CONFIG_SA1100_JORNADA56X is not set
 # CONFIG_SA1100_JORNADA720 is not set
+# CONFIG_SA1100_JORNADA820 is not set
 # CONFIG_SA1100_XDA is not set
 # CONFIG_SA1100_HACKKIT is not set
 # CONFIG_SA1100_LART is not set

@@ -106,14 +106,20 @@
 #ifdef PCMCIA_DEBUG
 static int pc_debug = PCMCIA_DEBUG;
 module_param(pc_debug, int, 0);
-static char *version = "$Revision: 1.2 $";
-#define DEBUG(n, args...) if (pc_debug>(n)) printk(KERN_INFO args);
+static char *version = "$Revision: 1.3 $";
+#define DEBUG(n, args...) if (pc_debug>(n)) printk(KERN_DEBUG args);
 #else
 #define DEBUG(n, args...)
 #endif
 
 
 static win_req_t memwin;
+
+typedef struct local_info_t {
+        dev_node_t      node;
+        struct net_device *ndev;
+} local_info_t;
+
 
 /***********************************************************************
 */
@@ -162,12 +168,12 @@ static void acxmem_s_delete_dma_regions(acx_device_t *adev);
 
 static int
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 11)
-acxmem_e_suspend(struct pcmcia_device *link, pm_message_t state);
+acxmem_e_suspend( struct net_device *ndev, pm_message_t state);
 #else
-acxmem_e_suspend(struct pcmcia_device *link, u32 state);
+acxmem_e_suspend( struct net_device *ndev, u32 state);
 #endif
 static void
-fw_resumer(acx_device_t *adev);
+fw_resumer(struct net_device *ndev);
 //fw_resumer( void *data );
 
 static int acx_netdev_event(struct notifier_block *this, unsigned long event, void *ptr)
@@ -1998,14 +2004,15 @@ acxmem_s_issue_cmd_timeo_debug(
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 11)
                 	{
 				pm_message_t state;
-				//acxmem_e_suspend (resume_pdev, state);
+				/* acxmem_e_suspend (resume_pdev, state); */
+				acxmem_e_suspend (adev->ndev , state);
 			}
 #else
-			//acxmem_e_suspend (adev->dev, 0);
+			acxmem_e_suspend (adev, 0);
 #endif
 			{
 				struct work_struct *notused;
-				fw_resumer (adev);
+				fw_resumer (adev->ndev);
 			}
 		}
 
@@ -2537,16 +2544,15 @@ done:
 ** pdev - ptr to PCI device structure containing info about pci configuration
 */
 static int __devexit
-acxmem_e_remove(struct platform_device *pdev)
+acxmem_e_remove(struct pcmcia_device *link)
 {
-	struct acx_hardware_data *hwdata = pdev->dev.platform_data;
 	struct net_device *ndev;
 	acx_device_t *adev;
 	unsigned long flags;
 
 	FN_ENTER;
 
-	ndev = (struct net_device*) platform_get_drvdata(pdev);
+	ndev = ((local_info_t*)link->priv)->ndev;
 	if (!ndev) {
 		log(L_DEBUG, "%s: card is unused. Skipping any release code\n",
 			__func__);
@@ -2633,8 +2639,6 @@ acxmem_e_remove(struct platform_device *pdev)
 	 * expecting to see a working dev...) */
 	free_netdev(ndev);
 
-	(void) hwdata->stop_hw();
-
 	printk ("e_remove done\n");
 end:
 	FN_EXIT0;
@@ -2649,25 +2653,21 @@ end:
 #ifdef CONFIG_PM
 static int
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 11)
-acxmem_e_suspend(struct pcmcia_device *link, pm_message_t state)
+acxmem_e_suspend( struct net_device *ndev, pm_message_t state)
 #else
-acxmem_e_suspend(struct pcmcia_device *link, u32 state)
+acxmem_e_suspend( struct net_device *ndev, u32 state)
 #endif
 {
-	acx_device_t *adev;
-	struct acx_hardware_data *hwdata;
-
 	FN_ENTER;
+	acx_device_t *adev;
 	printk("acx: suspend handler is experimental!\n");
-	printk("sus: dev %p\n", adev->ndev);
+	printk("sus: dev %p\n", ndev);
 
-	if (!netif_running(adev->ndev))
+	if (!netif_running(ndev))
 		goto end;
 	// @@ need to get it from link or something like that
-	//adev = ndev2adev(ndev);
+	adev = ndev2adev(ndev);
 	printk("sus: adev %p\n", adev);
-
-	hwdata = adev->dev->platform_data;
 
 	acx_sem_lock(adev);
 
@@ -2691,9 +2691,9 @@ end:
 
 
 static void
-fw_resumer(acx_device_t *adev)
+fw_resumer(struct net_device *ndev)
 {
-	struct net_device *ndev = adev->ndev;
+	acx_device_t *adev;
 
 	printk("acx: resume handler is experimental!\n");
 	printk("rsm: got dev %p\n", ndev);
@@ -5348,10 +5348,6 @@ static void acx_cs_detach(struct pcmcia_device *p_dev);
    card that is not ready to accept it.
 */
    
-typedef struct local_info_t {
-	dev_node_t	node;
-	struct net_device *ndev;
-} local_info_t;
 
 /*======================================================================
   
@@ -5421,11 +5417,13 @@ static void acx_cs_detach(struct pcmcia_device *link)
 {
 	DEBUG(0, "acx_detach(0x%p)\n", link);
 
-	acx_cs_release(link);
 
 	if ( ((local_info_t*)link->priv)->ndev ) {
 		acxmem_e_close( ((local_info_t*)link->priv)->ndev );
 	}
+
+	acx_cs_release(link);
+
 	((local_info_t*)link->priv)->ndev = NULL;
 
 	kfree(link->priv);
@@ -5595,6 +5593,7 @@ static int acx_cs_config(struct pcmcia_device *link)
 static void acx_cs_release(struct pcmcia_device *link)
 {
 	DEBUG(0, "acx_release(0x%p)\n", link);
+	acxmem_e_remove(link);
 	pcmcia_disable_device(link);
 }
 
@@ -5602,7 +5601,10 @@ static int acx_cs_suspend(struct pcmcia_device *link)
 {
 	local_info_t *local = link->priv;
 
-	netif_device_detach(local->ndev);
+	pm_message_t state;
+	acxmem_e_suspend ( local->ndev, state);
+	/* Already done in suspend
+	 * netif_device_detach(local->ndev); */
 
 	return 0;
 }
@@ -5610,12 +5612,15 @@ static int acx_cs_suspend(struct pcmcia_device *link)
 static int acx_cs_resume(struct pcmcia_device *link)
 {
 	local_info_t *local = link->priv;
+	
+	fw_resumer(local->ndev);
 
+	/* Already done in suspend
 	if (link->open) {
 	  // do we need reset for ACX, if so what function nane is ?
 		//reset_acx_card(local->eth_dev);
 		netif_device_attach(local->ndev);
-	}
+	} */
 
 	return 0;
 }
