@@ -29,32 +29,32 @@ static struct pxa27x_keyboard_platform_data loox720_kbd = {
     .nr_cols = 3,
     .keycodes = {
         {    /* row 0 */
-            KEY_RECORD,
+            KEY_CAMERA,     // left side button
             KEY_UP,
-            -1,
+            KEY_OK    // Rocker press
         },
         {    /* row 1 */
-            -1,
+            _KEY_RECORD,
             KEY_DOWN,
-	    -1
+            KEY_SCROLLDOWN    // Rocker down
         },
         {    /* row 2 */
-            KEY_F9,
+            _KEY_CALENDAR,
             KEY_RIGHT,
-            -1
+            KEY_SCROLLUP    // Rocker up
         },
         {    /* row 3 */
-            -1,
+            _KEY_APP3,    // Easy2Connect button
             KEY_LEFT,
             -1,
         },
         {    /* row 4 */
             _KEY_CONTACTS,
-            KEY_ENTER,
+            KEY_ENTER,    // joypad center button
             -1
         },
         {    /* row 5 */
-            -1,
+            _KEY_HOMEPAGE,
             -1,
             -1
         },
@@ -64,35 +64,35 @@ static struct pxa27x_keyboard_platform_data loox720_kbd = {
 static struct platform_device loox720_pxa_keyboard = {
         .name   = "pxa27x-keyboard",
         .id     = -1,
-	.dev    =  {
-		.platform_data  = &loox720_kbd,
-	},
+        .dev    =  {
+                .platform_data  = &loox720_kbd,
+        },
 };
 
 static int __devinit loox720_buttons_probe(struct platform_device *dev)
 {
-	platform_device_register(&loox720_pxa_keyboard);
-	return 0;
+        platform_device_register(&loox720_pxa_keyboard);
+        return 0;
 }
 
 static struct platform_driver loox720_buttons_driver = {
-	.driver		= {
-	    .name       = "loox720-buttons",
-	},
-	.probe          = loox720_buttons_probe,
+        .driver                = {
+            .name       = "loox720-buttons",
+        },
+        .probe          = loox720_buttons_probe,
 };
 
 static int __init loox720_buttons_init(void)
 {
-	if (!machine_is_loox720())
-		return -ENODEV;
+        if (!machine_is_loox720())
+                return -ENODEV;
 
-	return platform_driver_register(&loox720_buttons_driver);
+        return platform_driver_register(&loox720_buttons_driver);
 }
 
 static void __exit loox720_buttons_exit(void)
 {
-	platform_driver_unregister(&loox720_buttons_driver);
+        platform_driver_unregister(&loox720_buttons_driver);
 }
 
 module_init(loox720_buttons_init);
