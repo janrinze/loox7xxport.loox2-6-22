@@ -39,7 +39,7 @@
 
 static struct pxafb_mode_info loox720_lcd_modes[] = {
 {
-/*	.pixclock = 96153,
+	.pixclock = 96153,
 	.bpp = 16,
 	.xres = 480,
 	.yres = 640,
@@ -48,9 +48,9 @@ static struct pxafb_mode_info loox720_lcd_modes[] = {
 	.left_margin = 20,
 	.upper_margin = 8,
 	.right_margin = 8,
-	.lower_margin = 9,*/
+	.lower_margin = 9,
 //	.sync = 0,
-	.pixclock = 96153,
+/*	.pixclock = 96153,
 	.bpp = 16,
 	.xres = 480,
 	.yres = 640,
@@ -60,7 +60,7 @@ static struct pxafb_mode_info loox720_lcd_modes[] = {
 	.upper_margin = 1,
 	.right_margin = 87,
 	.lower_margin = 4,
-//	.sync = 0,
+//	.sync = 0,*/
 }
 };
 
