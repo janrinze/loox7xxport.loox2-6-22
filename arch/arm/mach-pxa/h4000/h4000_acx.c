@@ -47,20 +47,20 @@ int h4000_wlan_start(void)
 
         printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
         asic3_set_gpio_out_d(&h4000_asic3.dev, GPIOD_WLAN_MAC_RESET, GPIOD_WLAN_MAC_RESET);
-        printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
+//        printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
         mdelay(100);
-        printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
+//        printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
         
 	asic3_set_gpio_dir_b(&h4000_asic3.dev, 1<<GPIOB_WLAN_SOMETHING, 0);
-	printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
+//	printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
         
 	asic3_set_gpio_out_c(&h4000_asic3.dev, GPIOC_WLAN_POWER_ON, GPIOC_WLAN_POWER_ON);
-	printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
+//	printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
 	mdelay(30);
-	printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
+//	printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
 	mdelay(100);
 
-	MECR |= MECR_CIT;
+//	MECR |= MECR_CIT;
 	printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
 
 	mdelay(100);
@@ -94,62 +94,7 @@ int h4000_wlan_stop(void)
 	mdelay(100);
 	asic3_set_gpio_out_d(&h4000_asic3.dev, GPIOD_WLAN_MAC_RESET, 0);
 
-	MECR &= ~MECR_CIT;
+//	MECR &= ~MECR_CIT;
 
 	return 0;
 }
-
-static struct resource acx_resources[] = {
-	[0] = {
-		.start	= WLAN_BASE,
-		.end	= WLAN_BASE + 0x400,
-		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
-		.start	= H4000_IRQ(WLAN_MAC_IRQ_N),
-		.end	= H4000_IRQ(WLAN_MAC_IRQ_N),
-		.flags	= IORESOURCE_IRQ,
-	},
-};
-
-
-#if 0
-static struct acx_hardware_data acx_data = {
-	.start_hw	= h4000_wlan_start,
-	.stop_hw	= h4000_wlan_stop,
-};
-#endif
-
-static struct platform_device acx_device = {
-	.name	= "acx-mem",
-	.dev	= {
-//		.platform_data = &acx_data,
-	},
-	.num_resources	= ARRAY_SIZE( acx_resources ),
-	.resource	= acx_resources,
-};
-
-static int __init
-h4000_wlan_init( void )
-{
-	printk( "h4000_wlan_init: acx-mem platform_device_register\n" );
-//	request_irq(H4000_IRQ(WLAN_MAC_IRQ_N), h4000_wifi_isr, IRQF_DISABLED | IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING, 
-//		"H4000 wifi Detect", NULL);
-
-	return platform_device_register( &acx_device );
-}
-
-
-static void __exit
-h4000_wlan_exit( void )
-{
-//        free_irq(H4000_IRQ(WLAN_MAC_IRQ_N), NULL);
-	platform_device_unregister( &acx_device );
-}
-
-module_init( h4000_wlan_init );
-module_exit( h4000_wlan_exit );
-
-MODULE_AUTHOR( "Paul Sokolovsky <pfalcon@handhelds.org>" );
-MODULE_DESCRIPTION( "WLAN driver for iPAQ h4000" );
-MODULE_LICENSE( "GPL" );

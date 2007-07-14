@@ -1076,9 +1076,8 @@ static int asic3_probe(struct platform_device *pdev)
 		}
 	}
 
-	if (pdata && pdata->num_child_platform_devs != 0)
-		platform_add_devices(pdata->child_platform_devs,
-				     pdata->num_child_platform_devs);
+	if (pdata && pdata->num_child_devs != 0)
+		platform_add_devices(pdata->child_devs, pdata->num_child_devs);
 
 	return 0;
 }
@@ -1089,10 +1088,9 @@ static int asic3_remove(struct platform_device *pdev)
 	struct asic3_data *asic = platform_get_drvdata(pdev);
 	int i;
 
-	if (pdata && pdata->num_child_platform_devs != 0) {
-		for (i = 0; i < pdata->num_child_platform_devs; i++) {
-			platform_device_unregister(
-				pdata->child_platform_devs[i]);
+	if (pdata && pdata->num_child_devs != 0) {
+		for (i = 0; i < pdata->num_child_devs; i++) {
+			platform_device_unregister(pdata->child_devs[i]);
 		}
 	}
 

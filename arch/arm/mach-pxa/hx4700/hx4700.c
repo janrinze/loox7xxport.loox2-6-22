@@ -341,8 +341,8 @@ static struct asic3_platform_data hx4700_asic3_platform_data = {
 	.bus_shift = 1,
 	.irq_base = HX4700_ASIC3_IRQ_BASE,
 
-	.child_platform_devs	 = hx4700_asic3_devices,
-	.num_child_platform_devs = ARRAY_SIZE(hx4700_asic3_devices),
+	.child_devs	 = hx4700_asic3_devices,
+	.num_child_devs = ARRAY_SIZE(hx4700_asic3_devices),
 };
 
 static struct resource asic3_resources[] = {

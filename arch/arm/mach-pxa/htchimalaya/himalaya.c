@@ -205,8 +205,8 @@ static struct asic3_platform_data asic3_platform_data = {
 	.bus_shift		 = 2,
 	.irq_base = HTCHIMALAYA_ASIC3_IRQ_BASE,
 
-	.child_platform_devs     = himalaya_asic3_devices,
-	.num_child_platform_devs = ARRAY_SIZE(himalaya_asic3_devices),
+	.child_devs     = himalaya_asic3_devices,
+	.num_child_devs = ARRAY_SIZE(himalaya_asic3_devices),
 	.tmio_mmc_hwconfig	 = &himalaya_mmc_hwconfig,
 };
 

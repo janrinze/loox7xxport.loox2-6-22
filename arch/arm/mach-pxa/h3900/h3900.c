@@ -194,8 +194,8 @@ static struct platform_device *h3900_asic2_devices[] __initdata = {
 };
 
 static struct asic2_platform_data h3900_asic2_platform_data = {
-        .child_platform_devs     = h3900_asic2_devices,
-        .num_child_platform_devs = ARRAY_SIZE(h3900_asic2_devices),
+        .child_devs     = h3900_asic2_devices,
+        .num_child_devs = ARRAY_SIZE(h3900_asic2_devices),
 };
 
 static struct resource asic2_resources[] = {

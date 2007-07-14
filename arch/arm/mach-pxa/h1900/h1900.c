@@ -113,8 +113,8 @@ static struct asic3_platform_data h1900_asic3_platform_data = {
 	},
 	.irq_base = H1910_ASIC3_IRQ_BASE,
 
-	.child_platform_devs = child_devices,
-	.num_child_platform_devs = ARRAY_SIZE(child_devices),
+	.child_devs = child_devices,
+	.num_child_devs = ARRAY_SIZE(child_devices),
 };
 
 static struct platform_device *core_devices[] __initdata = {

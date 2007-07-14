@@ -26,14 +26,14 @@
 
 struct hamcop_platform_data
 {
-        struct gpiodev_ops gpiodev_ops;
-        int irq_base;
-        struct platform_device **child_platform_devs;
-        int num_child_platform_devs;
+	/* Standard MFD properties */
+	int irq_base;
+	struct platform_device **child_devs;
+	int num_child_devs;
 
         u16 clocksleep;
         u16 pllcontrol;
-}
+};
 
 extern void hamcop_set_gpio_a (struct device *dev, u32 mask, u16 bits);
 extern void hamcop_set_gpio_b (struct device *dev, u32 mask, u16 bits);

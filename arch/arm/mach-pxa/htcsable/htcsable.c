@@ -181,8 +181,8 @@ static struct asic3_platform_data htcsable_asic3_platform_data = {
 	.bus_shift = 1,
 	.irq_base = HTCSABLE_ASIC3_IRQ_BASE,
 
-	.child_platform_devs     = htcsable_asic3_devices,
-	.num_child_platform_devs = ARRAY_SIZE(htcsable_asic3_devices),
+	.child_devs     = htcsable_asic3_devices,
+	.num_child_devs = ARRAY_SIZE(htcsable_asic3_devices),
 	.tmio_mmc_hwconfig = &htcsable_mmc_hwconfig,
 };
 

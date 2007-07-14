@@ -84,6 +84,11 @@ struct asic3_platform_data
 	// Must be first member
 	struct gpiodev_ops gpiodev_ops;
 
+	/* Standard MFD properties */
+	int irq_base;
+	struct platform_device **child_devs;
+	int num_child_devs;
+
 	struct {
 		u32 dir;
 		u32 init;
@@ -94,11 +99,6 @@ struct asic3_platform_data
 		u32 alt_function;
 	} gpio_a, gpio_b, gpio_c, gpio_d;
 
-	int irq_base;
 	unsigned int bus_shift;
-
-	struct platform_device **child_platform_devs;
-	int num_child_platform_devs;
-
 	struct tmio_mmc_hwconfig *tmio_mmc_hwconfig;
 };

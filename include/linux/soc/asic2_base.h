@@ -22,9 +22,10 @@
 
 struct asic2_platform_data
 {
+	/* Standard MFD properties */
 	int irq_base;
-        struct platform_device **child_platform_devs;
-        int num_child_platform_devs;
+	struct platform_device **child_devs;
+	int num_child_devs;
 };
 
 enum ASIC_SHARED {

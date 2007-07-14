@@ -39,6 +39,14 @@
 
 #define SAMPLE_TIMEOUT 20	/* sample every 20ms */
 
+static int debug = 0;
+module_param(debug, int, 0644);
+MODULE_PARM_DESC(debug, "debug level (0-2)");
+
+#define pr_debug(fmt,arg...) \
+        if (debug) printk(KERN_DEBUG fmt,##arg) 
+
+
 enum touchscreen_state {
 	STATE_WAIT_FOR_TOUCH,   /* Waiting for a PEN interrupt */
 	STATE_SAMPLING          /* Actively sampling ADC */
@@ -90,26 +98,26 @@ void debounce_samples(struct tsadc_platform_data *params, struct adc_sense *pins
 	int i, ptr;
 	int d = params->max_jitter;
 
-#ifdef DEBUG_SAMPLES
-	pr_debug(DRIVER_NAME ": ");
-	ptr = 0;
-	for (i = 0; i < params->num_xy_samples; i++) {
-		printk("%04d ", pins[ptr++].value);
+	if (debug > 1) {
+		pr_debug(DRIVER_NAME ": ");
+		ptr = 0;
+		for (i = 0; i < params->num_xy_samples; i++) {
+			printk("%04d ", pins[ptr++].value);
+		}
+		printk("| ");
+		for (i = 0; i < params->num_xy_samples; i++) {
+			printk("%04d ", pins[ptr++].value);
+		}
+		printk("| ");
+		for (i = 0; i < params->num_z_samples; i++) {
+			printk("%04d ", pins[ptr++].value);
+		}
+		printk("| ");
+		for (i = 0; i < params->num_z_samples; i++) {
+			printk("%04d ", pins[ptr++].value);
+		}
+		printk("\n");
 	}
-	printk("| ");
-	for (i = 0; i < params->num_xy_samples; i++) {
-		printk("%04d ", pins[ptr++].value);
-	}
-	printk("| ");
-	for (i = 0; i < params->num_z_samples; i++) {
-		printk("%04d ", pins[ptr++].value);
-	}
-	printk("| ");
-	for (i = 0; i < params->num_z_samples; i++) {
-		printk("%04d ", pins[ptr++].value);
-	}
-	printk("\n");
-#endif
 
 	/* X-axis */
 	ptr = 0;
@@ -156,13 +164,19 @@ void debounce_samples(struct tsadc_platform_data *params, struct adc_sense *pins
 
 	// RTOUCH = (RXPlate) x (XPOSITION /4096) x [(Z2/Z1) - 1]
 	// pressure is proportional to 1 / RTOUCH
-	pressure = abs(z2 - z1) * (x ? x : 1); // X just shouldn't be 0
-	if (pressure != 0)
-		pressure = params->pressure_factor * z1 / pressure;
-	else
-		//pressure = BIG_VALUE; // this regresses h5000. workaround is below. needs more investigation
-		pressure = z1;
-
+	/* Allow for some noise in readings still. Too low z1 value means 0, 
+	   and zero means pen up. */
+	if (z1 < 20) {
+		pressure = 0;
+	} else {
+		pressure = abs(z2 - z1) * (x ? x : 1); // X just shouldn't be 0
+		if (pressure != 0)
+			pressure = params->pressure_factor * z1 / pressure;
+		else
+			//pressure = BIG_VALUE; // this regresses h5000. workaround is below. needs more investigation
+			pressure = z1;
+	}
+	
 	pr_debug(DRIVER_NAME ": x=%d y=%d z1=%d z2=%d P=%d\n", x, y, z1, z2, pressure);
 
 	tp->xd = x;
@@ -276,7 +290,7 @@ static int ts_adc_debounce_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, ts);
 
 	pdata->num_xy_samples = pdata->num_xy_samples ?: 10;
-	pdata->num_z_samples  = pdata->num_xy_samples ?: 2;
+	pdata->num_z_samples  = pdata->num_z_samples ?: 2;
 
 	ts->pins = kmalloc(sizeof(*ts->pins) * (pdata->num_xy_samples*2 + pdata->num_z_samples*2), GFP_KERNEL);
 	ts->req.senses = ts->pins;

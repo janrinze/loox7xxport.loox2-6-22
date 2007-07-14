@@ -37,95 +37,14 @@
 
 #include <asm/arch/aximx50-gpio.h>
 #include <asm/arch/pxa-regs.h>
-#include <asm/arch/pxafb.h>
 #include <asm/arch/udc.h>
+#include <asm/arch/pxafb.h>
 
 #include "../generic.h"
 
-/* Description of the X50(v)/X51(v) display modes */
-#ifdef CONFIG_X50_VGA
-static struct pxafb_mode_info aximx50_pxafb_modes[] = {
-{
-	.pixclock       = 96153,
-	.bpp            = 16,
-	.xres           = 480,
-	.yres           = 640,
-	.hsync_len      = 64,
-	.vsync_len      = 5,
-	.left_margin    = 17,
-	.upper_margin   = 1,
-	.right_margin   = 87,
-	.lower_margin   = 4,
-},
-};
-
-
-static struct pxafb_mach_info aximx50_fb_info = {
-	.modes      = aximx50_pxafb_modes,
-	.num_modes  = ARRAY_SIZE(aximx50_pxafb_modes),
-	.lccr0      = LCCR0_ENB | LCCR0_LDM |                           // 0x9
-			LCCR0_SFM | LCCR0_IUM | LCCR0_EFM | LCCR0_Act | // 0xf
-			LCCR0_QDM |                                     // 0x8
-									// 0x0
-									// 0x0
-			LCCR0_BM  | LCCR0_OUM | LCCR0_RDSTM |           // 0xb
-			LCCR0_CMDIM                                     // 0x1
-			,                                               // 0x0
-		//0x01b008f9,
-	.lccr3      = 0x04f00001,
-};
-
-#else /* undef CONFIG_X50_VGA */
-
-/* Description of the X50/X51 display modes */
-static struct pxafb_mode_info aximx50_pxafb_modes[] = {
-{
-	.pixclock       = 96153,
-	.bpp            = 16,
-	.xres           = 240,
-	.yres           = 320,
-	.hsync_len      = 20,
-	.vsync_len      = 4,
-	.left_margin    = 59,
-	.upper_margin   = 4,
-	.right_margin   = 16,
-	.lower_margin   = 0,
-},
-};
-
-
-static struct pxafb_mach_info aximx50_fb_info = {
-	.modes      = aximx50_pxafb_modes,
-	.num_modes  = ARRAY_SIZE(aximx50_pxafb_modes),
-	.lccr0      = LCCR0_ENB | LCCR0_LDM |                          // 0x9
-			LCCR0_SFM | LCCR0_IUM | LCCR0_EFM | LCCR0_Act |  // 0xf
-			LCCR0_QDM |                                      // 0x8
-									// 0x0
-									// 0x0
-			LCCR0_BM  | LCCR0_OUM                            // 0x3
-									// 0x0
-			,                                                // 0x0
-		//0x003008f9,
-	.lccr3      = 0x04900008,
-};
-
-
-#endif
-
-
-/* Initialization code */
-
-static void __init x50_map_io(void)
-{
-	pxa_map_io();
-}
-
-static void __init x50_init_irq(void)
-{
-	pxa_init_irq();
-}
-
-/* USB Device Controller */
+/*************************
+ * USB Device Controller *
+ *************************/
 
 static int
 udc_detect(void)
@@ -151,12 +70,14 @@ udc_enable(int cmd)
 	}
 }
 
-static struct pxa2xx_udc_mach_info x50_udc_mach_info = {
+static struct pxa2xx_udc_mach_info aximx50_udc_mach_info = {
 	.udc_is_connected = udc_detect,
 	.udc_command      = udc_enable,
 };
 
-/* Backlight */
+/*************
+ * Backlight *
+ *************/
 
 #define AXIMX50_MAX_INTENSITY 0x3ff
 
@@ -192,20 +113,135 @@ struct platform_device aximx50_bl = {
 	},
 };
 
-static struct platform_device x50_buttons           = { 
+/***********
+ * Buttons *
+ ***********/
+
+static struct platform_device aximx50_buttons           = { 
 	.name = "aximx50-buttons", 
 };
-static struct platform_device x50_ts                = { 
+
+/***************
+ * Framebuffer *
+ ***************/
+
+/* Axim X50 VGA Version */
+static struct pxafb_mode_info aximx50_pxafb_modes_vga[] = {
+{
+    .pixclock       = 96153,
+    .bpp            = 16,
+    .xres           = 480,
+    .yres           = 640,
+    .hsync_len      = 64,
+    .vsync_len      = 5,
+    .left_margin    = 17,
+    .upper_margin   = 1,
+    .right_margin   = 87,
+    .lower_margin   = 4,
+},
+};
+
+static struct pxafb_mach_info aximx50_fb_info_vga = {
+    .modes      = aximx50_pxafb_modes_vga,
+    .num_modes  = ARRAY_SIZE(aximx50_pxafb_modes_vga),
+    .lccr0      = LCCR0_ENB | LCCR0_LDM |                           // 0x9
+            LCCR0_SFM | LCCR0_IUM | LCCR0_EFM | LCCR0_Act | // 0xf
+            LCCR0_QDM |                                     // 0x8
+                                    // 0x0
+                                    // 0x0
+            LCCR0_BM  | LCCR0_OUM | LCCR0_RDSTM |           // 0xb
+            LCCR0_CMDIM                                     // 0x1
+            ,                                               // 0x0
+            //0x01b008f9,
+    .lccr3      = 0x04f00001,
+};
+/* Axim X50 QVGA Version */
+static struct pxafb_mode_info aximx50_pxafb_modes_qvga[] = {
+{
+    .pixclock       = 96153,
+    .bpp            = 16,
+    .xres           = 240,
+    .yres           = 320,
+    .hsync_len      = 20,
+    .vsync_len      = 4,
+    .left_margin    = 59,
+    .upper_margin   = 4,
+    .right_margin   = 16,
+    .lower_margin   = 0,
+},
+};
+
+
+static struct pxafb_mach_info aximx50_fb_info_qvga = {
+    .modes      = aximx50_pxafb_modes_qvga,
+    .num_modes  = ARRAY_SIZE(aximx50_pxafb_modes_qvga),
+    .lccr0      = LCCR0_ENB | LCCR0_LDM |                          // 0x9
+            LCCR0_SFM | LCCR0_IUM | LCCR0_EFM | LCCR0_Act |  // 0xf
+            LCCR0_QDM |                                      // 0x8
+                                    // 0x0
+                                    // 0x0
+            LCCR0_BM  | LCCR0_OUM                            // 0x3
+                                    // 0x0
+            ,                                                // 0x0
+            //0x003008f9,
+    .lccr3      = 0x04900008,
+};                                  
+
+static int lcd_vga = 0;
+
+static int aximx50_lcd_probe(void)
+{
+    //TODO: select the correct device automatic
+    #ifdef CONFIG_X50_VGA
+        lcd_vga = 1;
+    #endif
+
+    if (lcd_vga == 1) {
+        printk(KERN_NOTICE "DELL AXIMX50 VGA LCD driver\n");
+        set_pxa_fb_info(&aximx50_fb_info_vga);
+    } else {
+        printk(KERN_NOTICE "DELL AXIMX50 QVGA LCD driver\n");
+        set_pxa_fb_info(&aximx50_fb_info_qvga);
+    }
+
+    return 0;
+}
+
+static struct platform_device aximx50_lcd = {
+    .name = "aximx50-lcd",
+    .id = -1,
+};
+
+/***************
+ * Touchscreen *
+ ***************/
+
+static struct platform_device aximx50_ts                = { 
 	.name = "aximx50-ts", 
 };
 
+/****************
+ * Init Machine *
+ ****************/
+
 static struct platform_device *devices[] __initdata = {
-	&x50_buttons,
-	&x50_ts,
+	&aximx50_buttons,
+	&aximx50_ts,
 	&aximx50_bl,
+    //&aximx50_lcd,
 };
 
-static void __init x50_init( void )
+static void __init aximx50_map_io(void)
+{
+	pxa_map_io();
+}
+
+static void __init aximx50_init_irq(void)
+{
+	pxa_init_irq();
+}
+
+static void __init aximx50_init( void )
 {
 #if 0    // keep for reference, from bootldr
 	GPSR0 = 0x0935ede7;
@@ -233,9 +269,9 @@ static void __init x50_init( void )
 	MSC2 = 0x16dc7ffc;
 #endif
 
-	set_pxa_fb_info(&aximx50_fb_info);
+    aximx50_lcd_probe();
 	platform_add_devices(devices, ARRAY_SIZE(devices));
-	pxa_set_udc_info(&x50_udc_mach_info);
+	pxa_set_udc_info(&aximx50_udc_mach_info);
 }
 
 
@@ -243,9 +279,9 @@ MACHINE_START(X50, "Dell Axim X50/X51(v)")
 	.phys_io = 0x40000000,
 	.io_pg_offst = (io_p2v(0x40000000) >> 18) & 0xfffc,
 	.boot_params = 0xa8000100,
-	.map_io = x50_map_io,
-	.init_irq = x50_init_irq,
+	.map_io = aximx50_map_io,
+	.init_irq = aximx50_init_irq,
 	.timer = &pxa_timer,
-	.init_machine = x50_init,
+	.init_machine = aximx50_init,
 MACHINE_END
 

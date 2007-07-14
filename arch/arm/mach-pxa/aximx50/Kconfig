@@ -8,11 +8,11 @@ menuconfig MACH_X50
 	  type of PDAs.
 
 config X50_VGA
-	bool "VGA display"
-	depends on MACH_X50
-	default true
-	help
-	  Set this if you have the "v" variant of Axim X50/X51.
+    bool "Dell Axim X50 series VGA display"
+    depends on MACH_X50
+    default true
+    help
+      Set this if you have the "v" variant of the DELL Axim X50 series.
 
 config X50_BUTTONS
 	tristate "X50/X51(v) buttons support"

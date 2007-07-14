@@ -218,7 +218,7 @@ static struct tsadc_platform_data h4000_ts_params = {
 	.z1_pin = "ads7846-ssp:z1",
 	.z2_pin = "ads7846-ssp:z2",
 	.pressure_factor = 100000,
-	.min_pressure = 2,
+	.min_pressure = 4,
 	.max_jitter = 8,
 };
 static struct resource h4000_pen_irq = {
@@ -357,8 +357,8 @@ static struct asic3_platform_data h4000_asic3_platform_data = {
 	},
 	.irq_base = H4000_ASIC3_IRQ_BASE,
 
-	.child_platform_devs     = h4000_asic3_devices,
-	.num_child_platform_devs = ARRAY_SIZE(h4000_asic3_devices),
+	.child_devs     = h4000_asic3_devices,
+	.num_child_devs = ARRAY_SIZE(h4000_asic3_devices),
 };
 
 static struct resource h4000_asic3_resources[] = {

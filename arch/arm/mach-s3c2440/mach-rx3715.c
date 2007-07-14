@@ -193,8 +193,8 @@ static struct asic3_platform_data rx3715_asic3_cfg = {
         },
         .irq_base = RX3000_ASIC3_IRQ_BASE,
 
-        .child_platform_devs = child_devices,
-        .num_child_platform_devs = ARRAY_SIZE(child_devices),
+        .child_devs = child_devices,
+        .num_child_devs = ARRAY_SIZE(child_devices),
 };
 
 static struct resource s3c_asic3_resources[] = {

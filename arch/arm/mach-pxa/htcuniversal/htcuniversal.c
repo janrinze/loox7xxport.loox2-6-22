@@ -391,8 +391,8 @@ static struct asic3_platform_data htcuniversal_asic3_platform_data = {
 	.bus_shift = 1,
 	.irq_base = HTCUNIVERSAL_ASIC3_IRQ_BASE,
 
-	.child_platform_devs     = htcuniversal_asic3_devices,
-	.num_child_platform_devs = ARRAY_SIZE(htcuniversal_asic3_devices),
+	.child_devs     = htcuniversal_asic3_devices,
+	.num_child_devs = ARRAY_SIZE(htcuniversal_asic3_devices),
 };
 
 static struct resource htcuniversal_asic3_resources[] = {

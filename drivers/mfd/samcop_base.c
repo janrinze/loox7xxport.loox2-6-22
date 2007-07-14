@@ -1303,9 +1303,8 @@ static int samcop_probe(struct platform_device *pdev)
 	platform_data->gpiodev_ops.set = samcop_set_gpio_bit;
 	platform_data->gpiodev_ops.to_irq = samcop_gpio_to_irq;
 
-        if (platform_data && platform_data->num_child_platform_devs != 0)
-                platform_add_devices(platform_data->child_platform_devs,
-                                     platform_data->num_child_platform_devs);
+	if (platform_data && platform_data->num_child_devs != 0)
+		platform_add_devices(platform_data->child_devs, platform_data->num_child_devs);
 
 	return 0;
 
@@ -1328,9 +1327,14 @@ static int samcop_probe(struct platform_device *pdev)
 static int samcop_remove(struct platform_device *pdev)
 {
 	int i;
-	struct samcop_data *samcop;
+	struct samcop_platform_data *pdata = pdev->dev.platform_data;
+	struct samcop_data *samcop = platform_get_drvdata(pdev);
 
-	samcop = platform_get_drvdata(pdev);
+	if (pdata && pdata->num_child_devs != 0) {
+		for (i = 0; i < pdata->num_child_devs; i++) {
+			platform_device_unregister(pdata->child_devs[i]);
+		}
+	}
 
 	samcop_write_register(samcop, SAMCOP_PCMCIA_IC, 0);	/* nothing enabled */
 	samcop_write_register(samcop, SAMCOP_GPIO_ENINT1, 0);

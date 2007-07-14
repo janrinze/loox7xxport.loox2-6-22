@@ -1196,7 +1196,7 @@ static void hamcop_release (struct device *dev)
 
 static int hamcop_probe (struct platform_device *pdev)
 {
-	struct hamcop_platform_data *platform_data = pdev->dev.platform_data;
+	struct hamcop_platform_data *pdata = pdev->dev.platform_data;
 	struct hamcop_data *hamcop;
 	struct resource *hamcop_mem;
 	int i, rc;
@@ -1245,10 +1245,10 @@ static int hamcop_probe (struct platform_device *pdev)
 			       HAMCOP_CPM_CLKCON_GPIO_CLKEN);
 
 	hamcop_write_register (hamcop, HAMCOP_CPM_ClockSleep,
-			       platform_data->clocksleep);
+			       pdata->clocksleep);
 
 	hamcop_write_register (hamcop, HAMCOP_CPM_PllControl,
-			       platform_data->pllcontrol);
+			       pdata->pllcontrol);
 
 	/* 0x54 means enable only CLKOUT3M (3.6864MHz). */
 	hamcop_write_register (hamcop, HAMCOP_GPIO_CLKOUTCON, 0x54);
@@ -1325,9 +1325,8 @@ static int hamcop_probe (struct platform_device *pdev)
 		hamcop->devices[i] = sdev;
 	}
 
-        if (platform_data && platform_data->num_child_platform_devs != 0) 
-                platform_add_devices(platform_data->child_platform_devs, 
-                                     platform_data->num_child_platform_devs); 
+	if (pdata && pdata->num_child_devs != 0)
+		platform_add_devices(pdata->child_devs, pdata->num_child_devs);
 
 	return 0;
 
@@ -1347,12 +1346,18 @@ static int hamcop_probe (struct platform_device *pdev)
 	return -ENOMEM;
 }
 
-static int
-hamcop_remove (struct platform_device *pdev)
+static int hamcop_remove(struct platform_device *pdev)
 {
+	struct hamcop_platform_data *pdata = pdev->dev.platform_data;
 	struct hamcop_data *hamcop = platform_get_drvdata(pdev);
 	int i;
 	u8 *bootloader;
+
+	if (pdata && pdata->num_child_devs != 0) {
+		for (i = 0; i < pdata->num_child_devs; i++) {
+			platform_device_unregister(pdata->child_devs[i]);
+		}
+	}
 
 	for (i = 0; i < HAMCOP_NR_IRQS; i++) {
 		int irq = i + hamcop->irq_base;

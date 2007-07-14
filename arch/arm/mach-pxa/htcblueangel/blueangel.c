@@ -331,8 +331,8 @@ static struct asic3_platform_data asic3_platform_data_o = {
 	.bus_shift=1,
 	.irq_base = HTCBLUEANGEL_ASIC3_IRQ_BASE,
 
-	.child_platform_devs     = blueangel_asic3_devices,                                                                      
-	.num_child_platform_devs = ARRAY_SIZE(blueangel_asic3_devices),       
+	.child_devs     = blueangel_asic3_devices,                                                                      
+	.num_child_devs = ARRAY_SIZE(blueangel_asic3_devices),       
 	.tmio_mmc_hwconfig = &blueangel_mmc_hwconfig,
 };
 

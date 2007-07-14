@@ -602,8 +602,8 @@ static int asic2_probe(struct platform_device *pdev)
 	if (!asic->devices)
 		goto enomem;
 
-	if (pdata && pdata->child_platform_devs && pdata->num_child_platform_devs != 0)
-		platform_add_devices(pdata->child_platform_devs, pdata->num_child_platform_devs);
+	if (pdata && pdata->num_child_devs != 0)
+		platform_add_devices(pdata->child_devs, pdata->num_child_devs);
 
 	return 0;
 
@@ -623,7 +623,14 @@ static int asic2_probe(struct platform_device *pdev)
 static int asic2_remove(struct platform_device *pdev)
 {
 	int i;
+	struct asic2_platform_data *pdata = pdev->dev.platform_data;
 	struct asic2_data *asic;
+
+	if (pdata && pdata->num_child_devs != 0) {
+		for (i = 0; i < pdata->num_child_devs; i++) {
+			platform_device_unregister(pdata->child_devs[i]);
+		}
+	}
 
 	asic = platform_get_drvdata(pdev);
 

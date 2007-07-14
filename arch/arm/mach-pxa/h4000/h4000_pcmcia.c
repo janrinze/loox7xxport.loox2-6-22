@@ -29,6 +29,7 @@ static struct pcmcia_irqs socket_state_irqs[] = {
 
 static int h4000_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 {
+	printk("%s\n", __FUNCTION__);
 	GPSR(GPIO48_nPOE) = GPIO_bit(GPIO48_nPOE) | GPIO_bit(GPIO49_nPWE) |
 	    GPIO_bit(GPIO52_nPCE_1_MD) | GPIO_bit(GPIO53_nPCE_2_MD) |
 	    GPIO_bit(GPIO55_nPREG_MD) | GPIO_bit(GPIO56_nPWAIT_MD);
@@ -51,12 +52,14 @@ static int h4000_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 
 static void h4000_pcmcia_hw_shutdown(struct soc_pcmcia_socket *skt)
 {
+	printk("%s\n", __FUNCTION__);
 	soc_pcmcia_free_irqs(skt, socket_state_irqs, ARRAY_SIZE(socket_state_irqs));
 }
 
 static void h4000_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
 				      struct pcmcia_state *state)
 {
+	printk("%s\n", __FUNCTION__);
 	state->detect = 1;	// always attached
 	state->ready = GET_H4000_GPIO(WLAN_MAC_IRQ_N) ? 1 : 0;
 	state->bvd1 = 1;
@@ -70,22 +73,16 @@ static void h4000_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
 static int h4000_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 					 const socket_state_t * state)
 {
-	printk("%s\n", __FUNCTION__);
-	/* Silently ignore Vpp, output enable, speaker enable. */
-	printk( "Reset:%d Vcc:%d\n",
-	    (state->flags & SS_RESET) ? 1 : 0, state->Vcc);
+	printk("%s: Flags:%x Reset:%d Output En: %d Vcc:%d\n", __FUNCTION__,
+	    state->flags, !!(state->flags & SS_RESET), !!(state->flags & SS_OUTPUT_ENA), state->Vcc);
 
+	/* Silently ignore Vpp, output enable, speaker enable. */
 	switch (state->Vcc) {
 	case 0:
-		asic3_set_gpio_out_c(&h4000_asic3.dev, GPIOC_WLAN_POWER_ON,
-					  GPIOC_WLAN_POWER_ON);
-		break;
+		return h4000_wlan_stop();
 	case 50:
 	case 33:
 		return h4000_wlan_start();
-/*		asic3_set_gpio_out_c(&h4000_asic3.dev, GPIOC_WLAN_POWER_ON,
-					  GPIOC_WLAN_POWER_ON);*/
-		break;
 	default:
 		printk(KERN_ERR "%s: Unsupported Vcc:%d\n", __FUNCTION__,
 		       state->Vcc);
