@@ -53,6 +53,7 @@
 #include <asm/dma.h>
 #include <asm/io.h>
 #include <asm/irq.h>
+#include <asm/gpio.h>
 #include <asm/system.h>
 #include <asm/mach-types.h>
 #include <asm/unaligned.h>
@@ -1573,7 +1574,7 @@ static void udc_disable(struct pxa27x_udc *dev)
 	ep0_idle(dev);
 	dev->gadget.speed = USB_SPEED_UNKNOWN;
 	if (dev->mach->gpio_pullup)
-		udc_gpio_set(dev->mach->gpio_pullup, 0);
+		gpio_set_value(dev->mach->gpio_pullup, 0);
 	else if (dev->mach->udc_command)
 		dev->mach->udc_command(PXA2XX_UDC_CMD_DISCONNECT);
 }
@@ -1633,7 +1634,7 @@ static void udc_enable(struct pxa27x_udc *dev)
 	/* enable ep0 irqs */
 	UDCICR0 = UDCICR_INT(0,UDCICR_INT_MASK);
 	if (dev->mach->gpio_pullup)
-		udc_gpio_set(dev->mach->gpio_pullup, 1);
+		gpio_set_value(dev->mach->gpio_pullup, 1);
 	else if (dev->mach->udc_command)
 		dev->mach->udc_command(PXA2XX_UDC_CMD_CONNECT);
 }

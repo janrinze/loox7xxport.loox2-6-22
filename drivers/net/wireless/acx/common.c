@@ -1623,6 +1623,7 @@ acx_e_read_proc(char *buf, char **start, off_t offset, int count,
 	return length;
 }
 
+static char _buf[32768];
 static int
 acx_e_read_proc_diag(char *buf, char **start, off_t offset, int count,
 		     int *eof, void *data)
@@ -1634,13 +1635,15 @@ acx_e_read_proc_diag(char *buf, char **start, off_t offset, int count,
 
 	acx_sem_lock(adev);
 	/* fill buf */
-	length = acx_s_proc_diag_output(buf, adev);
+	length = acx_s_proc_diag_output(_buf, adev);
 	acx_sem_unlock(adev);
+
+	memcpy(buf, _buf + offset, count);
 
 	/* housekeeping */
 	if (length <= offset + count)
 		*eof = 1;
-	*start = buf + offset;
+	*start = count;
 	length -= offset;
 	if (length > count)
 		length = count;

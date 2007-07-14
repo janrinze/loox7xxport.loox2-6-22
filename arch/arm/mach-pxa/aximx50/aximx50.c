@@ -128,88 +128,88 @@ static struct platform_device aximx50_buttons           = {
 /* Axim X50 VGA Version */
 static struct pxafb_mode_info aximx50_pxafb_modes_vga[] = {
 {
-    .pixclock       = 96153,
-    .bpp            = 16,
-    .xres           = 480,
-    .yres           = 640,
-    .hsync_len      = 64,
-    .vsync_len      = 5,
-    .left_margin    = 17,
-    .upper_margin   = 1,
-    .right_margin   = 87,
-    .lower_margin   = 4,
+	.pixclock	= 96153,
+	.bpp		= 16,
+	.xres		= 480,
+	.yres		= 640,
+	.hsync_len	= 64,
+	.vsync_len	= 5,
+	.left_margin	= 17,
+	.upper_margin	= 1,
+	.right_margin	= 87,
+	.lower_margin   = 4,
 },
 };
 
 static struct pxafb_mach_info aximx50_fb_info_vga = {
-    .modes      = aximx50_pxafb_modes_vga,
-    .num_modes  = ARRAY_SIZE(aximx50_pxafb_modes_vga),
-    .lccr0      = LCCR0_ENB | LCCR0_LDM |                           // 0x9
-            LCCR0_SFM | LCCR0_IUM | LCCR0_EFM | LCCR0_Act | // 0xf
-            LCCR0_QDM |                                     // 0x8
-                                    // 0x0
-                                    // 0x0
-            LCCR0_BM  | LCCR0_OUM | LCCR0_RDSTM |           // 0xb
-            LCCR0_CMDIM                                     // 0x1
-            ,                                               // 0x0
-            //0x01b008f9,
-    .lccr3      = 0x04f00001,
+	.modes		= aximx50_pxafb_modes_vga,
+	.num_modes	= ARRAY_SIZE(aximx50_pxafb_modes_vga),
+	.lccr0		= LCCR0_ENB | LCCR0_LDM |		// 0x9
+		LCCR0_SFM | LCCR0_IUM | LCCR0_EFM | LCCR0_Act |	// 0xf
+		LCCR0_QDM |					// 0x8
+								// 0x0
+								// 0x0
+		LCCR0_BM  | LCCR0_OUM | LCCR0_RDSTM |		// 0xb
+		LCCR0_CMDIM					// 0x1
+		,						// 0x0
+		//0x01b008f9,
+	.lccr3		= 0x04f00001,
 };
 /* Axim X50 QVGA Version */
 static struct pxafb_mode_info aximx50_pxafb_modes_qvga[] = {
 {
-    .pixclock       = 96153,
-    .bpp            = 16,
-    .xres           = 240,
-    .yres           = 320,
-    .hsync_len      = 20,
-    .vsync_len      = 4,
-    .left_margin    = 59,
-    .upper_margin   = 4,
-    .right_margin   = 16,
-    .lower_margin   = 0,
+	.pixclock	= 96153,
+	.bpp		= 16,
+	.xres		= 240,
+	.yres		= 320,
+	.hsync_len	= 20,
+	.vsync_len	= 4,
+	.left_margin	= 59,
+	.upper_margin	= 4,
+	.right_margin	= 16,
+	.lower_margin	= 0,
 },
 };
 
 
 static struct pxafb_mach_info aximx50_fb_info_qvga = {
-    .modes      = aximx50_pxafb_modes_qvga,
-    .num_modes  = ARRAY_SIZE(aximx50_pxafb_modes_qvga),
-    .lccr0      = LCCR0_ENB | LCCR0_LDM |                          // 0x9
-            LCCR0_SFM | LCCR0_IUM | LCCR0_EFM | LCCR0_Act |  // 0xf
-            LCCR0_QDM |                                      // 0x8
-                                    // 0x0
-                                    // 0x0
-            LCCR0_BM  | LCCR0_OUM                            // 0x3
-                                    // 0x0
-            ,                                                // 0x0
-            //0x003008f9,
-    .lccr3      = 0x04900008,
+	.modes		= aximx50_pxafb_modes_qvga,
+	.num_modes	= ARRAY_SIZE(aximx50_pxafb_modes_qvga),
+	.lccr0		= LCCR0_ENB | LCCR0_LDM |		// 0x9
+		LCCR0_SFM | LCCR0_IUM | LCCR0_EFM | LCCR0_Act |	// 0xf
+		LCCR0_QDM |					// 0x8
+								// 0x0
+								// 0x0
+		LCCR0_BM  | LCCR0_OUM				// 0x3
+								// 0x0
+		,						// 0x0
+		//0x003008f9,
+	.lccr3		= 0x04900008,
 };                                  
 
 static int lcd_vga = 0;
 
 static int aximx50_lcd_probe(void)
 {
-    //TODO: select the correct device automatic
-    #ifdef CONFIG_X50_VGA
-        lcd_vga = 1;
-    #endif
+	//TODO: select the correct device automatic
+	#ifdef CONFIG_X50_VGA
+	lcd_vga = 1;
+	#endif
 
-    if (lcd_vga == 1) {
-        printk(KERN_NOTICE "DELL AXIMX50 VGA LCD driver\n");
-        set_pxa_fb_info(&aximx50_fb_info_vga);
-    } else {
-        printk(KERN_NOTICE "DELL AXIMX50 QVGA LCD driver\n");
-        set_pxa_fb_info(&aximx50_fb_info_qvga);
-    }
+	if (lcd_vga == 1) {
+		printk(KERN_NOTICE "DELL AXIMX50 VGA LCD driver\n");
+		set_pxa_fb_info(&aximx50_fb_info_vga);
+	} else {
+		printk(KERN_NOTICE "DELL AXIMX50 QVGA LCD driver\n");
+		set_pxa_fb_info(&aximx50_fb_info_qvga);
+	}
 
-    return 0;
+	return 0;
 }
 
 static struct platform_device aximx50_lcd = {
-    .name = "aximx50-lcd",
-    .id = -1,
+	.name = "aximx50-lcd",
+	.id = -1,
 };
 
 /***************
@@ -228,7 +228,7 @@ static struct platform_device *devices[] __initdata = {
 	&aximx50_buttons,
 	&aximx50_ts,
 	&aximx50_bl,
-    //&aximx50_lcd,
+	//&aximx50_lcd,
 };
 
 static void __init aximx50_map_io(void)
@@ -269,7 +269,7 @@ static void __init aximx50_init( void )
 	MSC2 = 0x16dc7ffc;
 #endif
 
-    aximx50_lcd_probe();
+	aximx50_lcd_probe();
 	platform_add_devices(devices, ARRAY_SIZE(devices));
 	pxa_set_udc_info(&aximx50_udc_mach_info);
 }
@@ -285,3 +285,4 @@ MACHINE_START(X50, "Dell Axim X50/X51(v)")
 	.init_machine = aximx50_init,
 MACHINE_END
 
+/* ex: set ts=8: */ 

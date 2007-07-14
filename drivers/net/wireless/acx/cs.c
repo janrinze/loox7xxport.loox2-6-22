@@ -106,7 +106,7 @@
 #ifdef PCMCIA_DEBUG
 static int pc_debug = PCMCIA_DEBUG;
 module_param(pc_debug, int, 0);
-static char *version = "$Revision: 1.3 $";
+static char *version = "$Revision: 1.10 $";
 #define DEBUG(n, args...) if (pc_debug>(n)) printk(KERN_DEBUG args);
 #else
 #define DEBUG(n, args...)
@@ -119,6 +119,8 @@ typedef struct local_info_t {
         dev_node_t      node;
         struct net_device *ndev;
 } local_info_t;
+
+static struct net_device *resume_ndev;
 
 
 /***********************************************************************
@@ -173,7 +175,7 @@ acxmem_e_suspend( struct net_device *ndev, pm_message_t state);
 acxmem_e_suspend( struct net_device *ndev, u32 state);
 #endif
 static void
-fw_resumer(struct net_device *ndev);
+fw_resumer(struct work_struct *notused);
 //fw_resumer( void *data );
 
 static int acx_netdev_event(struct notifier_block *this, unsigned long event, void *ptr)
@@ -2011,8 +2013,8 @@ acxmem_s_issue_cmd_timeo_debug(
 			acxmem_e_suspend (adev, 0);
 #endif
 			{
-				struct work_struct *notused;
-				fw_resumer (adev->ndev);
+				resume_ndev = adev->ndev;
+				fw_resumer (NULL);
 			}
 		}
 
@@ -2375,164 +2377,161 @@ acxmem_complete_hw_reset (acx_device_t *adev)
 	return 0;
 }
 
-static int acx_init_netdev(struct pcmcia_device *link, struct net_device *ndev)
+static int acx_init_netdev(struct net_device *ndev, struct device *dev, int base_addr, int addr_size, int irq)
 {
-        const char *chip_name;
-        int result = -EIO;
-        int err;
-        unsigned long addr_size=0;
-        u8 chip_type;
-        acx_device_t *adev = NULL;
+	const char *chip_name;
+	int result = -EIO;
+	int err;
+	u8 chip_type;
+	acx_device_t *adev = NULL;
  
-        FN_ENTER;
- 
-        /* FIXME: prism54 calls pci_set_mwi() here,
-         * should we do/support the same? */
-                                                                 
-        /* chiptype is u8 but id->driver_data is ulong
-        ** Works for now (possible values are 1 and 2) */
-        chip_type = CHIPTYPE_ACX100;
-        /* acx100 and acx111 have different PCI memory regions */
-        if (chip_type == CHIPTYPE_ACX100) {
-                chip_name = "ACX100";
-        } else if (chip_type == CHIPTYPE_ACX111) {
-                chip_name = "ACX111";
-        } else {
-                printk("acx: unknown chip type 0x%04X\n", chip_type);
-                goto fail_unknown_chiptype;
-        }
-        
-        printk("acx: found %s-based wireless network card\n", chip_name);
-        log(L_ANY, "initial debug setting is 0x%04X\n", acx_debug);
+	FN_ENTER;
+
+	/* FIXME: prism54 calls pci_set_mwi() here,
+	 * should we do/support the same? */
+
+	/* chiptype is u8 but id->driver_data is ulong
+	** Works for now (possible values are 1 and 2) */
+	chip_type = CHIPTYPE_ACX100;
+	/* acx100 and acx111 have different PCI memory regions */
+	if (chip_type == CHIPTYPE_ACX100) {
+		chip_name = "ACX100";
+	} else if (chip_type == CHIPTYPE_ACX111) {
+		chip_name = "ACX111";
+	} else {
+		printk("acx: unknown chip type 0x%04X\n", chip_type);
+		goto fail_unknown_chiptype;
+	}
+
+	printk("acx: found %s-based wireless network card\n", chip_name);
+	log(L_ANY, "initial debug setting is 0x%04X\n", acx_debug);
 
 
-        platform_set_drvdata(link, ndev);
+	dev_set_drvdata(dev, ndev);
 
-        ether_setup(ndev);
+	ether_setup(ndev);
 
-        ndev->irq = link->irq.AssignedIRQ;
+	ndev->irq = irq;
 
-        ndev->base_addr = memwin.Base;
-        addr_size=memwin.Size;
+	ndev->base_addr = base_addr;
 printk (KERN_INFO "memwinbase=%lx memwinsize=%u\n",memwin.Base,memwin.Size);
-        if (addr_size == 0 || ndev->irq == 0)
-                goto fail_hw_params;
-        ndev->open = &acxmem_e_open;
-        ndev->stop = &acxmem_e_close;
-        //pdev->dev.release = &acxmem_e_release;
-        ndev->hard_start_xmit = &acx_i_start_xmit;
-        ndev->get_stats = &acx_e_get_stats;
+	if (addr_size == 0 || ndev->irq == 0)
+		goto fail_hw_params;
+	ndev->open = &acxmem_e_open;
+	ndev->stop = &acxmem_e_close;
+	//pdev->dev.release = &acxmem_e_release;
+	ndev->hard_start_xmit = &acx_i_start_xmit;
+	ndev->get_stats = &acx_e_get_stats;
 #if IW_HANDLER_VERSION <= 5
-        ndev->get_wireless_stats = &acx_e_get_wireless_stats;
+	ndev->get_wireless_stats = &acx_e_get_wireless_stats;
 #endif
-        ndev->wireless_handlers = (struct iw_handler_def *)&acx_ioctl_handler_def;
-        ndev->set_multicast_list = &acxmem_i_set_multicast_list;
-        ndev->tx_timeout = &acxmem_i_tx_timeout;
-        ndev->change_mtu = &acx_e_change_mtu;
-        ndev->watchdog_timeo = 4 * HZ;
+	ndev->wireless_handlers = (struct iw_handler_def *)&acx_ioctl_handler_def;
+	ndev->set_multicast_list = &acxmem_i_set_multicast_list;
+	ndev->tx_timeout = &acxmem_i_tx_timeout;
+	ndev->change_mtu = &acx_e_change_mtu;
+	ndev->watchdog_timeo = 4 * HZ;
 
-        adev = ndev2adev(ndev);
-        spin_lock_init(&adev->lock);    /* initial state: unlocked */
-        spin_lock_init(&adev->txbuf_lock);
-        /* We do not start with downed sem: we want PARANOID_LOCKING to work */
-        sema_init(&adev->sem, 1);       /* initial state: 1 (upped) */
-        /* since nobody can see new netdev yet, we can as well
-        ** just _presume_ that we're under sem (instead of actually taking it): */
-        /* acx_sem_lock(adev); */
-        adev->dev = &link->dev;
-        adev->ndev = ndev;
-        adev->dev_type = DEVTYPE_MEM;
-        adev->chip_type = chip_type;
-        adev->chip_name = chip_name;
-        adev->io = (CHIPTYPE_ACX100 == chip_type) ? IO_ACX100 : IO_ACX111;
-        adev->membase = (volatile u32 *) ndev->base_addr;
-        adev->iobase = (volatile u32 *) ioremap_nocache (ndev->base_addr, addr_size);
-        /* to find crashes due to weird driver access
-         * to unconfigured interface (ifup) */
-        adev->mgmt_timer.function = (void (*)(unsigned long))0x0000dead;
+	adev = ndev2adev(ndev);
+	spin_lock_init(&adev->lock);	/* initial state: unlocked */
+	spin_lock_init(&adev->txbuf_lock);
+	/* We do not start with downed sem: we want PARANOID_LOCKING to work */
+	sema_init(&adev->sem, 1);	/* initial state: 1 (upped) */
+	/* since nobody can see new netdev yet, we can as well
+	** just _presume_ that we're under sem (instead of actually taking it): */
+	/* acx_sem_lock(adev); */
+	adev->dev = dev;
+	adev->ndev = ndev;
+	adev->dev_type = DEVTYPE_MEM;
+	adev->chip_type = chip_type;
+	adev->chip_name = chip_name;
+	adev->io = (CHIPTYPE_ACX100 == chip_type) ? IO_ACX100 : IO_ACX111;
+	adev->membase = (volatile u32 *) ndev->base_addr;
+	adev->iobase = (volatile u32 *) ioremap_nocache (ndev->base_addr, addr_size);
+	/* to find crashes due to weird driver access
+	 * to unconfigured interface (ifup) */
+	adev->mgmt_timer.function = (void (*)(unsigned long))0x0000dead;
 
 #if defined(NONESSENTIAL_FEATURES)
-        acx_show_card_eeprom_id(adev);
+	acx_show_card_eeprom_id(adev);
 #endif /* NONESSENTIAL_FEATURES */
 
 #ifdef SET_MODULE_OWNER
-        SET_MODULE_OWNER(ndev);
+	SET_MODULE_OWNER(ndev);
 #endif
-        // need to fix that @@
-        SET_NETDEV_DEV(ndev, &link->dev);
+	// need to fix that @@
+	SET_NETDEV_DEV(ndev, dev);
 
-        log(L_IRQ|L_INIT, "using IRQ %d\n", ndev->irq);
+	log(L_IRQ|L_INIT, "using IRQ %d\n", ndev->irq);
 
-        /* ok, pci setup is finished, now start initializing the card */
+	/* ok, pci setup is finished, now start initializing the card */
 
-        if (OK != acxmem_complete_hw_reset (adev))
-          goto fail_reset;
+	if (OK != acxmem_complete_hw_reset (adev))
+	  goto fail_reset;
 
-        /*
-         * Set up default things for most of the card settings.
-         */
-        acx_s_set_defaults(adev);
+	/*
+	 * Set up default things for most of the card settings.
+	 */
+	acx_s_set_defaults(adev);
 
-        /* Register the card, AFTER everything else has been set up,
-         * since otherwise an ioctl could step on our feet due to
-         * firmware operations happening in parallel or uninitialized data */
-        err = register_netdev(ndev);
-        if (OK != err) {
-                printk("acx: register_netdev() FAILED: %d\n", err);
-                goto fail_register_netdev;
-        }
-        
-        acx_proc_register_entries(ndev);
+	/* Register the card, AFTER everything else has been set up,
+	 * since otherwise an ioctl could step on our feet due to
+	 * firmware operations happening in parallel or uninitialized data */
+	err = register_netdev(ndev);
+	if (OK != err) {
+		printk("acx: register_netdev() FAILED: %d\n", err);
+		goto fail_register_netdev;
+	}
 
-        /* Now we have our device, so make sure the kernel doesn't try
-         * to send packets even though we're not associated to a network yet */
-        acx_stop_queue(ndev, "on probe");
-        acx_carrier_off(ndev, "on probe");
+	acx_proc_register_entries(ndev);
 
-        /*
-         * Set up a default monitor type so that poor combinations of initialization
-         * sequences in monitor mode don't end up destroying the hardware type.
-         */
-        adev->monitor_type = ARPHRD_ETHER;
+	/* Now we have our device, so make sure the kernel doesn't try
+	 * to send packets even though we're not associated to a network yet */
+	acx_stop_queue(ndev, "on probe");
+	acx_carrier_off(ndev, "on probe");
 
-        /*
-         * Register to receive inetaddr notifier changes.  This will allow us to
-         * catch if the user changes the MAC address of the interface.
-         */
-        register_netdevice_notifier(&acx_netdev_notifier);
+	/*
+	 * Set up a default monitor type so that poor combinations of initialization
+	 * sequences in monitor mode don't end up destroying the hardware type.
+	 */
+	adev->monitor_type = ARPHRD_ETHER;
 
-        /* after register_netdev() userspace may start working with dev
-         * (in particular, on other CPUs), we only need to up the sem */
-        /* acx_sem_unlock(adev); */
+	/*
+	 * Register to receive inetaddr notifier changes.  This will allow us to
+	 * catch if the user changes the MAC address of the interface.
+	 */
+	register_netdevice_notifier(&acx_netdev_notifier);
 
-        printk("acx "ACX_RELEASE": net device %s, driver compiled "
-                "against wireless extensions %d and Linux %s\n",
-                ndev->name, WIRELESS_EXT, UTS_RELEASE);
+	/* after register_netdev() userspace may start working with dev
+	 * (in particular, on other CPUs), we only need to up the sem */
+	/* acx_sem_unlock(adev); */
+
+	printk("acx "ACX_RELEASE": net device %s, driver compiled "
+		"against wireless extensions %d and Linux %s\n",
+		ndev->name, WIRELESS_EXT, UTS_RELEASE);
 
 #if CMD_DISCOVERY
-        great_inquisitor(adev);
+	great_inquisitor(adev);
 #endif
 
-        result = OK;
-        goto done;
+	result = OK;
+	goto done;
 
-        /* error paths: undo everything in reverse order... */
+	/* error paths: undo everything in reverse order... */
 
 fail_register_netdev:
 
-        acxmem_s_delete_dma_regions(adev);
+	acxmem_s_delete_dma_regions(adev);
 
 fail_reset:
 fail_hw_params:
-        free_netdev(ndev);
+	free_netdev(ndev);
 fail_unknown_chiptype:
 
 
 done:
-        FN_EXIT1(result);
-        return result;
+	FN_EXIT1(result);
+	return result;
 }
-
 
 
 /***********************************************************************
@@ -2689,11 +2688,11 @@ end:
 }
 
 
-
 static void
-fw_resumer(struct net_device *ndev)
+fw_resumer(struct work_struct *notused)
 {
 	acx_device_t *adev;
+	struct net_device *ndev = resume_ndev;
 
 	printk("acx: resume handler is experimental!\n");
 	printk("rsm: got dev %p\n", ndev);
@@ -5548,7 +5547,7 @@ static int acx_cs_config(struct pcmcia_device *link)
           memwin.Base=req.Base;
           memwin.Size=req.Size;
 
-	acx_init_netdev(link, local->ndev);
+	acx_init_netdev(local->ndev, &link->dev, memwin.Base, memwin.Size, link->irq.AssignedIRQ);
 
 #if 1	
 	/*
@@ -5613,15 +5612,19 @@ static int acx_cs_resume(struct pcmcia_device *link)
 {
 	local_info_t *local = link->priv;
 	
-	fw_resumer(local->ndev);
+	FN_ENTER;
+	resume_ndev = local->ndev;
 
+	schedule_work( &fw_resume_work );
+	
 	/* Already done in suspend
 	if (link->open) {
 	  // do we need reset for ACX, if so what function nane is ?
 		//reset_acx_card(local->eth_dev);
 		netif_device_attach(local->ndev);
 	} */
-
+	
+	FN_EXIT0;
 	return 0;
 }
 

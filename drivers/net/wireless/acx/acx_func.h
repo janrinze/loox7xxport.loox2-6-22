@@ -104,7 +104,7 @@ void log_fn_exit_v(const char *funcname, int v);
 #define log(chan, args...) \
 	do { \
 		if (acx_debug & (chan)) \
-			printk(args); \
+			printk(KERN_DEBUG args); \
 	} while (0)
 #define printk_ratelimited(args...) printk(args)
 

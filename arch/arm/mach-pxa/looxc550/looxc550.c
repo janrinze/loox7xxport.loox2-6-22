@@ -115,9 +115,15 @@ static struct pxamci_platform_data looxc550_mci_platform_data = {
 	.get_ro		= looxc550_mci_get_ro
 };
 
+/****************************     UDC     **************************/
+
+static struct pxa2xx_udc_mach_info looxc550_udc_info __initdata = {
+	.gpio_pullup	= GPIO_NR_LOOXC550_USB_PULLUP
+};
+
 /**************************** Entry point **************************/
 struct ads7846_ssp_platform_data looxc550_ssp_params = {
-	.port = 2,
+	.port = 1,
 	.pd_bits = 1,
 	.freq = 720000,
 };
@@ -154,15 +160,21 @@ static struct platform_device ads7846_ts = {
 	}
 };
 
+static struct platform_device looxc550_keyboard = {
+	.name = "looxc550-buttons"
+};
+
 static struct platform_device *devices[] __initdata = {
 	&ads7846_ssp,
-	&ads7846_ts
+	&ads7846_ts,
+	&looxc550_keyboard
 };
 
 static void __init looxc550_init(void)
 {
 	set_pxa_fb_info(&looxc550_pxafb_info);
 	pxa_set_mci_info(&looxc550_mci_platform_data);
+	pxa_set_udc_info(&looxc550_udc_info);
 	platform_add_devices(devices, ARRAY_SIZE(devices));
 }
 

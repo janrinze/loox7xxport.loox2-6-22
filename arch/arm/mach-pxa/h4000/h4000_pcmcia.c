@@ -13,6 +13,7 @@
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
+#include <linux/delay.h>
 #include <asm/hardware.h>
 #include <asm/arch/pxa-regs.h>
 #include <asm/hardware/ipaq-asic3.h>
@@ -23,9 +24,70 @@
 
 extern struct platform_device h4000_asic3;
 
+static int power_state = 0;
+
 static struct pcmcia_irqs socket_state_irqs[] = {
 //	{0, IRQ_GPIO(GPIO_NR_H4000_WLAN_MAC_IRQ_N), "PCMCIA0"},
 };
+
+int h4000_wlan_start(void)
+{
+        int timeout;
+	printk("h4000_wlan_start\n");
+
+        printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
+        asic3_set_gpio_out_d(&h4000_asic3.dev, GPIOD_WLAN_MAC_RESET, GPIOD_WLAN_MAC_RESET);
+//        printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
+        mdelay(100);
+//        printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
+        
+	asic3_set_gpio_dir_b(&h4000_asic3.dev, 1<<GPIOB_WLAN_SOMETHING, 0);
+//	printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
+        
+	asic3_set_gpio_out_c(&h4000_asic3.dev, GPIOC_WLAN_POWER_ON, GPIOC_WLAN_POWER_ON);
+//	printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
+	mdelay(30);
+//	printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
+	mdelay(100);
+
+//	MECR |= MECR_CIT;
+	printk("GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N));
+
+	mdelay(100);
+	asic3_set_gpio_out_d(&h4000_asic3.dev, GPIOD_WLAN_MAC_RESET, 0);
+
+        int val = -1;
+	for (timeout = 250; timeout; timeout--) {
+		int v2 = !!gpio_get_value(GPIO_NR_H4000_WLAN_MAC_IRQ_N);
+
+		if (v2 != val) {
+        		printk("%d: GPIO_NR_H4000_WLAN_MAC_IRQ_N=%d\n", timeout, v2);
+        		val = v2;
+		}
+
+		if (v2) break;
+		mdelay(1);
+	}
+
+	if (!timeout) printk("Timeout waiting for WLAN\n");
+
+	return 0;
+}
+
+int h4000_wlan_stop(void)
+{
+	printk("h4000_wlan_stop\n");
+	asic3_set_gpio_out_d(&h4000_asic3.dev, GPIOD_WLAN_MAC_RESET, GPIOD_WLAN_MAC_RESET);
+	mdelay(100);
+	asic3_set_gpio_out_c(&h4000_asic3.dev, GPIOC_WLAN_POWER_ON, 0);
+	asic3_set_gpio_dir_b(&h4000_asic3.dev, 1<<GPIOB_WLAN_SOMETHING, 1);
+	mdelay(100);
+	asic3_set_gpio_out_d(&h4000_asic3.dev, GPIOD_WLAN_MAC_RESET, 0);
+
+//	MECR &= ~MECR_CIT;
+
+	return 0;
+}
 
 static int h4000_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 {
@@ -59,7 +121,8 @@ static void h4000_pcmcia_hw_shutdown(struct soc_pcmcia_socket *skt)
 static void h4000_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
 				      struct pcmcia_state *state)
 {
-	printk("%s\n", __FUNCTION__);
+	//This function is polled at regular intervals
+	//printk("%s\n", __FUNCTION__);
 	state->detect = 1;	// always attached
 	state->ready = GET_H4000_GPIO(WLAN_MAC_IRQ_N) ? 1 : 0;
 	state->bvd1 = 1;
@@ -79,10 +142,20 @@ static int h4000_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 	/* Silently ignore Vpp, output enable, speaker enable. */
 	switch (state->Vcc) {
 	case 0:
-		return h4000_wlan_stop();
+		if (power_state) {
+			h4000_wlan_stop();
+			power_state = 0;
+			return 0;
+		}
+		break;
 	case 50:
 	case 33:
-		return h4000_wlan_start();
+		if (!power_state) {
+			h4000_wlan_start();
+			power_state = 1;
+			return 0;
+		}
+		break;
 	default:
 		printk(KERN_ERR "%s: Unsupported Vcc:%d\n", __FUNCTION__,
 		       state->Vcc);
