@@ -1,37 +1,6 @@
-
-//#include <linux/init.h>
 #include <linux/kernel.h>
-//#include <linux/ioport.h>
 #include <linux/platform_device.h>
-/*#include <linux/input.h>
-#include <linux/input_pda.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/gpio_keys.h>
-#include <linux/dpm.h>
-#include <linux/rs232_serial.h>
-#include <asm/gpio.h>
-#include <asm/arch/pxa2xx_udc_gpio.h>
-*/
 #include <asm/mach-types.h>
-/*#include <asm/io.h>
-#include <asm/hardware.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
-
-#include <asm/arch/serial.h>
-#include <asm/arch/hx4700.h>
-#include <asm/arch/hx4700-gpio.h>
-#include <asm/arch/hx4700-asic.h>
-#include <asm/arch/hx4700-core.h>
-#include <asm/arch/pxa-regs.h>
-#include <asm/hardware/asic3_keys.h>
-#include <asm/arch/udc.h>
-#include <asm/arch/audio.h>
-#include <asm/arch/irda.h>
-
-#include <asm/hardware/ipaq-asic3.h>
-#include <linux/soc/asic3_base.h>*/
 #include <linux/ads7846.h>
 #include <linux/touchscreen-adc.h>
 #include <linux/adc_battery.h>

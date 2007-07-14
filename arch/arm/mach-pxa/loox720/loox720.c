@@ -46,22 +46,24 @@
 #include <linux/soc/asic3_base.h>
 
 #include <linux/corgi_bl.h>
+#include <asm/arch/pxa2xx_udc_gpio.h>
 
 #include "../generic.h"
+#include "loox720_core.h"
 
 /* Initialization code */
 
-static void __init loox720_map_io(void)
-{
-	pxa_map_io();
-}
+//static void __init loox720_map_io(void)
+//{
+//	pxa_map_io();
+//}
 
-static void __init loox720_init_irq(void)
-{
-	/* int irq; */
-
-	pxa_init_irq();
-}
+//static void __init loox720_init_irq(void)
+//{
+//	/* int irq; */
+//
+//	pxa_init_irq();
+//}
 
 /* ASIC3*/
 
@@ -156,7 +158,7 @@ EXPORT_SYMBOL(loox720_asic3);
 /* PXA2xx Keys */
 
 static struct gpio_keys_button loox720_button_table[] = {
-	{ KEY_SUSPEND, GPIO_NR_LOOX720_KEY_ON, 1 },
+	{ KEY_POWER, GPIO_NR_LOOX720_KEY_ON, 1 },
 };
 
 static struct gpio_keys_platform_data loox720_pxa_keys_data = {
@@ -251,8 +253,40 @@ static struct platform_device loox720_battery = {
 	.name = "loox720-battery",
 };
 
+static struct loox720_core_funcs core_funcs;
+
+static struct platform_device loox720_core = {
+	.name = "loox720-core",
+	.id		= -1,
+	.dev = {
+		.platform_data = &core_funcs,
+	},
+};
+
+/*struct pxa2xx_udc_gpio_info loox720_udc_info = {
+	.detect_gpio = {&loox720_asic3.dev, ASIC3_GPIOD_IRQ_BASE + GPIOD_USBC_DETECT_N},
+	.detect_gpio_negative = 1,
+	.power_ctrl = {
+		.power_gpio = {&pxagpio_device.dev, GPIO_NR_LOOX720_USB_PUEN},
+	},
+
+};*/
+
+static struct pxa2xx_udc_mach_info loox720_udc_info __initdata = {
+	.gpio_pullup = GPIO_NR_LOOX720_USB_PULLUP,
+};
+
+/*static struct platform_device loox720_udc = { 
+	.name = "pxa2xx-udc-gpio",
+	.dev = {
+		.platform_data = &loox720_udc_info
+	}
+};*/
+
+
 
 static struct platform_device *devices[] __initdata = {
+	&loox720_core,
 	&pxa_spi_nssp,
 	&loox720_asic3,
 	&loox720_buttons,
@@ -260,6 +294,7 @@ static struct platform_device *devices[] __initdata = {
 	&loox720_pxa_keys,
 	&loox720_bl,
 	&loox720_battery,
+//	&loox720_udc,
 };
 
 static void __init loox720_init( void )
@@ -294,6 +329,8 @@ static void __init loox720_init( void )
 	mdelay(50);
 	SET_LOOX720_GPIO( ASIC3_RESET_N, 1 );
 	mdelay(50);
+	
+	pxa_set_udc_info(&loox720_udc_info);
 
 	platform_add_devices( devices, ARRAY_SIZE(devices) );
 }
@@ -306,8 +343,8 @@ MACHINE_START(LOOX720, "FSC Loox 720")
 	.phys_io = 0x40000000,
 	.io_pg_offst = (io_p2v(0x40000000) >> 18) & 0xfffc,
 	.boot_params	= 0xaa000100,
-	.map_io		= loox720_map_io,
-	.init_irq	= loox720_init_irq,
-	.timer = &pxa_timer,
+	.map_io		= pxa_map_io,
+	.init_irq	= pxa_init_irq,
+	.timer =	&pxa_timer,
 	.init_machine = loox720_init,
 MACHINE_END

@@ -44,3 +44,10 @@ config CONFIG_LOOX720_LIMIT_CPUFREQ
 	default yes
 	help
 		Not all LOOX pdas work on 624MHz. So, to avoid hangs, enable this.
+
+config CONFIG_LOOX720_GPIOED
+	tristate 'access GPIO from userland'
+	depends on MACH_LOOX720
+	default m
+	help
+		Enable this to allow GPIO access from userland.
