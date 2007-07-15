@@ -20,6 +20,7 @@
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/loox720-gpio.h>
 #include <asm/arch/loox720-asic.h>
+#include <asm/arch/loox720-cpld.h>
 
 #include <linux/soc/asic3_base.h>
 #include <asm/hardware/ipaq-asic3.h>
@@ -28,12 +29,15 @@
 
 #define EGPIO_OFFSET	0
 #define EGPIO_BASE	(PXA_CS5_PHYS+EGPIO_OFFSET)
-#define WLAN_OFFSET	0x800000
-#define WLAN_BASE	(PXA_CS5_PHYS+WLAN_OFFSET)
-#define PPSH_OFFSET	0x1000000
+//#define WLAN_OFFSET	0x800000
+//#define WLAN_BASE	(PXA_CS5_PHYS+WLAN_OFFSET)
+//#define PPSH_OFFSET	0x1000000
 
 volatile u_int16_t *egpios;
 u_int16_t egpio_reg;
+
+volatile u_int16_t *cpld_regs;
+static u_int16_t cpld_bits = 0xFFFF;
 
 /*
  * may make sense to put egpios elsewhere, but they're here now
@@ -57,6 +61,24 @@ loox720_egpio_disable( unsigned long bits )
 	*egpios = egpio_reg;
 }
 EXPORT_SYMBOL(loox720_egpio_disable);
+
+void
+loox720_cpld_enable( u16 bits )
+{
+	cpld_bits |= bits;
+	cpld_regs[0x0F] = cpld_bits;
+        printk("cpld_enable:  [%04X] = %04X\n", (u32)(cpld_regs + 0x0F) , (u32)cpld_bits);
+}
+EXPORT_SYMBOL(loox720_cpld_enable);
+
+void
+loox720_cpld_disable( u16 bits )
+{
+	cpld_bits &= ~bits;
+	cpld_regs[0x0F] = cpld_bits;
+	printk("cpld_disable: [%04X] = %04X\n", (u32)(cpld_regs + 0x0F), (u32)cpld_bits);
+}
+EXPORT_SYMBOL(loox720_cpld_disable);
 
 int
 loox720_udc_detect( void )
@@ -107,19 +129,23 @@ ac_isr(int irq, void *data)
 static int
 loox720_core_probe( struct platform_device *pdev )
 {
-	unsigned int statusd;
-	int connected;
-	struct loox720_core_funcs *funcs = (struct loox720_core_funcs *) pdev->dev.platform_data;
+//	unsigned int statusd;
+//	int connected;
+//	struct loox720_core_funcs *funcs = (struct loox720_core_funcs *) pdev->dev.platform_data;
 	printk( KERN_NOTICE "Loox 720 Core Hardware Driver\n" );
 
 //	funcs->udc_detect = loox720_udc_detect;
 	
-	/* UART IRQ */
 	egpios = (volatile u_int16_t *)ioremap_nocache( EGPIO_BASE, sizeof *egpios );
 	if (!egpios)
 		return -ENODEV;
 
-        serial_irq = asic3_irq_base( &loox720_asic3.dev ) + ASIC3_GPIOD_IRQ_BASE
+	cpld_regs = (volatile u_int16_t *)(u32)ioremap_nocache( LOOX720_CPLD_PHYS, LOOX720_CPLD_SIZE );
+	if (!cpld_regs)
+		return -ENODEV;
+
+	/* UART IRQ */
+/*        serial_irq = asic3_irq_base( &loox720_asic3.dev ) + ASIC3_GPIOD_IRQ_BASE
                 + GPIOD_COM_DCD;
 	printk("serial irq: %d\n", serial_irq);
         if (request_irq( serial_irq, serial_isr, SA_INTERRUPT,
@@ -146,7 +172,7 @@ loox720_core_probe( struct platform_device *pdev )
 		free_irq( serial_irq, NULL );
 		return -ENODEV;
 	}
-	SET_LOOX720_GPIO_N( CHARGE_EN, connected );
+	SET_LOOX720_GPIO_N( CHARGE_EN, connected );*/
 	return 0;
 }
 
@@ -155,14 +181,18 @@ loox720_core_remove( struct platform_device *dev )
 {
 	int irq;
 
-        irq = asic3_irq_base( &loox720_asic3.dev ) + ASIC3_GPIOD_IRQ_BASE
-			+ GPIOD_COM_DCD;
+//        irq = asic3_irq_base( &loox720_asic3.dev ) + ASIC3_GPIOD_IRQ_BASE
+//			+ GPIOD_COM_DCD;
 	if (egpios != NULL)
 		iounmap( (void *)egpios );
-	if (serial_irq != 0xffffffff)
+		
+	if (cpld_regs)
+		iounmap( cpld_regs );
+		
+/*	if (serial_irq != 0xffffffff)
 		free_irq( serial_irq, NULL );
 	if (ac_irq != 0xffffffff)
-		free_irq( ac_irq, NULL );
+		free_irq( ac_irq, NULL );*/
 	return 0;
 }
 

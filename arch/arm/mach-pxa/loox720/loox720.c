@@ -50,6 +50,8 @@
 
 #include "../generic.h"
 #include "loox720_core.h"
+#include <asm/arch/loox720-cpld.h>
+#include <asm/io.h>
 
 /* Initialization code */
 
@@ -144,7 +146,7 @@ static struct resource asic3_resources[] = {
 };
 
 struct platform_device loox720_asic3 = {
-        .name           = "asic3",
+        .name           = "ASIC3",
         .id             = 0,
         .num_resources  = ARRAY_SIZE(asic3_resources),
         .resource       = asic3_resources,
@@ -218,16 +220,16 @@ static void loox720_set_bl_intensity(int intensity)
 {
 	if (intensity < 7) intensity = 0;
 
-//	pxa_gpio_mode(GPIO_NR_LOOX720_BACKLIGHT_ON | GPIO_OUT);
-//	SET_LOOX720_GPIO(BACKLIGHT_ON, intensity != 0);
 	PWM_CTRL0 = 1;
 	PWM_PWDUTY0 = intensity;
 	PWM_PERVAL0 = LOOX720_MAX_INTENSITY;
 
 	if (intensity > 0) {
+		loox720_cpld_enable(0x4);
 		pxa_set_cken(CKEN0_PWM0, 1);
 	} else {
                 pxa_set_cken(CKEN0_PWM0, 0);
+		loox720_cpld_disable(0x4);
 	}
 }
 
@@ -286,9 +288,9 @@ static struct pxa2xx_udc_mach_info loox720_udc_info __initdata = {
 
 
 static struct platform_device *devices[] __initdata = {
+	&loox720_asic3,
 	&loox720_core,
 	&pxa_spi_nssp,
-	&loox720_asic3,
 	&loox720_buttons,
 	&loox720_ts,
 	&loox720_pxa_keys,
