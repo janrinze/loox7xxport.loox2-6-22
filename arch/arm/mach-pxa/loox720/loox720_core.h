@@ -1,4 +1,4 @@
-/* Core Hardware driver for X30 (ASIC3, EGPIOs)
+/* Core Hardware driver for FSC Loox 720
  *
 * Authors Giuseppe Zompatori <giuseppe_zompatori@yahoo.it>
  *

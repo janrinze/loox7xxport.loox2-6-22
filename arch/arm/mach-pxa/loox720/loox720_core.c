@@ -1,4 +1,4 @@
-/* Core Hardware driver for x30 (ASIC3, EGPIOs)
+/* Core Hardware driver for FSC Loox 720
  *
  * Authors: Giuseppe Zompatori <giuseppe_zompatori@yahoo.it>
  *
@@ -67,7 +67,7 @@ loox720_cpld_enable( u16 bits )
 {
 	cpld_bits |= bits;
 	cpld_regs[0x0F] = cpld_bits;
-        printk("cpld_enable:  [%04X] = %04X\n", (u32)(cpld_regs + 0x0F) , (u32)cpld_bits);
+//        printk("cpld_enable:  [%04X] = %04X\n", (u32)(cpld_regs + 0x0F) , (u32)cpld_bits);
 }
 EXPORT_SYMBOL(loox720_cpld_enable);
 
@@ -76,7 +76,7 @@ loox720_cpld_disable( u16 bits )
 {
 	cpld_bits &= ~bits;
 	cpld_regs[0x0F] = cpld_bits;
-	printk("cpld_disable: [%04X] = %04X\n", (u32)(cpld_regs + 0x0F), (u32)cpld_bits);
+//	printk("cpld_disable: [%04X] = %04X\n", (u32)(cpld_regs + 0x0F), (u32)cpld_bits);
 }
 EXPORT_SYMBOL(loox720_cpld_disable);
 
