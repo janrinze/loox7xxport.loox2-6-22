@@ -42,7 +42,8 @@ else \
 #define GPIO_NR_LOOX720_PWR_CAP1			6
 #define GPIO_NR_LOOX720_PWR_CAP2			7
 #define GPIO_NR_LOOX720_PWR_CAP3			8
-#define GPIO_NR_LOOX720_CLK_PIO_CPU_13MHz 	9
+//#define GPIO_NR_LOOX720_CLK_PIO_CPU_13MHz 	9
+#define GPIO_NR_LOOX720_AC_IN_N			9
 #define GPIO_NR_LOOX720_CLK_TOUT_32KHz		10
 #define GPIO_NR_LOOX720_CPU_BF_DOOR_N		11
 #define GPIO_NR_LOOX720_ASIC3_EXT_INT		12
@@ -50,7 +51,7 @@ else \
 #define GPIO_NR_LOOX720_WLAN_IRQ_N		14
 #define GPIO_NR_LOOX720_CS1_N			15
 
-#define GPIO_NR_LOOX720_BACKLIGHT_ON		17                      /* Tied to PWM0 when Alt function == 2 */
+#define GPIO_NR_LOOX720_BACKLIGHT		17                      /* Tied to PWM0 when Alt function == 2 */
 
 #define GPIO_NR_LOOX720_RDY			18
 #define GPIO_NR_LOOX720_TOUCHPANEL_SPI_CLK 	19
@@ -113,8 +114,6 @@ else \
 #define GPIO_NR_LOOX720_EARPHONE_DET_N		75
 #define GPIO_NR_LOOX720_USB_PUEN		76
 
-#define GPIO_NR_LOOX720_BACKLIGHT_EN		77
-
 #define GPIO_NR_LOOX720_CS2_N			78
 #define GPIO_NR_LOOX720_CS3_N			79
 #define GPIO_NR_LOOX720_CS4_N			80
@@ -167,6 +166,7 @@ else \
 #define EGPIO7_VCC_3V3_WL_EN		(1<<7)	/* WLAN 3.3V enable */
 #define EGPIO8_USB_3V3_ON		(1<<8)	/* unused */
 
+#define GPIO_NR_LOOX720_AC_IN_N_MD		( 9 | GPIO_ALT_FN_1_IN)
 #define GPIO_NR_LOOX720_SDCS2_N_MD		(20 | GPIO_ALT_FN_1_OUT | GPIO_DFLT_HIGH)
 #define GPIO_NR_LOOX720_SDCS3_N_MD		(21 | GPIO_ALT_FN_1_OUT | GPIO_DFLT_HIGH)
 #define GPIO_NR_LOOX720_SYNAPTICS_SPI_CLK_MD	(23 | GPIO_ALT_FN_2_IN)

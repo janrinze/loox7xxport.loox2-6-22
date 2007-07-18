@@ -42,120 +42,12 @@
 #include <asm/arch/udc.h>
 #include <asm/arch/audio.h>
 
-#include <asm/hardware/ipaq-asic3.h>
-#include <linux/soc/asic3_base.h>
-
 #include <linux/corgi_bl.h>
 #include <asm/arch/pxa2xx_udc_gpio.h>
 
 #include "../generic.h"
 #include "loox720_core.h"
 #include <asm/arch/loox720-cpld.h>
-#include <asm/io.h>
-
-/* Initialization code */
-
-//static void __init loox720_map_io(void)
-//{
-//	pxa_map_io();
-//}
-
-//static void __init loox720_init_irq(void)
-//{
-//	/* int irq; */
-//
-//	pxa_init_irq();
-//}
-
-/* ASIC3*/
-
-static struct asic3_platform_data loox720_asic3_platform_data = {
-        .gpio_a = {
-        //      .mask           = 0xffff,
-                .dir            = 0xffff, // Unknown, set as outputs so far
-                .init           = 0x0000,
-        //      .trigger_type   = 0x0000,
-        //      .edge_trigger   = 0x0000,
-        //      .leveltri       = 0x0000,
-        //      .sleep_mask     = 0xffff,
-                .sleep_out      = 0x0000,
-                .batt_fault_out = 0x0000,
-        //      .int_status     = 0x0000,
-                .alt_function   = 0xffff,
-                .sleep_conf     = 0x000c,
-        },
-        .gpio_b = {
-        //      .mask           = 0xffff,
-                .dir            = 0xffff, // Unknown, set as outputs so far
-                .init           = 0x0000,
-        //      .trigger_type   = 0x0000,
-        //      .edge_trigger   = 0x0000,
-        //      .leveltri       = 0x0000,
-        //      .sleep_mask     = 0xffff,
-                .sleep_out      = 0x0000,
-                .batt_fault_out = 0x0000,
-        //      .int_status     = 0x0000,
-                .alt_function   = 0xffff,
-                .sleep_conf     = 0x000c,
-        },
-        .gpio_c = {
-        //      .mask           = 0xffff,
-                .dir            = 0x6067,
-        // GPIOC_SD_CS_N | GPIOC_CIOW_N | GPIOC_CIOR_N  | GPIOC_PWAIT_N | GPIOC_PIOS16_N,
-                .init           = 0x0000,
-        //      .trigger_type   = 0x0000,
-        //      .edge_trigger   = 0x0000,
-        //      .leveltri       = 0x0000,
-        //      .sleep_mask     = 0xffff,
-                .sleep_out      = 0x0000,
-                .batt_fault_out = 0x0000,
-        //      .int_status     = 0x0000,
-                .alt_function   = 0xfff7, // GPIOC_LED_RED | GPIOC_LED_GREEN | GPIOC_LED_BLUE,
-                .sleep_conf     = 0x000c,
-        },
-        .gpio_d = {
-        //      .mask           = 0xffff,
-                .dir            = 0x0000, // Only inputs
-                .init           = 0x0000,
-        //      .trigger_type   = 0x67ff,
-        //      .edge_trigger   = 0x0000,
-        //      .leveltri       = 0x0000,
-        //      .sleep_mask     = 0x9800,
-                .sleep_out      = 0x0000,
-                .batt_fault_out = 0x0000,
-        //      .int_status     = 0x0000,
-                .alt_function   = 0x9800,
-                .sleep_conf     = 0x000c,
-        },
-        .bus_shift = 1,
-	.irq_base = LOOX720_ASIC3_IRQ_BASE,
-};
-
-
-static struct resource asic3_resources[] = {
-        [0] = {
-                .start  = LOOX720_ASIC3_PHYS,
-                .end    = LOOX720_ASIC3_PHYS + IPAQ_ASIC3_MAP_SIZE,
-                .flags  = IORESOURCE_MEM,
-        },
-        [1] = {
-                .start  = LOOX720_IRQ(ASIC3_EXT_INT),
-                .end    = LOOX720_IRQ(ASIC3_EXT_INT),
-                .flags  = IORESOURCE_IRQ,
-        },
-};
-
-struct platform_device loox720_asic3 = {
-        .name           = "ASIC3",
-        .id             = 0,
-        .num_resources  = ARRAY_SIZE(asic3_resources),
-        .resource       = asic3_resources,
-        .dev = {
-                .platform_data = &loox720_asic3_platform_data,
-        },
-};
-EXPORT_SYMBOL(loox720_asic3);
-
 
 /* PXA2xx Keys */
 
@@ -225,11 +117,11 @@ static void loox720_set_bl_intensity(int intensity)
 	PWM_PERVAL0 = LOOX720_MAX_INTENSITY;
 
 	if (intensity > 0) {
-		loox720_cpld_enable(0x4);
+		loox720_egpio_set_bit(LOOX720_CPLD_BACKLIGHT_BIT, 1);
 		pxa_set_cken(CKEN0_PWM0, 1);
 	} else {
+		loox720_egpio_set_bit(LOOX720_CPLD_BACKLIGHT_BIT, 0);
                 pxa_set_cken(CKEN0_PWM0, 0);
-		loox720_cpld_disable(0x4);
 	}
 }
 
@@ -274,8 +166,26 @@ static struct platform_device loox720_core = {
 
 };*/
 
+/*static void
+udc_enable(int cmd) 
+{
+	switch (cmd)
+	{
+		case PXA2XX_UDC_CMD_DISCONNECT:
+			printk (KERN_NOTICE "USB cmd disconnect\n");
+			loox720_udc_disable(0x00020000);
+			break;
+
+		case PXA2XX_UDC_CMD_CONNECT:
+			printk (KERN_NOTICE "USB cmd connect\n");
+			SET_X30_GPIO(USB_PUEN, 1);
+			break;
+	}
+}*/
+
 static struct pxa2xx_udc_mach_info loox720_udc_info __initdata = {
-	.gpio_pullup = GPIO_NR_LOOX720_USB_PULLUP,
+//	.gpio_pullup = GPIO_NR_LOOX720_USB_PULLUP,
+
 };
 
 /*static struct platform_device loox720_udc = { 
@@ -285,10 +195,7 @@ static struct pxa2xx_udc_mach_info loox720_udc_info __initdata = {
 	}
 };*/
 
-
-
 static struct platform_device *devices[] __initdata = {
-	&loox720_asic3,
 	&loox720_core,
 	&pxa_spi_nssp,
 	&loox720_buttons,

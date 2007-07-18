@@ -36,9 +36,6 @@
 volatile u_int16_t *egpios;
 u_int16_t egpio_reg;
 
-volatile u_int16_t *cpld_regs;
-static u_int16_t cpld_bits = 0xFFFF;
-
 /*
  * may make sense to put egpios elsewhere, but they're here now
  * since they share some of the same address space with the TI WLAN
@@ -62,29 +59,12 @@ loox720_egpio_disable( unsigned long bits )
 }
 EXPORT_SYMBOL(loox720_egpio_disable);
 
-void
-loox720_cpld_enable( u16 bits )
-{
-	cpld_bits |= bits;
-	cpld_regs[0x0F] = cpld_bits;
-//        printk("cpld_enable:  [%04X] = %04X\n", (u32)(cpld_regs + 0x0F) , (u32)cpld_bits);
-}
-EXPORT_SYMBOL(loox720_cpld_enable);
-
-void
-loox720_cpld_disable( u16 bits )
-{
-	cpld_bits &= ~bits;
-	cpld_regs[0x0F] = cpld_bits;
-//	printk("cpld_disable: [%04X] = %04X\n", (u32)(cpld_regs + 0x0F), (u32)cpld_bits);
-}
-EXPORT_SYMBOL(loox720_cpld_disable);
-
 int
 loox720_udc_detect( void )
 {
-	return (asic3_get_gpio_status_d(&loox720_asic3.dev)
-			& (1 << GPIOD_USBC_DETECT_N)) ? 0 : 1;
+//	return (asic3_get_gpio_status_d(&loox720_asic3.dev)
+//			& (1 << GPIOD_USBC_DETECT_N)) ? 0 : 1;
+    return 1;
 }
 
 static unsigned int serial_irq = 0xffffffff;
@@ -109,20 +89,24 @@ serial_isr(int irq, void *data)
 static int
 ac_isr(int irq, void *data)
 {
-	unsigned int statusd;
+//	unsigned int statusd;
 	int connected;
 
 	if (irq != ac_irq)
 	    return IRQ_NONE;
 
-	statusd = asic3_get_gpio_status_d( &loox720_asic3.dev );
-	connected = (statusd & (1<<GPIOD_AC_IN_N)) == 0;
+//	statusd = asic3_get_gpio_status_d( &loox720_asic3.dev );
+//	connected = (statusd & (1<<GPIOD_AC_IN_N)) == 0;
+
+	connected = GET_LOOX720_GPIO(AC_IN_N) == 0;
+	
 	printk( KERN_INFO "ac_isr: connected=%d\n", connected );
 	if (connected)
 	    set_irq_type( ac_irq, IRQT_RISING ); 
 	else
 	    set_irq_type( ac_irq, IRQT_FALLING ); 
-	SET_LOOX720_GPIO_N( CHARGE_EN, connected );
+
+//	SET_LOOX720_GPIO_N( CHARGE_EN, connected );
 	return IRQ_HANDLED;
 }
 
@@ -130,18 +114,14 @@ static int
 loox720_core_probe( struct platform_device *pdev )
 {
 //	unsigned int statusd;
-//	int connected;
-//	struct loox720_core_funcs *funcs = (struct loox720_core_funcs *) pdev->dev.platform_data;
+	int connected;
+	struct loox720_core_funcs *funcs = (struct loox720_core_funcs *) pdev->dev.platform_data;
 	printk( KERN_NOTICE "Loox 720 Core Hardware Driver\n" );
 
-//	funcs->udc_detect = loox720_udc_detect;
+	funcs->udc_detect = loox720_udc_detect;
 	
 	egpios = (volatile u_int16_t *)ioremap_nocache( EGPIO_BASE, sizeof *egpios );
 	if (!egpios)
-		return -ENODEV;
-
-	cpld_regs = (volatile u_int16_t *)(u32)ioremap_nocache( LOOX720_CPLD_PHYS, LOOX720_CPLD_SIZE );
-	if (!cpld_regs)
 		return -ENODEV;
 
 	/* UART IRQ */
@@ -160,19 +140,25 @@ loox720_core_probe( struct platform_device *pdev )
 
 	statusd = asic3_get_gpio_status_d( &loox720_asic3.dev );
 	connected = (statusd & (1<<GPIOD_AC_IN_N)) == 0;
+*/	
+	ac_irq = LOOX720_IRQ(AC_IN_N);
+	
+	connected = GET_LOOX720_GPIO(AC_IN_N) == 0;
+	
 	printk( KERN_INFO "AC: connected=%d\n", connected );
-	if (connected)
-	    set_irq_type( ac_irq, IRQT_RISING ); 
-	else
-	    set_irq_type( ac_irq, IRQT_FALLING ); 
-
         if (request_irq( ac_irq, ac_isr, SA_INTERRUPT,
 			    "Loox 720 AC Detect", NULL ) != 0) {
 		printk( KERN_ERR "Unable to configure AC detect interrupt.\n" );
 		free_irq( serial_irq, NULL );
 		return -ENODEV;
 	}
-	SET_LOOX720_GPIO_N( CHARGE_EN, connected );*/
+
+	if (connected)
+	    set_irq_type( ac_irq, IRQT_RISING ); 
+	else
+	    set_irq_type( ac_irq, IRQT_FALLING ); 
+
+//	SET_LOOX720_GPIO_N( CHARGE_EN, connected );*/
 	return 0;
 }
 
@@ -186,13 +172,10 @@ loox720_core_remove( struct platform_device *dev )
 	if (egpios != NULL)
 		iounmap( (void *)egpios );
 		
-	if (cpld_regs)
-		iounmap( cpld_regs );
-		
-/*	if (serial_irq != 0xffffffff)
-		free_irq( serial_irq, NULL );
+//	if (serial_irq != 0xffffffff)
+//		free_irq( serial_irq, NULL );
 	if (ac_irq != 0xffffffff)
-		free_irq( ac_irq, NULL );*/
+		free_irq( ac_irq, NULL );
 	return 0;
 }
 

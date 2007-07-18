@@ -11,11 +11,11 @@
 #include <asm/arch/pxa-regs.h>
 
 #define LOOX720_CPLD_PHYS	PXA_CS4_PHYS
-#define LOOX720_CPLD_SIZE	0x00100000
+#define LOOX720_CPLD_SIZE	32
 
-#define LOOX720_CPLD_BACKLIGHT_BIT 0x0004
+//#define LOOX720_CPLD_BACKLIGHT_BIT 0x0004
+#define LOOX720_CPLD_BACKLIGHT_BIT	242
 
-void loox720_cpld_enable( u16 bits );
-void loox720_cpld_disable( u16 bits );
+extern void	loox720_egpio_set_bit(int bit, int val);
 
 #endif

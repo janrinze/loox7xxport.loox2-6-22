@@ -3,7 +3,6 @@ menuconfig MACH_LOOX720
 	select PXA27x
 	select INPUT_KEYBOARD
 	select KEYBOARD_GPIO
-	depends HTC_ASIC3
 	help
 	  Enable this if you plan to boot the kernel on the Loox 720
 	  series of PDAs. Currently there is only basic support for this
