@@ -59,13 +59,13 @@ loox720_egpio_disable( unsigned long bits )
 }
 EXPORT_SYMBOL(loox720_egpio_disable);
 
-int
+/*int
 loox720_udc_detect( void )
 {
-//	return (asic3_get_gpio_status_d(&loox720_asic3.dev)
-//			& (1 << GPIOD_USBC_DETECT_N)) ? 0 : 1;
+//    return (asic3_get_gpio_status_d(&loox720_asic3.dev)
+			& (1 << GPIOD_USBC_DETECT_N)) ? 0 : 1;
     return 1;
-}
+}*/
 
 static unsigned int serial_irq = 0xffffffff;
 static unsigned int ac_irq = 0xffffffff;
@@ -115,10 +115,10 @@ loox720_core_probe( struct platform_device *pdev )
 {
 //	unsigned int statusd;
 	int connected;
-	struct loox720_core_funcs *funcs = (struct loox720_core_funcs *) pdev->dev.platform_data;
+//	struct loox720_core_funcs *funcs = (struct loox720_core_funcs *) pdev->dev.platform_data;
 	printk( KERN_NOTICE "Loox 720 Core Hardware Driver\n" );
 
-	funcs->udc_detect = loox720_udc_detect;
+//	funcs->udc_detect = loox720_udc_detect;
 	
 	egpios = (volatile u_int16_t *)ioremap_nocache( EGPIO_BASE, sizeof *egpios );
 	if (!egpios)

@@ -63,3 +63,5 @@ module_init( loox720_cpld_init );
 module_exit( loox720_cpld_exit );
 
 MODULE_AUTHOR("Piotr Czechowicz");
+MODULE_DESCRIPTION("Loox 720 CPLD driver");
+MODULE_LICENSE("GPL");

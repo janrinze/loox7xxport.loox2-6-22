@@ -166,26 +166,36 @@ static struct platform_device loox720_core = {
 
 };*/
 
-/*static void
-udc_enable(int cmd) 
+static int
+udc_detect(void)
+{
+        int detected = (GET_LOOX720_GPIO(USB_DETECT_N)==0);
+	printk (KERN_NOTICE "udc_detect: %d\n", detected);
+	return detected;
+}
+
+static void
+udc_command(int cmd) 
 {
 	switch (cmd)
 	{
 		case PXA2XX_UDC_CMD_DISCONNECT:
 			printk (KERN_NOTICE "USB cmd disconnect\n");
-			loox720_udc_disable(0x00020000);
+			loox720_egpio_set_bit(LOOX720_CPLD_USB_PULLUP_BIT, 0);
 			break;
 
 		case PXA2XX_UDC_CMD_CONNECT:
 			printk (KERN_NOTICE "USB cmd connect\n");
-			SET_X30_GPIO(USB_PUEN, 1);
+			loox720_egpio_set_bit(LOOX720_CPLD_USB_PULLUP_BIT, 1);
 			break;
+		default:
+			printk (KERN_ERR "USB: invalid command: %d\n", cmd);
 	}
-}*/
+}
 
 static struct pxa2xx_udc_mach_info loox720_udc_info __initdata = {
-//	.gpio_pullup = GPIO_NR_LOOX720_USB_PULLUP,
-
+	.udc_is_connected = udc_detect,
+	.udc_command      = udc_command,
 };
 
 /*static struct platform_device loox720_udc = { 
