@@ -1,5 +1,5 @@
 /*
- * 
+ *
  * Hardware definitions for HP iPAQ Handheld Computers
  *
  * Copyright 2004 Hewlett-Packard Company.
@@ -198,7 +198,7 @@ static struct pxa2xx_udc_mach_info loox720_udc_info __initdata = {
 	.udc_command      = udc_command,
 };
 
-/*static struct platform_device loox720_udc = { 
+/*static struct platform_device loox720_udc = {
 	.name = "pxa2xx-udc-gpio",
 	.dev = {
 		.platform_data = &loox720_udc_info
@@ -244,11 +244,6 @@ static void __init loox720_init( void )
 	MSC2 = 0x16dc7ffc;
 #endif
 
-	SET_LOOX720_GPIO( ASIC3_RESET_N, 0 );
-	mdelay(50);
-	SET_LOOX720_GPIO( ASIC3_RESET_N, 1 );
-	mdelay(50);
-	
 	pxa_set_udc_info(&loox720_udc_info);
 
 	platform_add_devices( devices, ARRAY_SIZE(devices) );
@@ -256,7 +251,6 @@ static void __init loox720_init( void )
 
 
 MACHINE_START(LOOX720, "FSC Loox 720")
-	/* Giuseppe Zompatori, <giuseppe_zompatori@yahoo.it> */
 //	BOOT_MEM(0xaa000000, 0x40000000, io_p2v(0x40000000))
 //	.phys_ram = 0xaa000000,
 	.phys_io = 0x40000000,
