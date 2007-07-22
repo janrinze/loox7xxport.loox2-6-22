@@ -1,5 +1,5 @@
 menuconfig MACH_LOOX720
-	bool "FSC Loox 720 (non-functional)"
+	bool "FSC Loox 720"
 	select PXA27x
 	select INPUT_KEYBOARD
 	select KEYBOARD_GPIO
@@ -10,7 +10,7 @@ menuconfig MACH_LOOX720
 
 config LOOX720_LCD
 	tristate "FSC Loox 720 LCD"
-	depends on MACH_LOOX720 
+	depends on MACH_LOOX720
 	help
 	  This driver provides support for changing power and brightness
 	  on Loox 720 LCD display.
@@ -24,11 +24,10 @@ config LOOX720_TS
 config LOOX720_BUTTONS
     tristate "FSC Loox 720 Buttons"
     depends on MACH_LOOX720
-#    select KEYBOARD_PXA27x
+    select KEYBOARD_PXA27x
     help
       FSC Loox 720 buttons support.
-    
-    
+
 config DRAM_BASE
 	hex '(S)DRAM Base Address'
 	depends on MACH_LOOX720
