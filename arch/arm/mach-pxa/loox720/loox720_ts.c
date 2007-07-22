@@ -54,9 +54,9 @@ static struct tsadc_platform_data loox720_ts_params = {
     .num_xy_samples = 10,
 };
 static struct resource loox720_pen_irq = {
-	.start = IRQ_GPIO(GPIO_NR_LOOX720_TOUCHPANEL_IRQ_N),
-	.end = IRQ_GPIO(GPIO_NR_LOOX720_TOUCHPANEL_IRQ_N),
-	.flags = IORESOURCE_IRQ,
+    .start = IRQ_GPIO(GPIO_NR_LOOX720_TOUCHPANEL_IRQ_N),
+    .end = IRQ_GPIO(GPIO_NR_LOOX720_TOUCHPANEL_IRQ_N),
+    .flags = IORESOURCE_IRQ,
 };
 static struct platform_device loox720_ts        = {
     .name = "ts-adc-debounce",
