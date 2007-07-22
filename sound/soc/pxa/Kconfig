@@ -167,4 +167,13 @@ config SND_PXA2XX_SOC_H5000
 	help
 	  Say Y if you want to add support for SoC audio on the
 	  H5000 iPAQs.
+
+config SND_PXA2XX_SOC_LOOX
+	tristate "SoC Audio support for Loox 7xx series"
+	depends on SND_PXA2XX_SOC && MACH_LOOX720
+	select SND_PXA2XX_SOC_I2S
+	select SND_SOC_WM8750
+	help
+	  Say Y if you want to add support for SoC audio on the
+	  Loox 7xx machines.
 endmenu
