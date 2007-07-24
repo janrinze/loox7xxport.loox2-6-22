@@ -19,11 +19,7 @@
 #include <asm/mach/irq.h>
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/loox720-gpio.h>
-#include <asm/arch/loox720-asic.h>
 #include <asm/arch/loox720-cpld.h>
-
-#include <linux/soc/asic3_base.h>
-#include <asm/hardware/ipaq-asic3.h>
 
 #include "loox720_core.h"
 
@@ -70,7 +66,7 @@ loox720_udc_detect( void )
 static unsigned int serial_irq = 0xffffffff;
 static unsigned int ac_irq = 0xffffffff;
 
-static int
+/*static int
 serial_isr(int irq, void *data)
 {
 	unsigned int statusd;
@@ -84,7 +80,7 @@ serial_isr(int irq, void *data)
 	printk( KERN_INFO "serial_isr: com_dcd=%d\n", connected );
 	SET_LOOX720_GPIO( RS232_ON, connected );
 	return IRQ_HANDLED;
-}
+}*/
 
 static int
 ac_isr(int irq, void *data)
@@ -165,7 +161,7 @@ loox720_core_probe( struct platform_device *pdev )
 static int
 loox720_core_remove( struct platform_device *dev )
 {
-	int irq;
+//	int irq;
 
 //        irq = asic3_irq_base( &loox720_asic3.dev ) + ASIC3_GPIOD_IRQ_BASE
 //			+ GPIOD_COM_DCD;

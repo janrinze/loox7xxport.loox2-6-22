@@ -17,17 +17,26 @@ void	loox720_cpld_reg_write(int regno, u32 value)
     printk(KERN_INFO "cpld_reg_write(%02X, %04X)\n", regno, value);
     cpld_mem[regno] = value;
 }
+EXPORT_SYMBOL(loox720_cpld_reg_write);
 
+void	loox720_egpio_cache_enable_bits(int pos, u32 bits)
+{
+    reg_cache[pos] |= bits;
+}
+
+void	loox720_egpio_cache_clear_bits(int pos, u32 bits)
+{
+    reg_cache[pos] &=~bits;
+}
 
 void	loox720_egpio_set_bit(int bit, int val)
 {
-    int pos = bit/32;
-    int sft = bit&31;
+    int pos = BIT_POS(bit);
     
     if (val)
-	reg_cache[pos] |= (u32)(1<<sft);
+	loox720_egpio_cache_enable_bits(pos, BIT_MSK(bit));
     else
-	reg_cache[pos] &= (u32)~(1<<sft);
+	loox720_egpio_cache_clear_bits(pos, BIT_MSK(bit));
 	
     loox720_cpld_reg_write(pos, reg_cache[pos]);
 }

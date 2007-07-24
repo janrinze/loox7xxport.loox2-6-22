@@ -35,6 +35,8 @@
 #include "pxa2xx-pcm.h"
 #include "pxa2xx-i2s.h"
 
+#include <asm/arch/loox720-cpld.h>
+
 static struct snd_soc_machine loox;
 
 static int loox_hw_params(struct snd_pcm_substream *substream,
@@ -129,6 +131,8 @@ static struct platform_device *loox_snd_device;
 static int __init loox_init(void)
 {
 	int ret;
+	
+	loox720_egpio_set_bit(LOOX720_CPLD_SOUND_BIT, 1);
 
 	loox_snd_device = platform_device_alloc("soc-audio", -1);
 	if (!loox_snd_device)

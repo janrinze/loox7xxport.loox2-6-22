@@ -35,7 +35,6 @@
 #include <asm/mach/map.h>
 
 #include <asm/arch/loox720-gpio.h>
-#include <asm/arch/loox720-asic.h>
 #include <asm/arch/pxa-regs.h>
 #include <linux/gpio_keys.h>
 #include <asm/arch/pxa2xx_spi.h>
