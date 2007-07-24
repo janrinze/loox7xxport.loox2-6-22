@@ -41,6 +41,7 @@
 #include <asm/arch/pxa2xx_spi.h>
 #include <asm/arch/udc.h>
 #include <asm/arch/audio.h>
+#include <asm/arch/ohci.h>
 
 #include <linux/corgi_bl.h>
 #include <asm/arch/pxa2xx_udc_gpio.h>
@@ -205,6 +206,23 @@ static struct pxa2xx_udc_mach_info loox720_udc_info __initdata = {
 	}
 };*/
 
+
+static int loox720_ohci_init(struct device *dev)
+{
+	        /* missing GPIO setup here */
+
+	        /* no idea what this does, got the values from haret 
+	        UHCHR = (UHCHR | UHCHR_SSEP2 | UHCHR_PCPL | UHCHR_CGR) &
+			            ~(UHCHR_SSEP1 | UHCHR_SSEP3 | UHCHR_SSE);
+			we don't know yet how to init.. */
+		        return 0;
+}
+
+static struct pxaohci_platform_data loox720_ohci_info = {
+	        .port_mode = PMM_PERPORT_MODE,
+		.init = loox720_ohci_init,
+};
+
 static struct platform_device *devices[] __initdata = {
 	&loox720_core,
 	&pxa_spi_nssp,
@@ -245,6 +263,7 @@ static void __init loox720_init( void )
 #endif
 
 	pxa_set_udc_info(&loox720_udc_info);
+	pxa_set_ohci_info(&loox720_ohci_info);
 
 	platform_add_devices( devices, ARRAY_SIZE(devices) );
 }
