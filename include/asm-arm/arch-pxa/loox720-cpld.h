@@ -31,6 +31,10 @@
 
 #define LOOX720_CPLD_BACKLIGHT_BIT	242
 
+#define LOOX720_CPLD_BT_ENABLE_BIT_A	44
+
+#define LOOX720_CPLD_BT_ENABLE_BIT_B	60
+
 extern void	loox720_egpio_set_bit(int bit, int val);
 
 #endif

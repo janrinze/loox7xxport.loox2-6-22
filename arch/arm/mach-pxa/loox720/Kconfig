@@ -28,6 +28,12 @@ config LOOX720_BUTTONS
     help
       FSC Loox 720 buttons support.
 
+config LOOX720_BT
+    tristate "FSC Loox 720 Bluetooth (BRF6150) - [Non-functional]"
+    depends on MACH_LOOX720
+    help
+      FSC Loox 720 Bluetooth (BRF6150) support. Highly experimental, usually just resets Loox after loox720_bt_configure(PXA_UART_CFG_POST_STARTUP).
+
 config DRAM_BASE
 	hex '(S)DRAM Base Address'
 	depends on MACH_LOOX720
