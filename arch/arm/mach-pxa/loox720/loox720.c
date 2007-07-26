@@ -154,6 +154,19 @@ static struct platform_pxa_serial_funcs loox_pxa_irda_funcs = {
 	.get_txrx  = loox_irda_get_txrx,
 };
 
+
+// Initialization code
+static void __init loox_map_io(void)
+{
+	pxa_map_io();
+	pxa_set_stuart_info(&loox_pxa_irda_funcs);
+#ifdef EARLY_SIR_CONSOLE
+	loox_irda_configure(NULL, 1);
+	loox_irda_set_txrx(NULL, PXA_SERIAL_TX);
+#endif
+}
+*/
+
 /*
  * Bluetooth - Relies on other loadable modules, like ASIC3 and Core,
  * so make the calls indirectly through pointers. Requires that the
@@ -174,18 +187,7 @@ static struct platform_pxa_serial_funcs loox720_pxa_bt_funcs = {
         .configure = loox720_bt_configure,
 };
 
-// Initialization code
-static void __init loox_map_io(void)
-{
-	pxa_map_io();
-	pxa_set_stuart_info(&loox_pxa_irda_funcs);
-#ifdef EARLY_SIR_CONSOLE
-	loox_irda_configure(NULL, 1);
-	loox_irda_set_txrx(NULL, PXA_SERIAL_TX);
-#endif
-	pxa_set_btuart_info(&loox720_pxa_bt_funcs);
-}
-*/
+
 /* PXA2xx Keys */
 
 static struct gpio_keys_button loox720_button_table[] = {
@@ -270,7 +272,7 @@ static struct corgibl_machinfo loox720_bl_machinfo = {
 };
 
 struct platform_device loox720_bl = {
-        .name = "loox720-bl",
+        .name = "corgi-bl",
         .dev = {
     		.platform_data = &loox720_bl_machinfo,
 	},
@@ -284,25 +286,6 @@ static struct platform_device loox720_battery = {
 	.name = "loox720-battery",
 };
 
-/* Backup battery */
-static struct battery_adc_platform_data loox_backup_batt_params = {
-	.battery_info = {
-		.name = "backup-battery",
-		.voltage_max_design = 1400000,
-		.voltage_min_design = 1000000,
-		.charge_full_design = 100000,
-	},
-	.voltage_pin = "ads7846-ssp:vaux",
-};
-
-static struct platform_device loox_backup_batt = {
-	.name = "adc-battery",
-	.id = -1,
-	.dev = {
-		.platform_data = &loox_backup_batt_params,
-	}
-};
-
 static struct loox720_core_funcs core_funcs;
 
 static struct platform_device loox720_core = {
@@ -312,15 +295,6 @@ static struct platform_device loox720_core = {
 		.platform_data = &core_funcs,
 	},
 };
-
-/*struct pxa2xx_udc_gpio_info loox720_udc_info = {
-	.detect_gpio = {&loox720_asic3.dev, ASIC3_GPIOD_IRQ_BASE + GPIOD_USBC_DETECT_N},
-	.detect_gpio_negative = 1,
-	.power_ctrl = {
-		.power_gpio = {&pxagpio_device.dev, GPIO_NR_LOOX720_USB_PUEN},
-	},
-
-};*/
 
 static int
 udc_detect(void)
@@ -353,14 +327,6 @@ static struct pxa2xx_udc_mach_info loox720_udc_info __initdata = {
 	.udc_is_connected = udc_detect,
 	.udc_command      = udc_command,
 };
-
-/*static struct platform_device loox720_udc = {
-	.name = "pxa2xx-udc-gpio",
-	.dev = {
-		.platform_data = &loox720_udc_info
-	}
-};*/
-
 
 static int loox720_ohci_init(struct device *dev)
 {
@@ -397,8 +363,6 @@ static struct platform_device *devices[] __initdata = {
 	&loox720_bl,
 	&loox720_battery,
 	&loox720_bt
-	&loox_backup_batt,
-//	&loox720_udc,
 };
 
 static void __init loox720_init( void )
@@ -432,6 +396,7 @@ static void __init loox720_init( void )
 	pxa_set_udc_info(&loox720_udc_info);
 	pxa_set_ficp_info(&loox_ficp_info);
 	pxa_set_ohci_info(&loox720_ohci_info);
+	pxa_set_btuart_info(&loox720_pxa_bt_funcs);
 
 	platform_add_devices( devices, ARRAY_SIZE(devices) );
 }

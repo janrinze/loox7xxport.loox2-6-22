@@ -87,17 +87,6 @@ loox720_lcd_init (void)
 	set_pxa_fb_info(&loox720_fb_info);
 	pxafb_lcd_device = lcd_device_register("pxafb", NULL, &loox720_lcd_properties);
 
-//	if (IS_ERR (pxafb_lcd_device))
-//		return PTR_ERR (pxafb_lcd_device);
-	//possible BUG location, dunno what to pass as 2nd param
-//	pxafb_backlight_device = backlight_device_register("pxafb",
-//		pxafb_lcd_device->class_dev.dev, NULL,
-//		&loox720_backlight_properties);
-//	if (IS_ERR (pxafb_backlight_device)) {
-//		lcd_device_unregister (pxafb_lcd_device);
-//		return PTR_ERR (pxafb_backlight_device);
-//	}
-
 	return 0;
 }
 
