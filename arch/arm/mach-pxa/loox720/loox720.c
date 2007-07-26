@@ -34,6 +34,8 @@
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 
+#include <asm/arch/serial.h>
+#include <asm/arch/loox720.h>
 #include <asm/arch/loox720-gpio.h>
 #include <asm/arch/pxa-regs.h>
 #include <linux/gpio_keys.h>
@@ -152,6 +154,26 @@ static struct platform_pxa_serial_funcs loox_pxa_irda_funcs = {
 	.get_txrx  = loox_irda_get_txrx,
 };
 
+/*
+ * Bluetooth - Relies on other loadable modules, like ASIC3 and Core,
+ * so make the calls indirectly through pointers. Requires that the
+ * loox720 bluetooth module be loaded before any attempt to use
+ * bluetooth (obviously).
+ */
+
+static struct loox720_bt_funcs bt_funcs;
+
+static void
+loox720_bt_configure( int state )
+{
+        if (bt_funcs.configure != NULL)
+                bt_funcs.configure( state );
+}
+
+static struct platform_pxa_serial_funcs loox720_pxa_bt_funcs = {
+        .configure = loox720_bt_configure,
+};
+
 // Initialization code
 static void __init loox_map_io(void)
 {
@@ -161,7 +183,7 @@ static void __init loox_map_io(void)
 	loox_irda_configure(NULL, 1);
 	loox_irda_set_txrx(NULL, PXA_SERIAL_TX);
 #endif
-//	pxa_set_btuart_info(&hx4700_pxa_bt_funcs);
+	pxa_set_btuart_info(&loox720_pxa_bt_funcs);
 }
 */
 /* PXA2xx Keys */
@@ -356,6 +378,16 @@ static struct pxaohci_platform_data loox720_ohci_info = {
 		.init = loox720_ohci_init,
 };
 
+/* Bluetooth */
+
+static struct platform_device loox720_bt = {
+        .name = "loox720-bt",
+        .id = -1,
+        .dev = {
+                .platform_data = &bt_funcs,
+        },
+};
+
 static struct platform_device *devices[] __initdata = {
 	&loox720_core,
 	&pxa_spi_nssp,
@@ -364,6 +396,7 @@ static struct platform_device *devices[] __initdata = {
 	&loox720_pxa_keys,
 	&loox720_bl,
 	&loox720_battery,
+	&loox720_bt
 	&loox_backup_batt,
 //	&loox720_udc,
 };
