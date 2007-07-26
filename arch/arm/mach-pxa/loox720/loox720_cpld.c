@@ -4,20 +4,61 @@
 #include <asm/io.h>
 #include <asm/arch/loox720-cpld.h>
 
+#include <linux/delay.h>
+
 static u32 reg_cache[8]={
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
+    0,
 };
 
 static u32 *cpld_mem = 0;
 
+struct cpld_bit
+{
+    int	bit;
+    int value;
+};
+
+static struct cpld_bit loox720_cpld_bits[] = 
+{
+    {
+	.bit   = LOOX720_CPLD_LCD_BIT,
+	.value = 1
+    },
+    {
+	.bit   = LOOX720_CPLD_SD_BIT,
+	.value = 1
+    },
+    {
+	.bit   = 209,	// not sure if this is necessary. probably refers to audio amplifier.
+	.value = 1
+    },
+};
 
 void	loox720_cpld_reg_write(int regno, u32 value)
 {
+    if (regno<4)
+    {
+	printk(KERN_INFO "skipping cpld_reg_write(%d) %08X\n", regno, value);
+	return;
+    }
+    
     printk(KERN_INFO "cpld_reg_write(%02X, %04X)\n", regno, value);
     cpld_mem[regno] = value;
 }
 EXPORT_SYMBOL(loox720_cpld_reg_write);
+
+static u32	loox720_egpio_cache_get(int regno)
+{
+    return reg_cache[regno];
+}
+EXPORT_SYMBOL(loox720_egpio_cache_get);
+
+static void	loox720_egpio_cache_set(int regno, u32 value)
+{
+    reg_cache[regno] = value;
+}
+EXPORT_SYMBOL(loox720_egpio_cache_set);
+
 
 void	loox720_egpio_cache_enable_bits(int pos, u32 bits)
 {
@@ -28,6 +69,7 @@ void	loox720_egpio_cache_clear_bits(int pos, u32 bits)
 {
     reg_cache[pos] &=~bits;
 }
+
 
 void	loox720_egpio_set_bit(int bit, int val)
 {
@@ -45,6 +87,8 @@ EXPORT_SYMBOL(loox720_egpio_set_bit);
 
 static int __init loox720_cpld_init(void)
 {
+    int i;
+    
     if (!machine_is_loox720())
 	return -ENODEV;
 	
@@ -59,6 +103,13 @@ static int __init loox720_cpld_init(void)
     
     printk(KERN_INFO "CPLD PHYS=%08X VIRT=%08X\n", LOOX720_CPLD_PHYS, (u32)cpld_mem);
     
+    for (i=0;i<ARRAY_SIZE(loox720_cpld_bits);i++)
+    {
+	loox720_egpio_set_bit(
+	  loox720_cpld_bits[i].bit, 
+	  loox720_cpld_bits[i].value
+	);
+    }
     return 0;
 }
 
