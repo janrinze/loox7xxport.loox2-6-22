@@ -102,6 +102,11 @@ ac_isr(int irq, void *data)
 	else
 	    set_irq_type( ac_irq, IRQT_FALLING ); 
 
+	if (connected)
+	    loox720_set_leds(LOOX720_LED2_COLOR_ORANGE | LOOX720_LED2_BLINK);
+	else
+	    loox720_set_leds(0);
+	    
 //	SET_LOOX720_GPIO_N( CHARGE_EN, connected );
 	return IRQ_HANDLED;
 }
