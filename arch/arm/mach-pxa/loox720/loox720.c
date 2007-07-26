@@ -41,6 +41,7 @@
 #include <asm/arch/udc.h>
 #include <asm/arch/audio.h>
 #include <asm/arch/ohci.h>
+#include <asm/arch/irda.h>
 
 #include <linux/corgi_bl.h>
 #include <asm/arch/pxa2xx_udc_gpio.h>
@@ -48,7 +49,121 @@
 #include "../generic.h"
 #include "loox720_core.h"
 #include <asm/arch/loox720-cpld.h>
+#include <linux/adc_battery.h>
 
+/*
+ * IRDA
+ */
+
+static void loox_irda_transceiver_mode(struct device *dev, int mode)
+{
+	unsigned long flags;
+
+	local_irq_save(flags);
+/*
+	if (mode & IR_FIRMODE)
+		SET_LOOX720_GPIO_N(IR_ON, 1);
+	else
+		SET_LOOX720_GPIO_N(IR_ON, 0);
+*/
+	if (mode & IR_OFF)
+		SET_LOOX720_GPIO_N(IR_ON, 1);
+	else
+		SET_LOOX720_GPIO_N(IR_ON, 0);
+
+	local_irq_restore(flags);
+}
+
+static struct pxaficp_platform_data loox_ficp_info = {
+	.transceiver_cap  = IR_SIRMODE | IR_FIRMODE | IR_OFF,
+	.transceiver_mode = loox_irda_transceiver_mode,
+};
+
+/* Uncomment the following line to get serial console via SIR work from
+ * the very early booting stage. This is not useful for end-user.
+ */
+/* #define EARLY_SIR_CONSOLE */
+/*
+#define IR_TRANSCEIVER_ON \
+	SET_LOOX720_GPIO_N(IR_ON, 1)
+
+#define IR_TRANSCEIVER_OFF \
+	SET_LOOX720_GPIO_N(IR_ON, 0)
+
+static void loox_irda_configure(int state)
+{
+	// Switch STUART RX/TX pins to SIR
+	pxa_gpio_mode(GPIO_NR_LOOX720_STD_RXD_MD);
+	pxa_gpio_mode(GPIO_NR_LOOX720_STD_TXD_MD);
+
+	// make sure FIR ICP is off
+	ICCR0 = 0;
+
+	switch (state) {
+
+	case PXA_UART_CFG_POST_STARTUP:
+		// configure STUART for SIR
+		STISR = STISR_XMODE | STISR_RCVEIR | STISR_RXPL;
+		IR_TRANSCEIVER_ON;
+		break;
+
+	case PXA_UART_CFG_PRE_SHUTDOWN:
+		STISR = 0;
+		IR_TRANSCEIVER_OFF;
+		break;
+	}
+}
+
+static void loox_irda_set_txrx(int txrx)
+{
+	unsigned old_stisr = STISR;
+	unsigned new_stisr = old_stisr;
+
+	if (txrx & PXA_SERIAL_TX) {
+		// Ignore RX if TX is set
+		txrx &= PXA_SERIAL_TX;
+		new_stisr |= STISR_XMITIR;
+	} else
+		new_stisr &= ~STISR_XMITIR;
+
+	if (txrx & PXA_SERIAL_RX)
+		new_stisr |= STISR_RCVEIR;
+	else
+		new_stisr &= ~STISR_RCVEIR;
+
+	if (new_stisr != old_stisr) {
+		while (!(STLSR & LSR_TEMT))
+			;
+		IR_TRANSCEIVER_OFF;
+		STISR = new_stisr;
+		IR_TRANSCEIVER_ON;
+	}
+}
+
+static int loox_irda_get_txrx (void)
+{
+	return ((STISR & STISR_XMITIR) ? PXA_SERIAL_TX : 0) |
+	       ((STISR & STISR_RCVEIR) ? PXA_SERIAL_RX : 0);
+}
+
+static struct platform_pxa_serial_funcs loox_pxa_irda_funcs = {
+	.configure = loox_irda_configure,
+	.set_txrx  = loox_irda_set_txrx,
+	.get_txrx  = loox_irda_get_txrx,
+};
+
+// Initialization code
+static void __init loox_map_io(void)
+{
+	pxa_map_io();
+	pxa_set_stuart_info(&loox_pxa_irda_funcs);
+#ifdef EARLY_SIR_CONSOLE
+	loox_irda_configure(NULL, 1);
+	loox_irda_set_txrx(NULL, PXA_SERIAL_TX);
+#endif
+//	pxa_set_btuart_info(&hx4700_pxa_bt_funcs);
+}
+*/
 /* PXA2xx Keys */
 
 static struct gpio_keys_button loox720_button_table[] = {
@@ -133,7 +248,7 @@ static struct corgibl_machinfo loox720_bl_machinfo = {
 };
 
 struct platform_device loox720_bl = {
-        .name = "corgi-bl",
+        .name = "loox720-bl",
         .dev = {
     		.platform_data = &loox720_bl_machinfo,
 	},
@@ -145,6 +260,25 @@ static struct platform_device loox720_buttons = {
 
 static struct platform_device loox720_battery = {
 	.name = "loox720-battery",
+};
+
+/* Backup battery */
+static struct battery_adc_platform_data loox_backup_batt_params = {
+	.battery_info = {
+		.name = "backup-battery",
+		.voltage_max_design = 1400000,
+		.voltage_min_design = 1000000,
+		.charge_full_design = 100000,
+	},
+	.voltage_pin = "ads7846-ssp:vaux",
+};
+
+static struct platform_device loox_backup_batt = {
+	.name = "adc-battery",
+	.id = -1,
+	.dev = {
+		.platform_data = &loox_backup_batt_params,
+	}
 };
 
 static struct loox720_core_funcs core_funcs;
@@ -175,7 +309,7 @@ udc_detect(void)
 }
 
 static void
-udc_command(int cmd) 
+udc_command(int cmd)
 {
 	switch (cmd)
 	{
@@ -208,13 +342,13 @@ static struct pxa2xx_udc_mach_info loox720_udc_info __initdata = {
 
 static int loox720_ohci_init(struct device *dev)
 {
-	        /* missing GPIO setup here */
+	/* missing GPIO setup here */
 
-	        /* no idea what this does, got the values from haret 
-	        UHCHR = (UHCHR | UHCHR_SSEP2 | UHCHR_PCPL | UHCHR_CGR) &
-			            ~(UHCHR_SSEP1 | UHCHR_SSEP3 | UHCHR_SSE);
-			we don't know yet how to init.. */
-		        return 0;
+	/* no idea what this does, got the values from haret
+	UHCHR = (UHCHR | UHCHR_SSEP2 | UHCHR_PCPL | UHCHR_CGR) &
+			    ~(UHCHR_SSEP1 | UHCHR_SSEP3 | UHCHR_SSE);
+		we don't know yet how to init.. */
+	return 0;
 }
 
 static struct pxaohci_platform_data loox720_ohci_info = {
@@ -230,6 +364,7 @@ static struct platform_device *devices[] __initdata = {
 	&loox720_pxa_keys,
 	&loox720_bl,
 	&loox720_battery,
+	&loox_backup_batt,
 //	&loox720_udc,
 };
 
@@ -262,6 +397,7 @@ static void __init loox720_init( void )
 #endif
 
 	pxa_set_udc_info(&loox720_udc_info);
+	pxa_set_ficp_info(&loox_ficp_info);
 	pxa_set_ohci_info(&loox720_ohci_info);
 
 	platform_add_devices( devices, ARRAY_SIZE(devices) );
@@ -270,7 +406,6 @@ static void __init loox720_init( void )
 
 MACHINE_START(LOOX720, "FSC Loox 720")
 //	BOOT_MEM(0xaa000000, 0x40000000, io_p2v(0x40000000))
-//	.phys_ram = 0xaa000000,
 	.phys_io = 0x40000000,
 	.io_pg_offst = (io_p2v(0x40000000) >> 18) & 0xfffc,
 	.boot_params	= 0xaa000100,
