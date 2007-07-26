@@ -43,17 +43,19 @@ void	loox720_cpld_reg_write(int regno, u32 value)
     }
     
     printk(KERN_INFO "cpld_reg_write(%02X, %04X)\n", regno, value);
-    cpld_mem[regno] = value;
+    
+    if (cpld_mem)
+      cpld_mem[regno] = value;
 }
 EXPORT_SYMBOL(loox720_cpld_reg_write);
 
-static u32	loox720_egpio_cache_get(int regno)
+u32	loox720_egpio_cache_get(int regno)
 {
     return reg_cache[regno];
 }
 EXPORT_SYMBOL(loox720_egpio_cache_get);
 
-static void	loox720_egpio_cache_set(int regno, u32 value)
+void	loox720_egpio_cache_set(int regno, u32 value)
 {
     reg_cache[regno] = value;
 }

@@ -24,6 +24,16 @@
 
 //#define	LOOX720_CPLD_SD_EN		113
 
+#define LOOX720_LED1_COLOR_BLUE	 1
+#define LOOX720_LED1_COLOR_GREEN 2
+#define LOOX720_LED1_BLINK	 4
+#define LOOX720_LED1_BLINK2	 8
+
+#define LOOX720_LED2_COLOR_GREEN  16
+#define LOOX720_LED2_COLOR_RED    32
+#define LOOX720_LED2_COLOR_ORANGE 64
+#define LOOX720_LED2_BLINK	  128
+#define LOOX720_LED2_BLINK2	  256
 
 #define LOOX720_CPLD_USB_PULLUP_BIT	145
 
@@ -39,6 +49,7 @@
 
 #define LOOX720_CPLD_BT_ENABLE_BIT_B	60
 
+extern void	loox720_set_leds(int mode);
 extern void	loox720_egpio_set_bit(int bit, int val);
 
 #endif
