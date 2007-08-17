@@ -41,7 +41,7 @@ static void handle_request(void)
 			printk(KERN_ERR "CPLD-edit: CPLD bit %lu set low\n", id);
 			break;
 		case 'r':
-			printk(KERN_ERR "CPLD-edit: Value of CPLD reg %lu is %08X\n", loox720_cpld_reg_read(id));
+			printk(KERN_ERR "CPLD-edit: Value of CPLD reg %lu is %08X\n", id, loox720_cpld_reg_read(id));
 			break;
 		default:
 			printk(KERN_ERR "CPLD-edit: Unknown request\n");
