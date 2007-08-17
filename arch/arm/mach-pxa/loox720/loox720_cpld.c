@@ -21,7 +21,23 @@ struct cpld_bit
 static struct cpld_bit loox720_cpld_bits[] = 
 {
     {
+	.bit   = LOOX720_CPLD_LCD_CONSOLE_BIT,
+	.value = 1
+    },
+    {
 	.bit   = LOOX720_CPLD_LCD_BIT,
+	.value = 1
+    },
+    {
+	.bit   = LOOX720_CPLD_LCD_COLOR_BIT,
+	.value = 1
+    },
+    {
+	.bit   = LOOX720_CPLD_LCD_BIT2,
+	.value = 1
+    },
+    {
+	.bit   = LOOX720_CPLD_BACKLIGHT_BIT,
 	.value = 1
     },
     {
@@ -104,7 +120,7 @@ static int __init loox720_cpld_init(void)
     }
     
     printk(KERN_INFO "CPLD PHYS=%08X VIRT=%08X\n", LOOX720_CPLD_PHYS, (u32)cpld_mem);
-    
+
     for (i=0;i<ARRAY_SIZE(loox720_cpld_bits);i++)
     {
 	loox720_egpio_set_bit(
@@ -112,6 +128,7 @@ static int __init loox720_cpld_init(void)
 	  loox720_cpld_bits[i].value
 	);
     }
+
     return 0;
 }
 
