@@ -60,5 +60,6 @@
 
 extern void	loox720_set_leds(int mode);
 extern void	loox720_egpio_set_bit(int bit, int val);
+extern u32 loox720_cpld_reg_read(int regno);
 
 #endif
