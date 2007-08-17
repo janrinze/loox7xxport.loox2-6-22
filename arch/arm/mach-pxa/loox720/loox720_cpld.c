@@ -50,6 +50,16 @@ static struct cpld_bit loox720_cpld_bits[] =
     },
 };
 
+u32	loox720_cpld_reg_read(int regno)
+{
+	if(regno>3)
+	{
+		printk(KERN_INFO "skipping cpld_reg_read(%d) %08X\n", regno);
+		return;
+	}
+	return (cpld_mem) ? cpld_mem[regno] : 0;
+}
+
 void	loox720_cpld_reg_write(int regno, u32 value)
 {
     if (regno<4)
