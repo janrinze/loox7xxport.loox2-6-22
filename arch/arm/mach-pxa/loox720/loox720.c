@@ -187,7 +187,6 @@ static struct platform_pxa_serial_funcs loox720_pxa_bt_funcs = {
         .configure = loox720_bt_configure,
 };
 
-
 /* PXA2xx Keys */
 
 static struct gpio_keys_button loox720_button_table[] = {

@@ -33,8 +33,6 @@ loox720_bt_configure( int state )
 
 	case PXA_UART_CFG_POST_STARTUP:
 		/* pre-serial-up hardware configuration */
-		loox720_egpio_enable( LOOX720_CPLD_BT_ENABLE_BIT_A );
-		loox720_egpio_enable( LOOX720_CPLD_BT_ENABLE_BIT_B );
 		SET_LOOX720_GPIO( CPU_BT_RESET_N, 0 );
 		mdelay(1);
 		SET_LOOX720_GPIO( CPU_BT_RESET_N, 1 );
