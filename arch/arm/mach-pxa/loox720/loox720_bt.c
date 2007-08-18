@@ -34,6 +34,7 @@ loox720_bt_configure( int state )
 	case PXA_UART_CFG_POST_STARTUP:
 		/* pre-serial-up hardware configuration */
 		loox720_egpio_set_bit( LOOX720_CPLD_BLUETOOTH_POWER, 1 );
+		loox720_egpio_set_bit( LOOX720_CPLD_BLUETOOTH_RADIO, 1 );
 		SET_LOOX720_GPIO( CPU_BT_RESET_N, 0 );
 		mdelay(1);
 		SET_LOOX720_GPIO( CPU_BT_RESET_N, 1 );
@@ -55,6 +56,7 @@ loox720_bt_configure( int state )
 		break;
 
 	case PXA_UART_CFG_PRE_SHUTDOWN:
+		loox720_egpio_set_bit( LOOX720_CPLD_BLUETOOTH_RADIO, 0 );
 		loox720_egpio_set_bit( LOOX720_CPLD_BLUETOOTH_POWER, 0 );
 		mdelay(1);
 		led_trigger_event_shared(loox720_radio_trig, LED_OFF);
