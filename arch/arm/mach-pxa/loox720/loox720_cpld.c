@@ -7,7 +7,7 @@
 #include <linux/delay.h>
 
 static u32 reg_cache[8]={
-    0,
+    0, 0, 0, 0, 0, 0, 0, 0
 };
 
 static u32 *cpld_mem = 0;
@@ -20,6 +20,10 @@ struct cpld_bit
 
 static struct cpld_bit loox720_cpld_bits[] = 
 {
+	{
+	.bit   = LOOX720_CPLD_SERIAL_BIT,
+	.value = 1
+	},
     {
 	.bit   = LOOX720_CPLD_LCD_CONSOLE_BIT,
 	.value = 1
