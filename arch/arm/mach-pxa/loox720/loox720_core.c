@@ -20,40 +20,9 @@
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/loox720-gpio.h>
 #include <asm/arch/loox720-cpld.h>
+#include <asm/arch/loox720.h>
 
 #include "loox720_core.h"
-
-#define EGPIO_OFFSET	0
-#define EGPIO_BASE	(PXA_CS5_PHYS+EGPIO_OFFSET)
-//#define WLAN_OFFSET	0x800000
-//#define WLAN_BASE	(PXA_CS5_PHYS+WLAN_OFFSET)
-//#define PPSH_OFFSET	0x1000000
-
-volatile u_int16_t *egpios;
-u_int16_t egpio_reg;
-
-/*
- * may make sense to put egpios elsewhere, but they're here now
- * since they share some of the same address space with the TI WLAN
- *
- * EGPIO register is write-only
- */
-
-void
-loox720_egpio_enable( unsigned long bits )
-{
-	egpio_reg |= bits;
-	*egpios = egpio_reg;
-}
-EXPORT_SYMBOL(loox720_egpio_enable);
-
-void
-loox720_egpio_disable( unsigned long bits )
-{
-	egpio_reg &= ~bits;
-	*egpios = egpio_reg;
-}
-EXPORT_SYMBOL(loox720_egpio_disable);
 
 /*int
 loox720_udc_detect( void )
@@ -103,9 +72,9 @@ ac_isr(int irq, void *data)
 	    set_irq_type( ac_irq, IRQT_FALLING ); 
 
 	if (connected)
-	    loox720_set_leds(LOOX720_LED2_COLOR_ORANGE | LOOX720_LED2_BLINK);
+	    loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B | LOOX720_LED_BLINK);
 	else
-	    loox720_set_leds(0);
+	    loox720_disable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B);
 	    
 //	SET_LOOX720_GPIO_N( CHARGE_EN, connected );
 	return IRQ_HANDLED;
@@ -121,10 +90,10 @@ loox720_core_probe( struct platform_device *pdev )
 
 //	funcs->udc_detect = loox720_udc_detect;
 	
-	egpios = (volatile u_int16_t *)ioremap_nocache( EGPIO_BASE, sizeof *egpios );
+/*	egpios = (volatile u_int16_t *)ioremap_nocache( EGPIO_BASE, sizeof *egpios );
 	if (!egpios)
 		return -ENODEV;
-
+*/
 	/* UART IRQ */
 /*        serial_irq = asic3_irq_base( &loox720_asic3.dev ) + ASIC3_GPIOD_IRQ_BASE
                 + GPIOD_COM_DCD;
@@ -159,6 +128,11 @@ loox720_core_probe( struct platform_device *pdev )
 	else
 	    set_irq_type( ac_irq, IRQT_FALLING ); 
 
+    if (connected)
+        loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B | LOOX720_LED_BLINK);
+    else
+        loox720_disable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B);
+
 //	SET_LOOX720_GPIO_N( CHARGE_EN, connected );*/
 	return 0;
 }
@@ -170,8 +144,8 @@ loox720_core_remove( struct platform_device *dev )
 
 //        irq = asic3_irq_base( &loox720_asic3.dev ) + ASIC3_GPIOD_IRQ_BASE
 //			+ GPIOD_COM_DCD;
-	if (egpios != NULL)
-		iounmap( (void *)egpios );
+//	if (egpios != NULL)
+//		iounmap( (void *)egpios );
 		
 //	if (serial_irq != 0xffffffff)
 //		free_irq( serial_irq, NULL );

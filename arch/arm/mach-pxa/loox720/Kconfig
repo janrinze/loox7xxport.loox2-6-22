@@ -63,13 +63,6 @@ config LOOX720_CPLD_EDIT
 	help
 		Enable this to allow CPLD bits access from userland.
 
-config LOOX720_LEDS_EDIT
-    tristate 'access CPLD bits from userland'
-    depends on MACH_LOOX720
-    default m
-    help
-        Enable this to allow controling LEDs from userland.
-
 config LOOX720_PCMCIA
 	tristate 'FSC Loox 720 CF/PC Card'
 	depends on MACH_LOOX720 && PCMCIA_PXA2XX
