@@ -29,10 +29,10 @@ config LOOX720_BUTTONS
       FSC Loox 720 buttons support.
 
 config LOOX720_BT
-    tristate "FSC Loox 720 Bluetooth (BRF6150) - [Non-functional]"
+    tristate "FSC Loox 720 Bluetooth (BRF6150)"
     depends on MACH_LOOX720
     help
-      FSC Loox 720 Bluetooth (BRF6150) support. Highly experimental, usually just resets Loox after loox720_bt_configure(PXA_UART_CFG_POST_STARTUP).
+      FSC Loox 720 Bluetooth (BRF6150) support. Should be working good.
 
 config DRAM_BASE
 	hex '(S)DRAM Base Address'
@@ -62,6 +62,13 @@ config LOOX720_CPLD_EDIT
 	default m
 	help
 		Enable this to allow CPLD bits access from userland.
+
+config LOOX720_LEDS_EDIT
+    tristate 'access CPLD bits from userland'
+    depends on MACH_LOOX720
+    default m
+    help
+        Enable this to allow controling LEDs from userland.
 
 config LOOX720_PCMCIA
 	tristate 'FSC Loox 720 CF/PC Card'
