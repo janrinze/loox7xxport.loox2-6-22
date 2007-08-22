@@ -16,7 +16,7 @@ static u8 loox720_leds_cache = 0x00;
 	|---|---|---|---|---|----------------------------------------
 	| A | B | C | D | X | LED status
 	|---|---|---|---|---|----------------------------------------
-	| 1 | 1 | 0 | 1 | 1 | Blinking green and blue
+	| 0 | 0 | 0 | 1 | 1 | Blinking green and blue
 	|---|---|---|---|---|----------------------------------------
 	| 0 | 1 | 0 | 1 | 1 | Blinking blue
 	|---|---|---|---|---|----------------------------------------
@@ -65,7 +65,7 @@ loox720_leds_cache structure:
 	bit 7 - led 2 inverted blink mode (working with blink bit set)
 */
 
-void	loox720_update_leds()
+static void	loox720_update_leds( void )
 {
 	u32 v = 0;
 	u32 mask = 0;
@@ -82,6 +82,8 @@ void	loox720_update_leds()
 			mask |= LOOX720_CPLD_LED1_BIT_A;
 		if(loox720_leds_cache & LOOX720_LED1_BLUE)
 			mask |= LOOX720_CPLD_LED1_BIT_B;
+		if((loox720_leds_cache & (LOOX720_LED1_BLUE | LOOX720_LED1_GREEN)) == (LOOX720_LED1_BLUE | LOOX720_LED1_GREEN))
+			mask &= ~(LOOX720_CPLD_LED1_BIT_A | LOOX720_CPLD_LED1_BIT_B);
 	}
 	if(loox720_leds_cache & LOOX720_LED2_RED)
 	{
