@@ -1,14 +1,21 @@
 #include <linux/module.h>
 #include <linux/version.h>
+#include <linux/irq.h>
 #include <asm/mach-types.h>
+#include <asm/irq.h>
 #include <asm/io.h>
 #include <asm/arch/loox720-cpld.h>
+#include <asm/arch/loox720-gpio.h>
 
 #include <linux/delay.h>
 
 static u32 reg_cache[8]={
     0, 0, 0, 0, 0, 0, 0, 0
 };
+
+static u16 masked_irqs = 0;
+int loox720_cpld_irq_base = -1;
+EXPORT_SYMBOL(loox720_cpld_irq_base);
 
 static u32 *cpld_mem = 0;
 
@@ -70,11 +77,12 @@ EXPORT_SYMBOL(loox720_cpld_reg_read);
 
 void	loox720_cpld_reg_write(int regno, u32 value)
 {
-    if (regno<4)
+/*    if (regno<4 && regno)
     {
 	printk(KERN_INFO "skipping cpld_reg_write(%d) %08X\n", regno, value);
 	return;
     }
+*/
     
     printk(KERN_INFO "cpld_reg_write(%02X, %04X)\n", regno, value);
     
@@ -85,13 +93,17 @@ EXPORT_SYMBOL(loox720_cpld_reg_write);
 
 u32	loox720_egpio_cache_get(int regno)
 {
-    return reg_cache[regno];
+	if(regno>0)
+	    return reg_cache[regno];
+	else
+		return 0;
 }
 EXPORT_SYMBOL(loox720_egpio_cache_get);
 
 void	loox720_egpio_cache_set(int regno, u32 value)
 {
-    reg_cache[regno] = value;
+	if(regno>0)
+	   	reg_cache[regno] = value;
 }
 EXPORT_SYMBOL(loox720_egpio_cache_set);
 
@@ -110,16 +122,61 @@ void	loox720_egpio_cache_clear_bits(int pos, u32 bits)
 void	loox720_egpio_set_bit(int bit, int val)
 {
     int pos = BIT_POS(bit);
-    
-    if (val)
-	loox720_egpio_cache_enable_bits(pos, BIT_MSK(bit));
-    else
-	loox720_egpio_cache_clear_bits(pos, BIT_MSK(bit));
-	
-    loox720_cpld_reg_write(pos, reg_cache[pos]);
+    if(bit > 31)
+	{
+	    if (val)
+		loox720_egpio_cache_enable_bits(pos, BIT_MSK(bit));
+	    else
+		loox720_egpio_cache_clear_bits(pos, BIT_MSK(bit));
+		
+	    loox720_cpld_reg_write(pos, reg_cache[pos]);
+	}
 }
 EXPORT_SYMBOL(loox720_egpio_set_bit);
 
+void	loox720_cpld_ack_irq(unsigned int irq)
+{
+//	if(cpld_mem)
+//		cpld_mem[0] = (1 << irq);
+	printk(KERN_INFO "CPLD: Acknowledged IRQ %d.\n", irq - loox720_cpld_irq_base);
+}
+
+void 	loox720_cpld_mask_irq(unsigned int irq)
+{
+	masked_irqs |= 1 << (irq - loox720_cpld_irq_base);
+	loox720_cpld_reg_write(0, masked_irqs << 16);
+	printk(KERN_INFO "CPLD: Masked IRQ %d.\n", irq - loox720_cpld_irq_base);
+}
+
+void	loox720_cpld_unmask_irq(unsigned int irq)
+{
+	masked_irqs &= ~(1 << (irq - loox720_cpld_irq_base));
+	loox720_cpld_reg_write(0, masked_irqs << 16);
+	printk(KERN_INFO "CPLD: Unmasked IRQ %d.\n", irq - loox720_cpld_irq_base);
+}
+
+static struct irq_chip loox720_irq_chip = {
+    .name       = "CPLD",
+    .ack        = loox720_cpld_ack_irq,
+    .mask       = loox720_cpld_mask_irq,
+    .unmask     = loox720_cpld_unmask_irq,
+};
+
+static void loox720_cpld_irq_demux(unsigned int irq, struct irq_desc *desc)
+{
+	int i, irq_num;
+	u32 fired_irqs = loox720_cpld_reg_read(0);
+	desc->chip->ack(irq);
+	loox720_cpld_reg_write(0, 0xFFFF);
+	for(i=0; i<LOOX720_CPLD_IRQ_COUNT; i++)
+		if(fired_irqs & (1 << i) & (~masked_irqs))
+		{
+			printk(KERN_INFO "CPLD: Received IRQ %d.\n", i);
+			irq_num = loox720_cpld_irq_base + i;
+			desc = irq_desc + irq_num;
+			desc->handle_irq(irq_num, desc);
+		}
+}
 
 static int __init loox720_cpld_init(void)
 {
@@ -127,17 +184,24 @@ static int __init loox720_cpld_init(void)
     
     if (!machine_is_loox720())
 	return -ENODEV;
-	
-    printk(KERN_INFO "LOOX720 CPLD Driver\n");
+	loox720_cpld_irq_base = alloc_irq_space(LOOX720_CPLD_IRQ_COUNT);
+	if(loox720_cpld_irq_base == -1)
+	{
+		printk(KERN_ERR "Failed to allocate %d IRQs", LOOX720_CPLD_IRQ_COUNT);
+		return -ENODEV;
+	}
+    printk(KERN_INFO "Loox 720 CPLD Driver\n");
     
     cpld_mem = (u32*)ioremap(LOOX720_CPLD_PHYS, LOOX720_CPLD_SIZE);
     if (!cpld_mem)
     {
-	printk(KERN_ERR "ioremap failed.\n");
-	return -ENODEV;
+		printk(KERN_ERR "ioremap failed.\n");
+		free_irq_space(loox720_cpld_irq_base, LOOX720_CPLD_IRQ_COUNT);
+		return -ENODEV;
     }
     
-    printk(KERN_INFO "CPLD PHYS=%08X VIRT=%08X\n", LOOX720_CPLD_PHYS, (u32)cpld_mem);
+    printk(KERN_INFO "Physical address of CPLD: %08X\nVirtual address of CPLD: %08X\nUsing IRQs from %d to %d on IRQ %d\n",
+		LOOX720_CPLD_PHYS, (u32)cpld_mem, loox720_cpld_irq_base, loox720_cpld_irq_base + LOOX720_CPLD_IRQ_COUNT - 1, LOOX720_IRQ(CPLD_INT));
 
     for (i=0;i<ARRAY_SIZE(loox720_cpld_bits);i++)
     {
@@ -146,12 +210,36 @@ static int __init loox720_cpld_init(void)
 	  loox720_cpld_bits[i].value
 	);
     }
+	masked_irqs = 0xFFFF;
+	loox720_cpld_reg_write(0, 0xFFFFFFFF); // Mask and clear all interrupts
+	for (i=0; i<LOOX720_CPLD_IRQ_COUNT; i++)
+	{
+		int irq = i + loox720_cpld_irq_base;
+        set_irq_chip(irq, &loox720_irq_chip);
+        set_irq_handler(irq, handle_level_irq);
+        set_irq_flags(irq, IRQF_VALID | IRQF_PROBE);
+	}
+    set_irq_chained_handler(LOOX720_IRQ(CPLD_INT), loox720_cpld_irq_demux);
+    set_irq_type(LOOX720_IRQ(CPLD_INT), IRQT_RISING);
 
     return 0;
 }
 
 static void __exit loox720_cpld_exit(void)
 {
+	if (loox720_cpld_irq_base!=-1)
+	{
+		int i;
+	    for (i = 0 ; i < LOOX720_CPLD_IRQ_COUNT ; i++)
+		{
+	        int irq = i + loox720_cpld_irq_base;
+	        set_irq_handler(irq, NULL);
+	        set_irq_chip(irq, NULL);
+	        set_irq_flags(irq, 0);
+	    }
+	    set_irq_chained_handler(LOOX720_IRQ(CPLD_INT), NULL);
+		free_irq_space(loox720_cpld_irq_base, LOOX720_CPLD_IRQ_COUNT);
+	}
 	if (cpld_mem)
 	    iounmap(cpld_mem);
 }
@@ -159,6 +247,6 @@ static void __exit loox720_cpld_exit(void)
 module_init( loox720_cpld_init );
 module_exit( loox720_cpld_exit );
 
-MODULE_AUTHOR("Piotr Czechowicz");
+MODULE_AUTHOR("Piotr Czechowicz & Tomasz Figa");
 MODULE_DESCRIPTION("Loox 720 CPLD driver");
 MODULE_LICENSE("GPL");

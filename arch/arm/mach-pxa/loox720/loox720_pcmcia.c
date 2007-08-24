@@ -61,7 +61,7 @@ static int loox720_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 	pxa_gpio_mode(GPIO56_nPWAIT_MD);
 	pxa_gpio_mode(GPIO57_nIOIS16_MD);
 
-	skt->irq = (skt->nr == 1) ? LOOX720_IRQ_GPIO_CF_IRQ : LOOX720_IRQ_GPIO_CF_WIFIIRQ;
+	skt->irq = (skt->nr == 1) ? LOOX720_IRQ_GPIO_CF_IRQ : LOOX720_CPLD_IRQ(WIFI);
 	return soc_pcmcia_request_irqs(skt, irqs, ARRAY_SIZE(irqs));
 }
 
@@ -83,7 +83,7 @@ static void loox720_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
 	}
 	else{
 		state->detect = 1;
-		state->ready  = GPLR_BIT(LOOX720_GPIO_CF_WIFIIRQ) ? 1 : 0;
+		state->ready  = (loox720_cpld_reg_read(1) & 0x20) ? 1 : 0;
 	}
 
 	state->bvd1   = 1;  /* not available */
