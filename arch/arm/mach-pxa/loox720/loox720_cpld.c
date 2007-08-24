@@ -155,7 +155,7 @@ void	loox720_cpld_unmask_irq(unsigned int irq)
 	spin_lock(masked_irqs);
 		masked_irqs &= ~(1 << (irq - loox720_cpld_irq_base));
 	spin_unlock(masked_irqs);
-	loox720_cpld_reg_write(0, masked_irqs << 16);
+	loox720_cpld_reg_write(0, (masked_irqs << 16) | (1 << (irq - loox720_cpld_irq_base)));
 	printk(KERN_INFO "CPLD: Unmasked IRQ %d.\n", irq - loox720_cpld_irq_base);
 }
 
