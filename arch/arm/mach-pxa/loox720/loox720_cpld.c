@@ -54,11 +54,11 @@ static struct cpld_bit loox720_cpld_bits[] =
     {
 	.bit   = LOOX720_CPLD_SD_BIT,
 	.value = 1
-    },
+    }/*,
     {
-	.bit   = 209,	// not sure if this is necessary. probably refers to audio amplifier.
+	.bit   = LOOX720_CPLD_SND_AMPLIFIER_BIT,	// not sure if this is necessary. probably refers to audio amplifier.
 	.value = 1
-    },
+    },*/
 };
 
 u32	loox720_cpld_reg_read(int regno)
@@ -143,14 +143,18 @@ void	loox720_cpld_ack_irq(unsigned int irq)
 
 void 	loox720_cpld_mask_irq(unsigned int irq)
 {
-	masked_irqs |= 1 << (irq - loox720_cpld_irq_base);
+	spin_lock(masked_irqs);
+		masked_irqs |= 1 << (irq - loox720_cpld_irq_base);
+	spin_unlock(masked_irqs);
 	loox720_cpld_reg_write(0, masked_irqs << 16);
 	printk(KERN_INFO "CPLD: Masked IRQ %d.\n", irq - loox720_cpld_irq_base);
 }
 
 void	loox720_cpld_unmask_irq(unsigned int irq)
 {
-	masked_irqs &= ~(1 << (irq - loox720_cpld_irq_base));
+	spin_lock(masked_irqs);
+		masked_irqs &= ~(1 << (irq - loox720_cpld_irq_base));
+	spin_unlock(masked_irqs);
 	loox720_cpld_reg_write(0, masked_irqs << 16);
 	printk(KERN_INFO "CPLD: Unmasked IRQ %d.\n", irq - loox720_cpld_irq_base);
 }
@@ -165,9 +169,17 @@ static struct irq_chip loox720_irq_chip = {
 static void loox720_cpld_irq_demux(unsigned int irq, struct irq_desc *desc)
 {
 	int i, irq_num;
-	u32 fired_irqs = loox720_cpld_reg_read(0);
-	desc->chip->ack(irq);
-	loox720_cpld_reg_write(0, 0xFFFF);
+	u32 fired_irqs;
+	u16 old_mask;
+	spin_lock(masked_irqs);
+		old_mask = masked_irqs;
+		masked_irqs = 0xFFFF;
+		loox720_cpld_reg_write(0, 0xFFFF0000);
+		fired_irqs = loox720_cpld_reg_read(0);
+		desc->chip->ack(irq);
+		masked_irqs = old_mask;
+	spin_unlock(masked_irqs);
+	loox720_cpld_reg_write(0, (masked_irqs << 16) | fired_irqs);
 	for(i=0; i<LOOX720_CPLD_IRQ_COUNT; i++)
 		if(fired_irqs & (1 << i) & (~masked_irqs))
 		{
