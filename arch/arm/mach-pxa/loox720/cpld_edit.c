@@ -14,7 +14,7 @@
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/irqs.h>
 #include <asm/uaccess.h>
-#include <asm/arch-pxa/loox720-cpld.h>
+#include <asm/arch/loox720-cpld.h>
 
 #include <linux/seq_file.h>
 
@@ -42,6 +42,9 @@ static void handle_request(void)
 			break;
 		case 'r':
 			printk(KERN_ERR "CPLD-edit: Value of CPLD reg %lu is %08X\n", id, loox720_cpld_reg_read(id));
+			break;
+		case '0':
+			loox720_cpld_reg_write(0, id);
 			break;
 		default:
 			printk(KERN_ERR "CPLD-edit: Unknown request\n");
