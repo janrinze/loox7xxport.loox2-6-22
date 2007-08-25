@@ -13,7 +13,6 @@ static u32 reg_cache[8]={
     0, 0, 0, 0, 0, 0, 0, 0
 };
 
-static u16 masked_irqs = 0;
 int loox720_cpld_irq_base = -1;
 EXPORT_SYMBOL(loox720_cpld_irq_base);
 
@@ -24,6 +23,13 @@ struct cpld_bit
     int	bit;
     int value;
 };
+
+struct loox720_irq_data
+{
+	u16 irq_mask;
+	int irq_base;
+};
+struct loox720_irq_data * loox720_cpld_irq_data;
 
 static struct cpld_bit loox720_cpld_bits[] = 
 {
@@ -136,27 +142,24 @@ EXPORT_SYMBOL(loox720_egpio_set_bit);
 
 void	loox720_cpld_ack_irq(unsigned int irq)
 {
-//	if(cpld_mem)
-//		cpld_mem[0] = (1 << irq);
-	printk(KERN_INFO "CPLD: Acknowledged IRQ %d.\n", irq - loox720_cpld_irq_base);
+	struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
+	printk(KERN_INFO "CPLD: Acknowledged IRQ %d.\n", irq - irq_data->irq_base);
 }
 
 void 	loox720_cpld_mask_irq(unsigned int irq)
 {
-	spin_lock(masked_irqs);
-		masked_irqs |= 1 << (irq - loox720_cpld_irq_base);
-	spin_unlock(masked_irqs);
-	loox720_cpld_reg_write(0, masked_irqs << 16);
-	printk(KERN_INFO "CPLD: Masked IRQ %d.\n", irq - loox720_cpld_irq_base);
+	struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
+	irq_data->irq_mask |= 1 << (irq - irq_data->irq_base);
+	loox720_cpld_reg_write(0, irq_data->irq_mask << 16);
+	printk(KERN_INFO "CPLD: Masked IRQ %d.\n", irq - irq_data->irq_base);
 }
 
 void	loox720_cpld_unmask_irq(unsigned int irq)
 {
-	spin_lock(masked_irqs);
-		masked_irqs &= ~(1 << (irq - loox720_cpld_irq_base));
-	spin_unlock(masked_irqs);
-	loox720_cpld_reg_write(0, (masked_irqs << 16) | (1 << (irq - loox720_cpld_irq_base)));
-	printk(KERN_INFO "CPLD: Unmasked IRQ %d.\n", irq - loox720_cpld_irq_base);
+	struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
+	irq_data->irq_mask &= ~(1 << (irq - irq_data->irq_base));
+	loox720_cpld_reg_write(0, (irq_data->irq_mask << 16) | (1 << (irq - irq_data->irq_base)));
+	printk(KERN_INFO "CPLD: Unmasked IRQ %d.\n", irq - irq_data->irq_base);
 }
 
 static struct irq_chip loox720_irq_chip = {
@@ -171,20 +174,19 @@ static void loox720_cpld_irq_demux(unsigned int irq, struct irq_desc *desc)
 	int i, irq_num;
 	u32 fired_irqs;
 	u16 old_mask;
-	spin_lock(masked_irqs);
-		old_mask = masked_irqs;
-		masked_irqs = 0xFFFF;
-		loox720_cpld_reg_write(0, 0xFFFF0000);
-		fired_irqs = loox720_cpld_reg_read(0);
-		desc->chip->ack(irq);
-		masked_irqs = old_mask;
-	spin_unlock(masked_irqs);
-	loox720_cpld_reg_write(0, (masked_irqs << 16) | fired_irqs);
+	struct loox720_irq_data * irq_data = desc->handler_data;
+	old_mask = irq_data->irq_mask;
+	irq_data->irq_mask = 0xFFFF;
+	loox720_cpld_reg_write(0, 0xFFFF0000);
+	fired_irqs = loox720_cpld_reg_read(0);
+	desc->chip->ack(irq);
+	irq_data->irq_mask = old_mask;
+	loox720_cpld_reg_write(0, (irq_data->irq_mask << 16) | fired_irqs);
 	for(i=0; i<LOOX720_CPLD_IRQ_COUNT; i++)
-		if(fired_irqs & (1 << i) & (~masked_irqs))
+		if(fired_irqs & (1 << i) & (~irq_data->irq_mask))
 		{
 			printk(KERN_INFO "CPLD: Received IRQ %d.\n", i);
-			irq_num = loox720_cpld_irq_base + i;
+			irq_num = irq_data->irq_base + i;
 			desc = irq_desc + irq_num;
 			desc->handle_irq(irq_num, desc);
 		}
@@ -217,21 +219,33 @@ static int __init loox720_cpld_init(void)
 
     for (i=0;i<ARRAY_SIZE(loox720_cpld_bits);i++)
     {
-	loox720_egpio_set_bit(
-	  loox720_cpld_bits[i].bit, 
-	  loox720_cpld_bits[i].value
-	);
+		loox720_egpio_set_bit(
+		  loox720_cpld_bits[i].bit, 
+		  loox720_cpld_bits[i].value
+		);
     }
-	masked_irqs = 0xFFFF;
+	loox720_cpld_irq_data = kmalloc(sizeof(struct loox720_irq_data), GFP_KERNEL);
+	if(!loox720_cpld_irq_data)
+	{
+	    printk(KERN_ERR "kmalloc failed.\n");
+        free_irq_space(loox720_cpld_irq_base, LOOX720_CPLD_IRQ_COUNT);
+	    if (cpld_mem)
+	        iounmap(cpld_mem);
+        return -ENOMEM;
+	}
+	loox720_cpld_irq_data->irq_base = loox720_cpld_irq_base;
+	loox720_cpld_irq_data->irq_mask = 0xFFFF;
 	loox720_cpld_reg_write(0, 0xFFFFFFFF); // Mask and clear all interrupts
 	for (i=0; i<LOOX720_CPLD_IRQ_COUNT; i++)
 	{
 		int irq = i + loox720_cpld_irq_base;
         set_irq_chip(irq, &loox720_irq_chip);
+		set_irq_chip_data(irq, loox720_cpld_irq_data);
         set_irq_handler(irq, handle_level_irq);
         set_irq_flags(irq, IRQF_VALID | IRQF_PROBE);
 	}
     set_irq_chained_handler(LOOX720_IRQ(CPLD_INT), loox720_cpld_irq_demux);
+	set_irq_data(LOOX720_IRQ(CPLD_INT), loox720_cpld_irq_data);
     set_irq_type(LOOX720_IRQ(CPLD_INT), IRQT_RISING);
 
     return 0;
@@ -246,12 +260,16 @@ static void __exit loox720_cpld_exit(void)
 		{
 	        int irq = i + loox720_cpld_irq_base;
 	        set_irq_handler(irq, NULL);
+			set_irq_chip_data(irq, NULL);
 	        set_irq_chip(irq, NULL);
 	        set_irq_flags(irq, 0);
 	    }
 	    set_irq_chained_handler(LOOX720_IRQ(CPLD_INT), NULL);
+		set_irq_data(LOOX720_IRQ(CPLD_INT), NULL);
 		free_irq_space(loox720_cpld_irq_base, LOOX720_CPLD_IRQ_COUNT);
 	}
+	if (loox720_cpld_irq_data)
+		kfree(loox720_cpld_irq_data);
 	if (cpld_mem)
 	    iounmap(cpld_mem);
 }

@@ -115,10 +115,12 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 	switch (state->Vcc) {
 		case 0:
 			if(skt->nr == 1)
-				{}//GPCR_BIT(LOOX720_GPIO_CF_PWR);
+			{}//GPCR_BIT(LOOX720_GPIO_CF_PWR);
 			else
+			{
 				loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 0);
 				GPCR_BIT(LOOX720_GPIO_CF_PWR);//loox720_clear_egpio(LOOX720_EGPIO_WIFI_PWR);
+			}
 			break;
 		case 50:
 		case 33:
@@ -126,8 +128,10 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 			if(skt->nr == 1)
 				{}//GPSR_BIT(LOOX720_GPIO_CF_PWR);
 			else
+			{
 				loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 1);
 				GPSR_BIT(LOOX720_GPIO_CF_PWR);//loox720_set_egpio(LOOX720_EGPIO_WIFI_PWR);
+			}
 			break;
 		default:
 			printk (KERN_ERR "%s: Unsupported Vcc:%d\n", __FUNCTION__, state->Vcc);
@@ -140,18 +144,10 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 
 static void loox720_pcmcia_socket_init(struct soc_pcmcia_socket *skt)
 {
-	if(skt->nr == 0)
-	{
-		loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 1);
-	}
 }
 
 static void loox720_pcmcia_socket_suspend(struct soc_pcmcia_socket *skt)
 {
-	if(skt->nr == 0)
-	{
-		loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 0);
-	}
 }
 
 static struct pcmcia_low_level loox720_pcmcia_ops = {
