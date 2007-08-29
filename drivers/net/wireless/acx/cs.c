@@ -48,10 +48,6 @@
 #define DUMP_MEM_DURING_DIAG 0
 #define DUMP_IF_SLOW 0
 
-#define PATCH_AROUND_BAD_SPOTS 1
-#define HX4700_FIRMWARE_CHECKSUM 0x0036862e
-#define HX4700_ALTERNATE_FIRMWARE_CHECKSUM 0x00368a75
-
 #include <linux/version.h>
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 18)
 #include <linux/config.h>
@@ -85,7 +81,7 @@
 #include <linux/workqueue.h>
 #include <linux/inetdevice.h>
 
-#define PCMCIA_DEBUG 1
+#define PCMCIA_DEBUG 16
 
 /*
    All the PCMCIA modules use PCMCIA_DEBUG to control debugging.  If
@@ -2913,16 +2909,13 @@ acxmem_e_open(struct net_device *ndev)
 
 /* TODO: pci_set_power_state(pdev, PCI_D0); ? */
 
-#if 0
 	/* request shared IRQ handler */
-	if (request_irq(ndev->irq, acxmem_i_interrupt, SA_INTERRUPT, ndev->name, ndev)) {
+	if (request_irq(ndev->irq, acxmem_i_interrupt, IRQF_DISABLED, ndev->name, ndev)) {
 		printk("%s: request_irq FAILED\n", ndev->name);
 		result = -EAGAIN;
 		goto done;
 	}
-	set_irq_type (ndev->irq, IRQT_FALLING);
 	log(L_DEBUG|L_IRQ, "request_irq %d successful\n", ndev->irq);
-#endif
 
 	/* ifup device */
 	acxmem_s_up(ndev);
@@ -3376,7 +3369,7 @@ static irqreturn_t
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 19)
 acxmem_i_interrupt(int irq, void *dev_id)
 #else
-acxmwm_i_interrupt(int irq, void *dev_id, struct pt_regs *regs)
+acxmem_i_interrupt(int irq, void *dev_id, struct pt_regs *regs)
 #endif
 {
 	acx_device_t *adev;
@@ -5374,7 +5367,7 @@ static int acx_cs_probe(struct pcmcia_device *link)
         }
 
         /* Interrupt setup */
-        link->irq.Attributes = IRQ_TYPE_EXCLUSIVE | IRQ_HANDLE_PRESENT;
+        link->irq.Attributes = IRQ_TYPE_DYNAMIC_SHARING;
         link->irq.IRQInfo1 = IRQ_LEVEL_ID;
         link->irq.Handler = acxmem_i_interrupt;
         link->irq.Instance = ndev;
