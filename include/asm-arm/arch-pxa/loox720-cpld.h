@@ -49,7 +49,7 @@ Bitmasks of bits in reg #4:
 #define LOOX720_CPLD_LED2_BLINK 16384
 
 /*
-CPLD bits numbers
+CPLD output bits numbers
 */
 
 #define LOOX720_CPLD_USB_PULLUP_BIT		145
@@ -75,6 +75,15 @@ CPLD bits numbers
 
 #define LOOX720_CPLD_BACKLIGHT_BIT		242
 
+/*
+CPLD input bitmasks definitions
+*/
+
+#define LOOX720_CPLD_CF_DETECT_N		0x04
+#define LOOX720_CPLD_CF_READY			0x10
+#define LOOX720_CPLD_WIFI_READY			0x20
+#define LOOX720_CPLD_WIFI_ENABLED		0x40
+
 extern int loox720_cpld_irq_base;
 
 /*
@@ -87,6 +96,8 @@ CPLD interrupt multiplexer definitions
 #define LOOX720_CPLD_IRQ_COUNT 16
 
 #define LOOX720_CPLD_IRQ_WIFI 5
+#define LOOX720_CPLD_IRQ_CF 4
+#define LOOX720_CPLD_IRQ_CARD_DETECT 2
 
 /*
 Function definitions
