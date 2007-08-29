@@ -90,8 +90,10 @@ extern int loox720_cpld_irq_base;
 CPLD interrupt multiplexer definitions
 */
 
+#define LOOX720_IRQ_BASE IRQ_BOARD_START
+
 #define LOOX720_CPLD_IRQ(irq) \
-    (LOOX720_CPLD_IRQ_ ## irq) + loox720_cpld_irq_base
+    (LOOX720_CPLD_IRQ_ ## irq) + LOOX720_IRQ_BASE
 
 #define LOOX720_CPLD_IRQ_COUNT 16
 
