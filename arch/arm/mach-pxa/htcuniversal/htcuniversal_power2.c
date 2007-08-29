@@ -11,7 +11,7 @@
 #include <linux/platform_device.h>
 #include <linux/module.h>
 #include <linux/pda_power.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #include <asm/mach-types.h>
 #include <asm/hardware.h>

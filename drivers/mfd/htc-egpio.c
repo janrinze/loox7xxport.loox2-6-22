@@ -12,6 +12,7 @@
 #include <linux/interrupt.h> /* enable_irq_wake */
 #include <linux/spinlock.h> /* spinlock_t */
 #include <linux/module.h>
+#include <linux/gpiodev2.h>
 #include <linux/mfd/htc-egpio.h>
 
 #include <asm/irq.h> /* IRQT_RISING */
@@ -121,8 +122,9 @@ static inline int u16bit(int bit) {
 }
 
 /* Check an input pin to see if it is active. */
-static int egpio_get(struct device *dev, unsigned bit)
+static int egpio_get(struct device *dev, unsigned gpio)
 {
+	unsigned bit = gpio & GPIO_BASE_MASK;
 	struct egpio_info *ei = dev_get_drvdata(dev);
 	u16 readval = readw(&ei->addrBase[u16pos(bit) << ei->bus_shift]);
 	return readval & u16bit(bit);
@@ -136,11 +138,11 @@ static int egpio_to_irq(struct device *dev, unsigned gpio_no)
 	for (i=0; i<pdata->nr_pins; i++) {
 		struct htc_egpio_pinInfo *pi = &pdata->pins[i];
 		if (pi->type == HTC_EGPIO_TYPE_INPUT
-		    && pi->pin_nr == gpio_no
+		    && pi->pin_nr == (gpio_no & GPIO_BASE_MASK)
 		    && pi->input_irq >= 0)
 			return pi->input_irq + ei->irqStart;
 		if (pi->type == HTC_EGPIO_TYPE_IRQ
-		    && pi->pin_nr == gpio_no)
+		    && pi->pin_nr == (gpio_no & GPIO_BASE_MASK))
 			return pi->pin_nr + ei->irqStart;
 	}
 	return -ENODEV;
@@ -151,8 +153,9 @@ static int egpio_to_irq(struct device *dev, unsigned gpio_no)
  * Output pins
  ****************************************************************/
 
-static void egpio_set(struct device *dev, unsigned bit, int val)
+static void egpio_set(struct device *dev, unsigned gpio, int val)
 {
+	unsigned bit = gpio & GPIO_BASE_MASK;
 	struct egpio_info *ei = dev_get_drvdata(dev);
 	int pos = u16pos(bit);
 	unsigned long flag;
@@ -248,6 +251,14 @@ static int egpio_probe(struct platform_device *pdev)
 	pdata->ops.set = egpio_set;
 	pdata->ops.to_irq = egpio_to_irq;
 	platform_set_drvdata(pdev, ei);
+
+	{
+	struct gpio_ops ops;
+	ops.get_value = egpio_get;
+	ops.set_value = egpio_set;
+	ops.to_irq = egpio_to_irq;
+	gpiodev_register(pdata->gpio_base, &pdev->dev, &ops);
+	}
 
 	/* Go through list of pins. */
 	ei->irqStart = pdata->irq_base;

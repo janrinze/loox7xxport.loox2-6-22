@@ -52,11 +52,11 @@
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 
-#include <linux/soc/hamcop_base.h>
+#include <linux/mfd/hamcop_base.h>
 #include <asm/hardware/ipaq-hamcop.h>
 #include <asm/hardware/hamcop_leds.h>
 #include <asm/arch/serial.h>
-#include <asm/arch/h2200-asic.h>
+#include <asm/arch/h2200.h>
 #include <asm/arch/h2200-gpio.h>
 #include <asm/arch/h2200-irqs.h>
 #include <asm/arch/h2200-init.h>
@@ -499,38 +499,7 @@ static struct pxa2xx_udc_mach_info h2200_udc_mach_info = {
 	.udc_command      = h2200_udc_command,
 };
 
-/* ------------------- */
-
-static struct resource hamcop_resources[] = {
-	[0] = {		
-		.start	= H2200_HAMCOP_BASE,
-		.end	= H2200_HAMCOP_BASE + 0x00ffffff,
-		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
-		.start  = IRQ_GPIO_H2200_ASIC_INT,
-		.end	= IRQ_GPIO_H2200_ASIC_INT,
-		.flags  = IORESOURCE_IRQ,
-	},
-};
-
-static struct hamcop_platform_data hamcop_platform_data = {
-	.clocksleep = HAMCOP_CPM_CLKSLEEP_XTCON | HAMCOP_CPM_CLKSLEEP_UCLK_ON |
-		      HAMCOP_CPM_CLKSLEEP_CLKSEL,
-	.pllcontrol = 0xd15e,           /* value from wince via haret */ 
-};
-
-struct platform_device h2200_hamcop = {
-	.name		= "hamcop",
-	.id		= -1,
-	.num_resources	= ARRAY_SIZE(hamcop_resources),
-	.resource	= hamcop_resources,
-	.dev		= {
-		.platform_data = &hamcop_platform_data,
-	},
-};
-EXPORT_SYMBOL(h2200_hamcop);
-
+/* Buttons */
 
 static struct gpio_keys_button h2200_button_table[] = {
 	{ KEY_POWER, GPIO_NR_H2200_POWER_ON_N, 1 },
@@ -551,10 +520,47 @@ static struct platform_device h2200_gpio_keys = {
 static struct platform_device h2200_buttons = {
 	.name = "h2200 buttons",
 	.id   = -1,
-	.dev  = {
-		.parent = &h2200_hamcop.dev,
+};
+
+/* SoC device */
+static struct resource hamcop_resources[] = {
+	[0] = {		
+		.start	= H2200_HAMCOP_BASE,
+		.end	= H2200_HAMCOP_BASE + 0x00ffffff,
+		.flags	= IORESOURCE_MEM,
+	},
+	[1] = {
+		.start  = IRQ_GPIO_H2200_ASIC_INT,
+		.end	= IRQ_GPIO_H2200_ASIC_INT,
+		.flags  = IORESOURCE_IRQ,
 	},
 };
+
+static struct platform_device *h2200_hamcop_devices[] __initdata = {
+	&h2200_buttons,
+	&h2200_leds_pdev,
+};
+
+static struct hamcop_platform_data hamcop_platform_data = {
+	.irq_base = H2200_HAMCOP_IRQ_BASE,
+	.clocksleep = HAMCOP_CPM_CLKSLEEP_XTCON | HAMCOP_CPM_CLKSLEEP_UCLK_ON |
+		      HAMCOP_CPM_CLKSLEEP_CLKSEL,
+	.pllcontrol = 0xd15e,           /* value from wince via haret */ 
+
+	.child_devs     = h2200_hamcop_devices,
+	.num_child_devs = ARRAY_SIZE(h2200_hamcop_devices),
+};
+
+struct platform_device h2200_hamcop = {
+	.name		= "hamcop",
+	.id		= -1,
+	.num_resources	= ARRAY_SIZE(hamcop_resources),
+	.resource	= hamcop_resources,
+	.dev		= {
+		.platform_data = &hamcop_platform_data,
+	},
+};
+EXPORT_SYMBOL(h2200_hamcop);
 
 
 static void __init 
@@ -563,8 +569,6 @@ h2200_init (void)
 	platform_device_register(&h2200_hamcop);
 	platform_device_register(&h2200_gpio_keys);
 	platform_device_register(&h2200_power);
-	platform_device_register(&h2200_buttons);
-	platform_device_register(&h2200_leds_pdev);
 	pxa_set_udc_info (&h2200_udc_mach_info);
 	pxa_set_ficp_info(&h2200_ficp_platform_data);
 }

@@ -16,10 +16,10 @@
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/corgi_bl.h>
-#include <linux/mq11xx.h>
+#include <linux/mfd/mq11xx.h>
 
 #include <asm/arch/h5400-asic.h>
-#include <linux/soc/samcop_base.h>
+#include <linux/mfd/samcop_base.h>
 
 extern struct mediaq11xx_base *mq_base;
 

@@ -36,7 +36,7 @@
 #include "pxa2xx-i2s.h"
 #include "pxa2xx-ssp.h"
 
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #define BLUEANGEL_HP_OFF    0
 #define BLUEANGEL_HEADSET   1

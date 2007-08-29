@@ -26,7 +26,7 @@
 #include <asm/arch/h1900-gpio.h>
 #include <asm/hardware/ipaq-hamcop.h>
 #include <asm/arch/h1900-asic.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <linux/platform_device.h>
 
 #include "pxa2xx-i2sound.h"

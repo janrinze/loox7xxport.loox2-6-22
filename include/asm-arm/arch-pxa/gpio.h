@@ -27,6 +27,7 @@
 #include <asm/arch/pxa-regs.h>
 #include <asm/irq.h>
 #include <asm/hardware.h>
+#include <linux/gpiodev2.h>
 
 static inline int gpio_request(unsigned gpio, const char *label)
 {
@@ -54,7 +55,7 @@ static inline int __gpio_get_value(unsigned gpio)
 }
 
 #define gpio_get_value(gpio)			\
-	(__builtin_constant_p(gpio) ?		\
+	(__builtin_constant_p(gpio) && gpio < GPIO_BASE_INCREMENT ?		\
 	 __gpio_get_value(gpio) :		\
 	 pxa_gpio_get_value(gpio))
 
@@ -67,13 +68,17 @@ static inline void __gpio_set_value(unsigned gpio, int value)
 }
 
 #define gpio_set_value(gpio,value)		\
-	(__builtin_constant_p(gpio) ?		\
+	(__builtin_constant_p(gpio) && gpio < GPIO_BASE_INCREMENT ?		\
 	 __gpio_set_value(gpio, value) :	\
 	 pxa_gpio_set_value(gpio, value))
 
 #include <asm-generic/gpio.h>			/* cansleep wrappers */
 
-#define gpio_to_irq(gpio)	IRQ_GPIO(gpio)
+#define gpio_to_irq(gpio)		\
+	(__builtin_constant_p(gpio) && gpio < GPIO_BASE_INCREMENT ?		\
+	 IRQ_GPIO(gpio) :	\
+	 pxa_gpio_to_irq(gpio))
+
 #define irq_to_gpio(irq)	IRQ_TO_GPIO(irq)
 
 extern struct platform_device pxagpio_device;

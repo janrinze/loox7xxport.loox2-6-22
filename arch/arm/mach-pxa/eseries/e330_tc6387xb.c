@@ -18,7 +18,7 @@
 #include <asm/arch/eseries-irq.h>
 #include <asm/arch/eseries-gpio.h>
 
-#include <soc/tc6387xb.h>
+#include <linux/mfd/tc6387xb.h>
 
 static struct resource e330_tc6387xb_resources[] = {
 	[0] = {

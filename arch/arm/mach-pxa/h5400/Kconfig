@@ -24,11 +24,3 @@ config IPAQ_H5400_WIFI
 config IPAQ_H5400_AUDIO
 	tristate "HP iPAQ h5400 audio"
 	depends on ARCH_H5400 && SND_H5XXX_AK4535
-
-config IPAQ_H5400_POWER
-	tristate "HP iPAQ h5400 power"
-	depends on ARCH_H5400 && SOC_SAMCOP
-
-config IPAQ_H5400_LEDS
-	tristate "HP iPAQ h5400 LEDs"
-	depends on ARCH_H5400 && LEDS_SAMCOP

@@ -56,7 +56,7 @@ static struct resource aximx50_pen_irq = {
 	.flags = IORESOURCE_IRQ,
 };
 static struct platform_device aximx50_ts        = { 
-	.name = "ts-adc-debounce", 
+	.name = "ts-adc", 
 	.id = -1,
 	.resource = &aximx50_pen_irq,
 	.num_resources = 1,

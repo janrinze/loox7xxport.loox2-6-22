@@ -20,7 +20,7 @@
 #include <asm/arch/h5400-asic.h>
 #include <linux/platform_device.h>
 
-#include <linux/soc/samcop_base.h>
+#include <linux/mfd/samcop_base.h>
 
 /* It's up to the <machine>_audio drive to initialize 
  * the ak4535_device_controls variable, as it's needed

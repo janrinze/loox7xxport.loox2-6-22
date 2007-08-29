@@ -41,8 +41,8 @@ static struct platform_device ads7846_ssp     = {
 };
 
 static struct tsadc_platform_data loox720_ts_params = {
-    .pen_irq = LOOX720_IRQ(TOUCHPANEL_IRQ_N),
-//    .pen_gpio = GPIO_NR_LOOX720_TOUCHPANEL_IRQ_N,
+//    .pen_irq = LOOX720_IRQ(TOUCHPANEL_IRQ_N),
+    .pen_gpio = GPIO_NR_LOOX720_TOUCHPANEL_IRQ_N,
     .x_pin = "ads7846-ssp:x",
     .y_pin = "ads7846-ssp:y",
     .z1_pin = "ads7846-ssp:z1",
@@ -59,7 +59,7 @@ static struct resource loox720_pen_irq = {
     .flags = IORESOURCE_IRQ,
 };
 static struct platform_device loox720_ts        = {
-    .name = "ts-adc-debounce",
+    .name = "ts-adc",
     .id = -1,
     .resource = &loox720_pen_irq,
     .num_resources = 1,

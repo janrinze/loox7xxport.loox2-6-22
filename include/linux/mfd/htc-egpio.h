@@ -42,12 +42,14 @@ struct htc_egpio_pinInfo {
 struct htc_egpio_platform_data {
 	/* This is 'gpiodev' capable */
 	struct gpiodev_ops ops;
+	/* Beginning of available irqs (eg, IRQ_BOARD_START) */
+	int irq_base;
+	/* Beginning of available gpios (eg, GPIO_BASE_INCREMENT) */
+	int gpio_base;
 	/* Shift register number by this value (bus_shift=1 for 32bit register alignment) */
 	int bus_shift;
 	/* Set if chip requires writing '0' to ack an irq */
 	int invertAcks;
-	/* Beginning of available irqs (eg, IRQ_BOARD_START) */
-	int irq_base;
 	/* Number of registers (optional if all output pins specified
 	 * below) */
 	int nrRegs;

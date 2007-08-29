@@ -231,12 +231,16 @@ int pxa_gpio_mode(int gpio_mode)
 
 EXPORT_SYMBOL(pxa_gpio_mode);
 
+#include <linux/gpiodev2.h>
+struct gpio_ops gpio_desc[16];
 /*
  * Return GPIO level
  */
 int pxa_gpio_get_value(unsigned gpio)
 {
-	return __gpio_get_value(gpio);
+	if (gpio < GPIO_BASE_INCREMENT)
+		return __gpio_get_value(gpio);
+	return gpiodev2_get_value(gpio);
 }
 
 EXPORT_SYMBOL(pxa_gpio_get_value);
@@ -246,10 +250,24 @@ EXPORT_SYMBOL(pxa_gpio_get_value);
  */
 void pxa_gpio_set_value(unsigned gpio, int value)
 {
-	__gpio_set_value(gpio, value);
+	if (gpio < GPIO_BASE_INCREMENT)
+		__gpio_set_value(gpio, value);
+	gpiodev2_set_value(gpio, value);
 }
 
 EXPORT_SYMBOL(pxa_gpio_set_value);
+
+/*
+ * 
+ */
+int pxa_gpio_to_irq(unsigned gpio)
+{
+	if (gpio < GPIO_BASE_INCREMENT)
+		return IRQ_GPIO(gpio);
+	return gpiodev2_to_irq(gpio);
+}
+
+EXPORT_SYMBOL(pxa_gpio_to_irq);
 
 /*
  * Routine to safely enable or disable a clock in the CKEN

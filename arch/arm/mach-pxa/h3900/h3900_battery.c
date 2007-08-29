@@ -25,10 +25,10 @@
 #include <asm/arch/pxa-regs.h>
 
 #include <asm/mach/arch.h>
-#include <asm/arch/h3900-asic.h>
+#include <asm/arch/h3900.h>
 #include <asm/arch/h3900-gpio.h>
 
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 static int ac_in;
 

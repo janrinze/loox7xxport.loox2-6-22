@@ -43,6 +43,7 @@
 #include <asm/arch/akita.h>
 #include <asm/arch/spitz.h>
 #include <asm/arch/sharpsl.h>
+#include <linux/corgi_bl.h>
 
 #include <asm/mach/sharpsl_param.h>
 #include <asm/hardware/scoop.h>

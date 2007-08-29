@@ -34,8 +34,8 @@
 #include <linux/dma-mapping.h>
 #include <linux/clk.h>
 #include <linux/ds1wm.h>
-#include <linux/soc/hamcop_base.h>
-#include <linux/soc/samcop_adc.h>
+#include <linux/mfd/hamcop_base.h>
+#include <linux/mfd/samcop_adc.h>
 #include <linux/touchscreen-adc.h>
 
 #include <asm/types.h>
@@ -52,7 +52,7 @@
 #include <asm/arch/irq.h>
 #include <asm/arch/clock.h>
 
-#include <asm/arch/h2200-asic.h>
+#include <asm/arch/h2200.h>
 #include <asm/arch/h2200-gpio.h>
 #include <asm/hardware/ipaq-hamcop.h>
 
@@ -1140,7 +1140,7 @@ static struct hamcop_block hamcop_blocks[] = {
 	},
 	{
 		.id = { -1 },
-		.name = "ts-adc-debounce",
+		.name = "ts-adc",
 		.platform_data = &tsadc_pdata,
 		.irq = _IRQ_HAMCOP_ADCTS,
 	},
@@ -1208,18 +1208,18 @@ static int hamcop_probe (struct platform_device *pdev)
 	memset (hamcop, 0, sizeof (*hamcop));
 	platform_set_drvdata(pdev, hamcop);
 
-	hamcop->irq_base = alloc_irq_space (HAMCOP_NR_IRQS);
 	hamcop->irq_nr = platform_get_irq(pdev, 0);
 	hamcop_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
-	if (unlikely (hamcop->irq_base == -1)) {
-		printk ("hamcop: could not allocate %d irqs\n", HAMCOP_NR_IRQS);
+	hamcop->irq_base = pdata->irq_base;
+	if (unlikely(hamcop->irq_base == 0)) {
+		printk ("hamcop: uninitialized irq_base!\n");
 		goto error1;
 	}
 	hamcop->mapping = ioremap ((unsigned long)hamcop_mem->start, HAMCOP_MAP_SIZE);
 	if (unlikely (!hamcop->mapping)) {
 		printk ("hamcop: couldn't ioremap\n");
-		goto error2;
+		goto error1;
 	}
 
 	/* Tell the DMA system about HAMCOP's SRAM, which the samcop_sdi
@@ -1325,8 +1325,12 @@ static int hamcop_probe (struct platform_device *pdev)
 		hamcop->devices[i] = sdev;
 	}
 
-	if (pdata && pdata->num_child_devs != 0)
-		platform_add_devices(pdata->child_devs, pdata->num_child_devs);
+	if (pdata && pdata->num_child_devs != 0) {
+		for (i = 0; i < pdata->num_child_devs; i++) {
+			pdata->child_devs[i]->dev.parent = &pdev->dev;
+			platform_device_register(pdata->child_devs[i]);
+		}
+	}
 
 	return 0;
 
@@ -1338,8 +1342,6 @@ static int hamcop_probe (struct platform_device *pdev)
 
  error3:
 	iounmap(hamcop->mapping);
- error2:
-	free_irq_space (hamcop->irq_base, HAMCOP_NR_IRQS);
  error1:
 	kfree (hamcop);
  error0:
@@ -1393,7 +1395,6 @@ static int hamcop_remove(struct platform_device *pdev)
 		       HAMCOP_SRAM_Size);
 
 	iounmap (hamcop->mapping);
-	free_irq_space (hamcop->irq_base, HAMCOP_NR_IRQS);
 
 	kfree (hamcop);
 

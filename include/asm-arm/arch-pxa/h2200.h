@@ -26,7 +26,12 @@
 #ifndef _INCLUDE_H2200_ASIC_H_ 
 #define _INCLUDE_H2200_ASIC_H_
 
+#include <asm/hardware/ipaq-hamcop.h>
+
 #define H2200_HAMCOP_BASE	PXA_CS0_PHYS /* from 02-cotulla_IF.pdf */
+
+#define H2200_HAMCOP_IRQ_BASE IRQ_BOARD_START
+#define H2200_MQ11XX_IRQ_BASE (H2200_HAMCOP_IRQ_BASE + HAMCOP_NR_IRQS)
 
 extern struct platform_device h2200_hamcop;
 

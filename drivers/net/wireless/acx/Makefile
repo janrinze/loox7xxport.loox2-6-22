@@ -10,7 +10,6 @@
 obj-$(CONFIG_ACX) += acx.o
 obj-$(CONFIG_ACX_HX4700) += hx4700_acx.o
 obj-$(CONFIG_ACX_HTCUNIVERSAL) += htcuniversal_acx.o
-obj-$(CONFIG_ACX_HTCBLUEANGEL) += htcblueangel_acx.o
 obj-$(CONFIG_ACX_HTCSABLE) += htcsable_acx.o
 obj-$(CONFIG_ACX_RX3000) += rx3000_acx.o
 #

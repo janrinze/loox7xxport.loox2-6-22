@@ -23,8 +23,8 @@
 #include <linux/backlight.h>
 #include <linux/fb.h>
 #include <linux/platform_device.h>
-#include <linux/soc/asic3_base.h>
-#include <linux/soc/tmio_mmc.h>
+#include <linux/mfd/asic3_base.h>
+#include <linux/mfd/tmio_mmc.h>
 #include <linux/kthread.h>
 #include <linux/freezer.h>
 #include <linux/apm-emulation.h>

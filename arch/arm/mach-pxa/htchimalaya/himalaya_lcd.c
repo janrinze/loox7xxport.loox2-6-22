@@ -19,7 +19,7 @@
 #include <linux/fb.h>
 #include <linux/err.h>
 #include <linux/delay.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #include <video/w100fb.h>
 

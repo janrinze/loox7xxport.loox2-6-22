@@ -46,7 +46,7 @@
 
 #include <asm/hardware/ipaq-asic2.h>
 
-#include <linux/soc/asic2_base.h>
+#include <linux/mfd/asic2_base.h>
 
 
 /***********************************************************************************

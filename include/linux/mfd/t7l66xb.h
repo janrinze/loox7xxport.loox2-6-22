@@ -28,6 +28,11 @@ struct tmio_ohci_hwconfig {
 
 struct t7l66xb_platform_data
 {
+	/* Standard MFD properties */
+	int irq_base;
+	struct platform_device **child_devs;
+	int num_child_devs;
+
 	void (* hw_init) (void);
 	void (* suspend) (void);
 	void (* resume)  (void);

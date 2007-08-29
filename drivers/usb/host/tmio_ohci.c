@@ -11,7 +11,7 @@
  */
 
 #include <linux/device.h>
-#include <linux/soc/tmio_ohci.h>
+#include <linux/mfd/tmio_ohci.h>
 #include <asm/hardware.h>
 #include <asm/mach-types.h>
 #include <asm/arch/eseries-irq.h>

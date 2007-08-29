@@ -29,13 +29,6 @@ config MAGICIAN_LCD
 	  This driver provides support for changing power and brightness
 	  of the HTC Magician LCD display and backlight.
 
-config MAGICIAN_DS1WM
-	tristate "HTC Magician DS1WM driver"
-	depends on MACH_MAGICIAN
-	help
-	  Experimental driver for the DS1WM in the Magician's AIC3
-	  MA17635 0450 v1.1 ASIC.
-
 config MAGICIAN_PHONE
 	tristate "HTC Magician Phone driver"
 	depends on MACH_MAGICIAN

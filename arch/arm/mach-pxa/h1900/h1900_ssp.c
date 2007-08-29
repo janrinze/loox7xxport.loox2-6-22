@@ -23,7 +23,7 @@
 #include <linux/proc_fs.h>
 #include <linux/delay.h>
 #include <linux/input.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <linux/platform_device.h>
 
 #include <asm/mach/map.h>

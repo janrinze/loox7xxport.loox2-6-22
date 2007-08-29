@@ -33,9 +33,9 @@
 #include <asm/mach-types.h>
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/h2200-gpio.h>
-#include <linux/soc/hamcop_base.h>
+#include <linux/mfd/hamcop_base.h>
 #include <asm/hardware/ipaq-hamcop.h>
-#include <asm/arch/h2200-asic.h>
+#include <asm/arch/h2200.h>
 
 
 #include "pxa2xx-i2sound.h"

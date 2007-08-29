@@ -12,7 +12,7 @@
 #include <linux/delay.h>
 #include <linux/platform_device.h>
 #include <linux/leds.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #include <asm/io.h>
 #include <asm/hardware/ipaq-asic3.h>

@@ -73,9 +73,16 @@ struct backlight_device {
 	struct class_device class_dev;
 };
 
+#ifdef CONFIG_LEDS_TRIGGER_BACKLIGHT
+extern void ledtrig_backlight_update_status(struct backlight_device *bd);
+#endif
+
 static inline void backlight_update_status(struct backlight_device *bd)
 {
 	mutex_lock(&bd->update_lock);
+#ifdef CONFIG_LEDS_TRIGGER_BACKLIGHT
+	ledtrig_backlight_update_status(bd);
+#endif
 	if (bd->ops && bd->ops->update_status)
 		bd->ops->update_status(bd);
 	mutex_unlock(&bd->update_lock);

@@ -20,7 +20,7 @@
 #include <asm/hardware.h>
 #include <asm/hardware/asic3_keys.h>
 
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #include <asm/arch/regs-gpio.h>
 #include <asm/arch/rx3000-asic3.h>

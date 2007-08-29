@@ -15,7 +15,7 @@
 #include <linux/soc-old.h>
 #include <linux/delay.h>
 #include <linux/battery.h>
-#include <linux/mq11xx.h>
+#include <linux/mfd/mq11xx.h>
 #include <asm/irq.h>
 #include <asm/hardware.h>
 #include <asm/arch/pxa-regs.h>

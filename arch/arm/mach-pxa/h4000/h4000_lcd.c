@@ -19,7 +19,7 @@
 #include <linux/delay.h>
 #include <linux/dpm.h>
 #include <linux/platform_device.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #include <asm/arch/hardware.h>  /* for pxa-regs.h (__REG) */
 #include <asm/arch/pxa-regs.h>  /* LCCR[0,1,2,3]* */

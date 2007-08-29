@@ -79,7 +79,7 @@ static int __devinit gpio_keys_probe(struct platform_device *pdev)
 		int irq = gpio_to_irq(pdata->buttons[i].gpio);
 
 		set_irq_type(irq, IRQ_TYPE_EDGE_BOTH);
-		error = request_irq(irq, gpio_keys_isr, IRQF_SAMPLE_RANDOM | IRQF_SHARED,
+		error = request_irq(irq, gpio_keys_isr, IRQF_SAMPLE_RANDOM | IRQF_SHARED | IRQF_DISABLED,
 				     pdata->buttons[i].desc ? pdata->buttons[i].desc : "gpio_keys",
 				     pdev);
 		if (error) {

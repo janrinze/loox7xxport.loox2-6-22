@@ -21,7 +21,7 @@
 #include <asm/arch/aximx30-gpio.h>
 #include <asm/arch/aximx30-asic.h>
 
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <asm/hardware/ipaq-asic3.h>
 
 #include "aximx30_core.h"

@@ -25,6 +25,7 @@
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 
+#include <asm/gpio.h>
 #include <asm/hardware/scoop.h>
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/hardware.h>
@@ -299,13 +300,13 @@ static int magician_set_input(struct snd_kcontrol * kcontrol,
 
 	magician_in_sel = ucontrol->value.integer.value[0];
 
-	magician_egpio_set(EGPIO_NR_MAGICIAN_IN_SEL0, 0);
+	gpio_set_value(EGPIO_MAGICIAN_IN_SEL0, 0);
 	switch (magician_in_sel) {
 	case MAGICIAN_MIC:
-		magician_egpio_set(EGPIO_NR_MAGICIAN_IN_SEL1, 1);
+		gpio_set_value(EGPIO_MAGICIAN_IN_SEL1, 1);
 		break;
 	case MAGICIAN_MIC_EXT:
-		magician_egpio_set(EGPIO_NR_MAGICIAN_IN_SEL1, 0);
+		gpio_set_value(EGPIO_MAGICIAN_IN_SEL1, 0);
 	}
 
 	return 1;
@@ -313,19 +314,19 @@ static int magician_set_input(struct snd_kcontrol * kcontrol,
 
 static int magician_spk_power(struct snd_soc_dapm_widget *w, int event)
 {
-	magician_egpio_set(EGPIO_NR_MAGICIAN_SPK_POWER, SND_SOC_DAPM_EVENT_ON(event));
+	gpio_set_value(EGPIO_MAGICIAN_SPK_POWER, SND_SOC_DAPM_EVENT_ON(event));
 	return 0;
 }
 
 static int magician_hp_power(struct snd_soc_dapm_widget *w, int event)
 {
-	magician_egpio_set(EGPIO_NR_MAGICIAN_EP_POWER, SND_SOC_DAPM_EVENT_ON(event));
+	gpio_set_value(EGPIO_MAGICIAN_EP_POWER, SND_SOC_DAPM_EVENT_ON(event));
 	return 0;
 }
 
 static int magician_mic_bias(struct snd_soc_dapm_widget *w, int event)
 {
-	magician_egpio_set(EGPIO_NR_MAGICIAN_MIC_POWER, SND_SOC_DAPM_EVENT_ON(event));
+	gpio_set_value(EGPIO_MAGICIAN_MIC_POWER, SND_SOC_DAPM_EVENT_ON(event));
 	return 0;
 }
 
@@ -455,12 +456,12 @@ static int __init magician_init(void)
 	if (!machine_is_magician())
 		return -ENODEV;
 
-	magician_egpio_set(EGPIO_NR_MAGICIAN_CODEC_POWER, 1);
+	gpio_set_value(EGPIO_MAGICIAN_CODEC_POWER, 1);
 
 	/* we may need to have the clock running here - pH5 */
-	magician_egpio_set(EGPIO_NR_MAGICIAN_CODEC_RESET, 1);
+	gpio_set_value(EGPIO_MAGICIAN_CODEC_RESET, 1);
 	udelay(5);
-	magician_egpio_set(EGPIO_NR_MAGICIAN_CODEC_RESET, 0);
+	gpio_set_value(EGPIO_MAGICIAN_CODEC_RESET, 0);
 
 	/* correct place? we'll need it to talk to the uda1380 */
 	request_module("i2c-pxa");
@@ -487,10 +488,10 @@ static void __exit magician_exit(void)
 {
 	platform_device_unregister(magician_snd_device);
 
-	magician_egpio_set(EGPIO_NR_MAGICIAN_SPK_POWER, 0);
-	magician_egpio_set(EGPIO_NR_MAGICIAN_EP_POWER, 0);
-	magician_egpio_set(EGPIO_NR_MAGICIAN_MIC_POWER, 0);
-	magician_egpio_set(EGPIO_NR_MAGICIAN_CODEC_POWER, 0);
+	gpio_set_value(EGPIO_MAGICIAN_SPK_POWER, 0);
+	gpio_set_value(EGPIO_MAGICIAN_EP_POWER, 0);
+	gpio_set_value(EGPIO_MAGICIAN_MIC_POWER, 0);
+	gpio_set_value(EGPIO_MAGICIAN_CODEC_POWER, 0);
 }
 
 module_init(magician_init);

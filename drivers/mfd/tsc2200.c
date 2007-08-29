@@ -14,7 +14,7 @@
 #include <linux/interrupt.h>
 #include <linux/device.h>
 #include <linux/delay.h>
-#include <linux/soc/tsc2200.h>
+#include <linux/mfd/tsc2200.h>
 #include <linux/platform_device.h>
 
 unsigned short tsc2200_read(struct device *dev, unsigned short reg)

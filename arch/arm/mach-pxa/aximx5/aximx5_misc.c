@@ -30,7 +30,7 @@
 #include <asm/arch/irqs.h>
 #include <asm/arch/aximx5-gpio.h>
 
-#include <linux/mq11xx.h>
+#include <linux/mfd/mq11xx.h>
 #include "../drivers/usb/gadget/mq11xx_udc.h"
 
 #if defined CONFIG_DOCKING_HOTPLUG || \

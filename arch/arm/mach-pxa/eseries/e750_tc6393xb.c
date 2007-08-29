@@ -17,7 +17,7 @@
 #include <asm/arch/eseries-irq.h>
 #include <asm/arch/eseries-gpio.h>
 
-#include <soc/tc6393.h>
+#include <linux/mfd/tc6393.h>
 
 static struct resource e750_tc6393xb_resources[] = {
 	[0] = {
@@ -64,6 +64,7 @@ SYS_DCR: 1033
 */
 
 static struct tc6393xb_platform_data e750_tc6393xb_info = {
+	.irq_base 		= IRQ_BOARD_START,
 	.sys_pll2cr             = 0x0cc1,
 	.sys_ccr                = 0x1310,
 	.sys_mcr                = 0x80aa,

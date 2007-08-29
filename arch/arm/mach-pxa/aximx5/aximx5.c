@@ -15,7 +15,7 @@
 #include <linux/platform_device.h>
 #include <linux/lcd.h>
 #include <linux/backlight.h>
-#include <linux/mq11xx.h>
+#include <linux/mfd/mq11xx.h>
 #include <asm/mach-types.h>
 #include <asm/hardware.h>
 #include <asm/mach/arch.h>

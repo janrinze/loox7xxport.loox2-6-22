@@ -37,7 +37,7 @@
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/htcsable-gpio.h>
 #include <asm/arch/htcsable-asic.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #include "pxa2xx-i2sound.h"
 #include <sound/ak4641.h>

@@ -6,7 +6,7 @@
 #include <asm/io.h>
 #include <asm/arch/loox720-cpld.h>
 #include <asm/arch/loox720-gpio.h>
-
+#include <asm/arch/irqs.h>
 #include <linux/delay.h>
 
 static u32 reg_cache[8]={
@@ -198,19 +198,13 @@ static int __init loox720_cpld_init(void)
     
     if (!machine_is_loox720())
 	return -ENODEV;
-	loox720_cpld_irq_base = alloc_irq_space(LOOX720_CPLD_IRQ_COUNT);
-	if(loox720_cpld_irq_base == -1)
-	{
-		printk(KERN_ERR "Failed to allocate %d IRQs", LOOX720_CPLD_IRQ_COUNT);
-		return -ENODEV;
-	}
+	loox720_cpld_irq_base = IRQ_BOARD_START;
     printk(KERN_INFO "Loox 720 CPLD Driver\n");
     
     cpld_mem = (u32*)ioremap(LOOX720_CPLD_PHYS, LOOX720_CPLD_SIZE);
     if (!cpld_mem)
     {
 		printk(KERN_ERR "ioremap failed.\n");
-		free_irq_space(loox720_cpld_irq_base, LOOX720_CPLD_IRQ_COUNT);
 		return -ENODEV;
     }
     
@@ -228,7 +222,6 @@ static int __init loox720_cpld_init(void)
 	if(!loox720_cpld_irq_data)
 	{
 	    printk(KERN_ERR "kmalloc failed.\n");
-        free_irq_space(loox720_cpld_irq_base, LOOX720_CPLD_IRQ_COUNT);
 	    if (cpld_mem)
 	        iounmap(cpld_mem);
         return -ENOMEM;
@@ -266,7 +259,6 @@ static void __exit loox720_cpld_exit(void)
 	    }
 	    set_irq_chained_handler(LOOX720_IRQ(CPLD_INT), NULL);
 		set_irq_data(LOOX720_IRQ(CPLD_INT), NULL);
-		free_irq_space(loox720_cpld_irq_base, LOOX720_CPLD_IRQ_COUNT);
 	}
 	if (loox720_cpld_irq_data)
 		kfree(loox720_cpld_irq_data);

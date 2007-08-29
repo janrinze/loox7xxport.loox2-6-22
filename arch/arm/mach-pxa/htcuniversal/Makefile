@@ -13,7 +13,6 @@ obj-$(CONFIG_HTCUNIVERSAL_TS2)		+= htcuniversal_ts2.o
 obj-$(CONFIG_HTCUNIVERSAL_BUTTONS) 	+= htcuniversal_buttons.o
 obj-$(CONFIG_HTCUNIVERSAL_BLUETOOTH)	+= htcuniversal_bt.o 
 obj-$(CONFIG_HTCUNIVERSAL_PHONE)	+= htcuniversal_phone.o 
-obj-$(CONFIG_HTCUNIVERSAL_ASIC3_LEDS)	+= htcuniversal_asic3_leds.o
 obj-$(CONFIG_HTCUNIVERSAL_UDC)		+= htcuniversal_udc.o
 
 obj-$(CONFIG_HTCUNIVERSAL_AK4641)	+= htcuniversal_ak4641.o

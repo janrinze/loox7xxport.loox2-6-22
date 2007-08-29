@@ -2,6 +2,7 @@
  * 
  * Hardware definitions for HP iPAQ Handheld Computers
  *
+ * Copyright (c) 2006  Anton Vorontsov <cbou@mail.ru>
  * Copyright 2005 SDG Systems, LLC
  *
  * Based on code:
@@ -49,17 +50,21 @@
 #include <asm/arch/hx4700-core.h>
 #include <asm/arch/pxa-regs.h>
 #include <asm/hardware/asic3_keys.h>
+#include <asm/hardware/asic3_leds.h>
 #include <asm/arch/udc.h>
 #include <asm/arch/audio.h>
 #include <asm/arch/irda.h>
 
 #include <asm/hardware/ipaq-asic3.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <linux/ads7846.h>
 #include <linux/touchscreen-adc.h>
 #include <linux/adc_battery.h>
 
 #include "../generic.h"
+
+DEFINE_LED_TRIGGER_SHARED_GLOBAL(hx4700_radio_trig);
+EXPORT_LED_TRIGGER_SHARED(hx4700_radio_trig);
 
 /* Physical address space information */
 
@@ -189,6 +194,49 @@ static struct platform_pxa_serial_funcs hx4700_pxa_irda_funcs = {
 	.get_txrx  = hx4700_irda_get_txrx,
 };
 
+/* LEDs */
+static struct asic3_led hx4700_leds[] = {
+	{
+		.led_cdev  = {
+			.name	         = "hx4700:amber",
+			.default_trigger = "ds2760-battery.0-charging",
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 0,
+
+	},
+	{
+		.led_cdev  = {
+			.name	         = "hx4700:green",
+			.default_trigger = "ds2760-battery.0-full",
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 1,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "hx4700:blue",
+			.default_trigger = "hx4700-radio",
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 2,
+	},
+};
+
+static struct asic3_leds_machinfo hx4700_leds_machinfo = {
+	.num_leds = ARRAY_SIZE(hx4700_leds),
+	.leds = hx4700_leds,
+	.asic3_pdev = &hx4700_asic3,
+};
+
+static struct platform_device hx4700_leds_pdev = {
+	.name = "asic3-leds",
+	.dev = {
+		.platform_data = &hx4700_leds_machinfo,
+	},
+};
+
+
 /* Initialization code */
 
 static void __init hx4700_map_io(void)
@@ -231,7 +279,7 @@ static void __init hx4700_init_irq(void)
 
 /* ASIC3 */
 
-static struct platform_device hx4700_asic3_keys;
+static struct platform_device hx4700_gpio_keys;
 
 struct pxa2xx_udc_gpio_info hx4700_udc_info = {
 	.detect_gpio = {&hx4700_asic3.dev, ASIC3_GPIOD_IRQ_BASE + GPIOD_USBC_DETECT_N},
@@ -266,7 +314,8 @@ static struct platform_device hx4700_serial = {
 static struct platform_device *hx4700_asic3_devices[] __initdata = {
 	&hx4700_serial,
 	&hx4700_udc,
-	&hx4700_asic3_keys,
+	&hx4700_gpio_keys,
+	&hx4700_leds_pdev,
 };
 
 static struct asic3_platform_data hx4700_asic3_platform_data = {
@@ -340,6 +389,7 @@ static struct asic3_platform_data hx4700_asic3_platform_data = {
         },
 	.bus_shift = 1,
 	.irq_base = HX4700_ASIC3_IRQ_BASE,
+	.gpio_base = HX4700_ASIC3_GPIO_BASE,
 
 	.child_devs	 = hx4700_asic3_devices,
 	.num_child_devs = ARRAY_SIZE(hx4700_asic3_devices),
@@ -415,42 +465,24 @@ static struct platform_device hx4700_backup_batt = {
 
 /* PXA2xx Keys */
 
-static struct gpio_keys_button hx4700_pxa_buttons[] = {
+static struct gpio_keys_button hx4700_gpio_buttons[] = {
 	{ KEY_POWER,	 GPIO_NR_HX4700_KEY_ON_N, 1, "Power button" },
 	{ _KEY_MAIL,	 GPIO_NR_HX4700_KEY_AP3,  0, "Mail button" },
 	{ _KEY_CONTACTS, GPIO_NR_HX4700_KEY_AP1,  0, "Contacts button" },
+	{ _KEY_RECORD,   HX4700_ASIC3_GPIO_BASE+ASIC3_GPIOD_IRQ_BASE+GPIOD_AUD_RECORD_N, 1, "Record button" },
+	{ _KEY_CALENDAR, HX4700_ASIC3_GPIO_BASE+ASIC3_GPIOD_IRQ_BASE+GPIOD_KEY_AP2_N, 1, "Calendar button" },
+	{ _KEY_HOMEPAGE, HX4700_ASIC3_GPIO_BASE+ASIC3_GPIOD_IRQ_BASE+GPIOD_KEY_AP4_N, 1, "Home button" },
 };
 
-static struct gpio_keys_platform_data hx4700_pxa_keys_data = {
-	.buttons = hx4700_pxa_buttons,
-	.nbuttons = ARRAY_SIZE(hx4700_pxa_buttons),
+static struct gpio_keys_platform_data hx4700_gpio_keys_data = {
+	.buttons = hx4700_gpio_buttons,
+	.nbuttons = ARRAY_SIZE(hx4700_gpio_buttons),
 };
 
-static struct platform_device hx4700_pxa_keys = {
+static struct platform_device hx4700_gpio_keys = {
 	.name = "gpio-keys",
 	.dev = {
-		.platform_data = &hx4700_pxa_keys_data,
-	},
-};
-
-/* ASIC3 Keys */
-
-static struct asic3_keys_button hx4700_asic3_buttons[] = {
-        { _KEY_RECORD,   ASIC3_GPIOD_IRQ_BASE+GPIOD_AUD_RECORD_N, 1, "Record button" },
-        { _KEY_CALENDAR, ASIC3_GPIOD_IRQ_BASE+GPIOD_KEY_AP2_N, 1, "Calendar button" },
-        { _KEY_HOMEPAGE, ASIC3_GPIOD_IRQ_BASE+GPIOD_KEY_AP4_N, 1, "Home button" },
-};
-
-static struct asic3_keys_platform_data hx4700_asic3_keys_data = {
-        .buttons = hx4700_asic3_buttons,
-        .nbuttons = ARRAY_SIZE(hx4700_asic3_buttons),
-        .asic3_dev = &hx4700_asic3.dev,
-};
-
-static struct platform_device hx4700_asic3_keys = {
-        .name = "asic3-keys",
-        .dev = {
-		.platform_data = &hx4700_asic3_keys_data,
+		.platform_data = &hx4700_gpio_keys_data,
 	},
 };
 
@@ -526,7 +558,7 @@ static struct resource hx4700_pen_irq = {
 	.flags = IORESOURCE_IRQ,
 };
 static struct platform_device ads7846_ts = {
-	.name = "ts-adc-debounce",
+	.name = "ts-adc",
 	.id = -1,
 	.resource = &hx4700_pen_irq,
 	.num_resources = 1,
@@ -541,7 +573,6 @@ static struct platform_device *devices[] __initdata = {
 	&hx4700_asic3,
 	&hx4700_core,
 	&hx4700_backup_batt,
-	&hx4700_pxa_keys,
 	&hx4700_lcd,
 	&hx4700_navpt,
 	&hx4700_bl,
@@ -604,6 +635,8 @@ static void __init hx4700_init( void )
 
 	platform_add_devices( devices, ARRAY_SIZE(devices) );
 	pxa_set_ficp_info(&hx4700_ficp_platform_data);
+
+	led_trigger_register_shared("hx4700-radio", &hx4700_radio_trig);
 }
 
 

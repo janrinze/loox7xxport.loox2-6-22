@@ -39,7 +39,7 @@
 #include <linux/mmc/card.h>
 #include <linux/mmc/protocol.h>
 #include <linux/scatterlist.h>
-#include <linux/soc/tmio_mmc.h>
+#include <linux/mfd/tmio_mmc.h>
 
 #include <asm/io.h>
 #include <linux/clk.h>

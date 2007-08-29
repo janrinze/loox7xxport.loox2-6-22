@@ -90,6 +90,13 @@ config LEDS_ASIC3
 	  This option enables support for the LEDs connected to the
 	  HTC ASIC3 chip.
 
+config LEDS_PASIC3
+	tristate "LED Support for the HTC PASIC3 chip"
+	depends LEDS_CLASS && HTC_PASIC3
+	help
+	  This option enables support for the LEDs connected to the
+	  HTC PASIC3 chip.
+
 config LEDS_SAMCOP
 	tristate "LED Support for the Samsung's SAMCOP chip"
 	depends LEDS_CLASS && SOC_SAMCOP
@@ -158,6 +165,13 @@ config LEDS_TRIGGER_IDE_DISK
 	help
 	  This allows LEDs to be controlled by IDE disk activity.
 	  If unsure, say Y.
+
+config LEDS_TRIGGER_BACKLIGHT
+	bool "LED Backlight Trigger"
+	depends on BACKLIGHT_CLASS_DEVICE
+	help
+	  This allows LEDs to be controlled by backlight brightness.
+	  If unsure, say N.
 
 config LEDS_TRIGGER_HEARTBEAT
 	tristate "LED Heartbeat Trigger"

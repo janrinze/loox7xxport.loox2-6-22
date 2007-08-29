@@ -28,8 +28,8 @@
 #include <asm/arch/htcsable-asic.h>
 
 #include <asm/hardware/ipaq-asic3.h>
-#include <linux/soc/asic3_base.h>
-#include <linux/soc/tmio_mmc.h>
+#include <linux/mfd/asic3_base.h>
+#include <linux/mfd/tmio_mmc.h>
 
 #include "../generic.h"
 

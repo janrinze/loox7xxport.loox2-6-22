@@ -184,15 +184,13 @@ static int a716_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 {
 	DPRINTK("skt: %d\n", skt->nr);
 
-	GPDR1 &= ~0x40;
-	GAFR1_L &= ~0x3000;
-
 	if (skt->nr == 0) {
 		skt->irq = IRQ_GPIO(GPIO_NR_A716_CF_READY);
-		soc_pcmcia_request_irqs(skt, irqs, ARRAY_SIZE(irqs));
 	} else {
 		skt->irq = IRQ_GPIO(GPIO_NR_A716_WIFI_READY);
 	}
+
+	soc_pcmcia_request_irqs(skt, irqs, ARRAY_SIZE(irqs));
 
 	return 0;
 }
@@ -201,8 +199,7 @@ static void a716_pcmcia_hw_shutdown(struct soc_pcmcia_socket *skt)
 {
 	DPRINTK("skt: %d\n", skt->nr);
 
-	if (skt->nr == 0)
-		soc_pcmcia_free_irqs(skt, irqs, ARRAY_SIZE(irqs));
+	soc_pcmcia_free_irqs(skt, irqs, ARRAY_SIZE(irqs));
 }
 
 static void a716_pcmcia_socket_state(struct soc_pcmcia_socket *skt, struct pcmcia_state *state)
@@ -253,6 +250,7 @@ static void a716_pcmcia_socket_suspend(struct soc_pcmcia_socket *skt)
 	DPRINTK("skt: %d\n", skt->nr);
 
 	soc_pcmcia_disable_irqs(skt, irqs, ARRAY_SIZE(irqs));
+
 	a716_pcmcia_socket_power_off(skt);
 }
 

@@ -785,6 +785,7 @@ int soc_common_drv_pcmcia_probe(struct device *dev, struct pcmcia_low_level *ops
 	up(&soc_pcmcia_sockets_lock);
 	return ret;
 }
+EXPORT_SYMBOL(soc_common_drv_pcmcia_probe);
 
 int soc_common_drv_pcmcia_remove(struct device *dev)
 {

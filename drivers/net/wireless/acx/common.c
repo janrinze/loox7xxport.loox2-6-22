@@ -6803,6 +6803,8 @@ acx_s_update_card_settings(acx_device_t *adev)
 			log(L_DEBUG, "setting WEP Options for acx111 is not supported\n");
 		} else {
 			log(L_INIT, "setting WEP Options\n");
+			acx100_s_init_wep(adev);
+#if 0
 			/* let's choose maximum setting: 4 default keys,
 			 * plus 10 other keys: */
 			options.NumKeys = cpu_to_le16(DOT11_MAX_DEFAULT_WEP_KEYS + 10);
@@ -6816,6 +6818,7 @@ acx_s_update_card_settings(acx_device_t *adev)
 			}
 
 			acx_s_configure(adev, &options, ACX100_IE_WEP_OPTIONS);
+#endif
 		}
 		CLEAR_BIT(adev->set_mask, SET_WEP_OPTIONS);
 	}

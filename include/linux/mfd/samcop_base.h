@@ -37,8 +37,6 @@ extern u32 samcop_get_gpio_e (struct device *dev);
 
 extern void samcop_reset_fcd (struct device *dev);
 
-extern int samcop_irq_base (struct device *dev);
-
 extern void samcop_set_spcr (struct device *dev, u32 mask, u32 bits);
 
 struct samcop_platform_data
@@ -47,6 +45,7 @@ struct samcop_platform_data
 
 	/* Standard MFD properties */
 	int irq_base;
+	int gpio_base;
 	struct platform_device **child_devs;
 	int num_child_devs;
 

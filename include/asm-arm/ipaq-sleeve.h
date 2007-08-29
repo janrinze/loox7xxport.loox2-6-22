@@ -20,7 +20,8 @@
 #define _INCLUDE_IPAQ_SLEEVE_H_
 
 #include <linux/device.h>
-#include <asm/arch-sa1100/h3600.h>	/* !!! */
+#include <linux/irqreturn.h>
+//#include <asm/arch-sa1100/h3600.h>	/* !!! */
 
 enum sleeve_vendor_id {
         SLEEVE_NO_VENDOR     = 0,
@@ -215,6 +216,6 @@ struct ipaq_sleeve_ops {
 
 extern int ipaq_sleeve_register(struct ipaq_sleeve_ops *ops, void *dev);
 extern int ipaq_sleeve_unregister(void);
-extern irqreturn_t ipaq_sleeve_presence_interrupt (int irq, void *dev_id, struct pt_regs *regs);
+extern irqreturn_t ipaq_sleeve_presence_interrupt(int irq, void *dev_id);
 
 #endif /* _INCLUDE_IPAQ_SLEEVE_H_ */

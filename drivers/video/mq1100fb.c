@@ -32,7 +32,7 @@
 #include <linux/platform_device.h>
 #include <linux/soc-old.h>
 #include <linux/notifier.h>
-#include <linux/mq11xx.h>
+#include <linux/mfd/mq11xx.h>
 
 #include "console/fbcon.h"
 

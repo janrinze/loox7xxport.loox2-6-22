@@ -37,7 +37,7 @@
 #include <asm/arch-pxa/h5400.h>
 #include <asm/arch-pxa/h5400-asic.h>
 
-#include <linux/soc/samcop_base.h>
+#include <linux/mfd/samcop_base.h>
 
 typedef struct ohci ohci_t;
 

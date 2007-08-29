@@ -2,8 +2,6 @@
 
 struct tsadc_platform_data {
 	// Information on pen down gpio.
-	int pen_irq;
-	int pin_irq_falling;
 	int pen_gpio;
 	int (*ispendown)(void);
 

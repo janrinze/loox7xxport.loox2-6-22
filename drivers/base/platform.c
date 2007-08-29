@@ -255,10 +255,6 @@ int platform_device_add(struct platform_device *pdev)
 		if (r->name == NULL)
 			r->name = pdev->dev.bus_id;
 
-		/* not much point checking for containment of IRQs -Jamey */
-		if (r->flags & IORESOURCE_IRQ)
-			continue;
-
 		p = r->parent;
 		if (!p) {
 			if (r->flags & IORESOURCE_MEM)

@@ -12,7 +12,7 @@
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <linux/delay.h>
 #include <linux/battery.h>
 #include <linux/leds.h>

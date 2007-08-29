@@ -16,7 +16,7 @@
 #include <linux/pda_power.h>
 #include <asm/mach-types.h>
 #include <asm/hardware.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <asm/arch/hx4700-gpio.h>
 #include <asm/arch/hx4700-asic.h>
 #include <asm/arch/hx4700-core.h>

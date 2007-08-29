@@ -14,6 +14,11 @@
 
 struct tc6393xb_platform_data
 {
+	/* Standard MFD properties */
+	int irq_base;
+	struct platform_device **child_devs;
+	int num_child_devs;
+
 	u16 sys_gper;
 	u16 sys_gpodsr1;
 	u16 sys_gpooecr1;

@@ -19,11 +19,11 @@
 #include <linux/fb.h>
 #include <linux/err.h>
 #include <linux/platform_device.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
-#include <asm/arch/h3900-asic.h>
+#include <asm/arch/h3900.h>
 
 extern struct platform_device h3900_asic3;
 

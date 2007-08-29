@@ -52,7 +52,7 @@
 #include <asm/arch/h5400-asic.h>
 #include <asm/arch/h5400-gpio.h>
 #include <asm/hardware/ipaq-samcop.h>
-#include <linux/soc/samcop_base.h>
+#include <linux/mfd/samcop_base.h>
 #include <asm/hardware/samcop-sdi.h>
 #include <asm/hardware/samcop-dma.h>
 #include <asm/arch/pxa-dmabounce.h>
@@ -142,7 +142,8 @@ static int samcop_get_gpio_bit(struct device *dev, unsigned gpio)
 
 static int samcop_gpio_to_irq(struct device *dev, unsigned gpio)
 {
-	u32 irq_base = samcop_irq_base(dev);
+	struct samcop_data *samcop = dev_get_drvdata(dev);
+	u32 irq_base = samcop->irq_base;
 
 	pr_debug("%s(%d)\n", __FUNCTION__, gpio);
 
@@ -434,6 +435,9 @@ static void samcop_asic_ack_eps_irq(unsigned int irq)
 	int mask = eps_irq_mask[irq - SAMCOP_EPS_IRQ_START - samcop->irq_base];
 
 	samcop_write_register(samcop, SAMCOP_PCMCIA_IP, mask);
+	/* acknowledge PCMCIA interrupt in INTPND/SRCPND */
+	samcop_write_register(samcop, SAMCOP_IC_SRCPND, 1 << _SAMCOP_IC_INT_PCMCIA);
+	samcop_write_register(samcop, SAMCOP_IC_INTPND, 1 << _SAMCOP_IC_INT_PCMCIA);
 }
 
 static void samcop_asic_mask_eps_irq(unsigned int irq)
@@ -456,10 +460,6 @@ static void samcop_asic_unmask_eps_irq(unsigned int irq)
 	val = samcop_read_register(samcop, SAMCOP_PCMCIA_IC);
 	val |= mask;
 	samcop_write_register(samcop, SAMCOP_PCMCIA_IC, val);
-
-	/* acknowledge also PCMCIA interrupt in INTPND/SRCPND */
-	samcop_write_register(samcop, SAMCOP_IC_SRCPND, 1 << _SAMCOP_IC_INT_PCMCIA);
-	samcop_write_register(samcop, SAMCOP_IC_INTPND, 1 << _SAMCOP_IC_INT_PCMCIA);
 }
 
 static void samcop_asic_ack_gpio_irq(unsigned int irq)
@@ -604,7 +604,7 @@ static void samcop_sdi_init(struct device *dev)
 	/* provide the right card detect irq to the mmc subsystem by
 	 * applying the samcop irq_base offset
 	 */
-	plat->irq_cd = _IRQ_SAMCOP_SD_WAKEUP + samcop_irq_base(dev->parent);
+	plat->irq_cd = _IRQ_SAMCOP_SD_WAKEUP + samcop->irq_base;
 
 	/* setup DMA (including dma_bounce) */
 	dev->dma_mask = &samcop_sdi_dmamask; /* spread the address range wide
@@ -967,14 +967,6 @@ void samcop_reset_fcd(struct device *dev)
 }
 EXPORT_SYMBOL(samcop_reset_fcd);
 
-int samcop_irq_base(struct device *dev)
-{
-	struct samcop_data *samcop = dev->driver_data;
-
-	return samcop->irq_base;
-}
-EXPORT_SYMBOL(samcop_irq_base);
-
 void samcop_set_spcr(struct device *dev, u32 mask, u32 bits)
 {
 	struct samcop_data *samcop = dev->driver_data;
@@ -1115,7 +1107,7 @@ static struct samcop_block samcop_blocks[] = {
 	},
 	{
 		.id = { -1 },
-		.name = "ts-adc-debounce",
+		.name = "ts-adc",
 		.platform_data = &tsadc_pdata,
 		.irq = _IRQ_SAMCOP_ADCTS,
 	},
@@ -1176,7 +1168,7 @@ static void samcop_release(struct device *dev)
 static int samcop_probe(struct platform_device *pdev)
 {
 	int i, rc;
-	struct samcop_platform_data *platform_data = pdev->dev.platform_data;
+	struct samcop_platform_data *pdata = pdev->dev.platform_data;
 	struct samcop_data *samcop;
 
 	samcop = kmalloc(sizeof(struct samcop_data), GFP_KERNEL);
@@ -1187,9 +1179,9 @@ static int samcop_probe(struct platform_device *pdev)
 
 	samcop->dev = &pdev->dev;
 	samcop->irq_nr = platform_get_irq(pdev, 0);
-	samcop->irq_base = alloc_irq_space(SAMCOP_NR_IRQS);
-	if (samcop->irq_base == -1) {
-		printk("samcop: unable to allocate %d irqs\n", SAMCOP_NR_IRQS);
+	samcop->irq_base = pdata->irq_base;
+	if (samcop->irq_base == 0) {
+		printk("samcop: uninitialized irq_base!\n");
 		goto enomem2;
 	}
 
@@ -1212,8 +1204,8 @@ static int samcop_probe(struct platform_device *pdev)
 	       samcop->irq_base + SAMCOP_NR_IRQS - 1, samcop->irq_nr);
 
 	samcop_write_register(samcop, SAMCOP_CPM_ClockControl, SAMCOP_CPM_CLKCON_GPIO_CLKEN);
-	samcop_write_register(samcop, SAMCOP_CPM_ClockSleep, platform_data->clocksleep);
-	samcop_write_register(samcop, SAMCOP_CPM_PllControl, platform_data->pllcontrol);
+	samcop_write_register(samcop, SAMCOP_CPM_ClockSleep, pdata->clocksleep);
+	samcop_write_register(samcop, SAMCOP_CPM_PllControl, pdata->pllcontrol);
 
 	samcop_irq_init(samcop);
 
@@ -1245,7 +1237,7 @@ static int samcop_probe(struct platform_device *pdev)
 		struct resource *res;
 
 		if (blk->start == _SAMCOP_ADC_Base)
-			blk->platform_data = &platform_data->samcop_adc_pdata;
+			blk->platform_data = &pdata->samcop_adc_pdata;
 
 		sdev = kmalloc(sizeof (*sdev), GFP_KERNEL);
 		if (unlikely(!sdev))
@@ -1283,28 +1275,32 @@ static int samcop_probe(struct platform_device *pdev)
 	}
 
 	/* initialize GPIOs from platform_data */
-	samcop_set_gpio_a_con(&pdev->dev, 0, ~0, platform_data->gpio_pdata.gpacon1);
-	samcop_set_gpio_a_con(&pdev->dev, 1, ~0, platform_data->gpio_pdata.gpacon2);
-	samcop_set_gpio_a(&pdev->dev, ~0, platform_data->gpio_pdata.gpadat);
-	samcop_set_gpio_a_pullup(&pdev->dev, ~0, platform_data->gpio_pdata.gpaup);
+	samcop_set_gpio_a_con(&pdev->dev, 0, ~0, pdata->gpio_pdata.gpacon1);
+	samcop_set_gpio_a_con(&pdev->dev, 1, ~0, pdata->gpio_pdata.gpacon2);
+	samcop_set_gpio_a(&pdev->dev, ~0, pdata->gpio_pdata.gpadat);
+	samcop_set_gpio_a_pullup(&pdev->dev, ~0, pdata->gpio_pdata.gpaup);
 
 	for (i = 0; i < 3; i++)
-		samcop_set_gpio_int(&pdev->dev, i, ~0, platform_data->gpio_pdata.gpioint[i]);
+		samcop_set_gpio_int(&pdev->dev, i, ~0, pdata->gpio_pdata.gpioint[i]);
 
 	for (i = 0; i < 7; i++)
-		samcop_set_gpio_filter_config(&pdev->dev, i, ~0, platform_data->gpio_pdata.gpioflt[i]);
+		samcop_set_gpio_filter_config(&pdev->dev, i, ~0, pdata->gpio_pdata.gpioflt[i]);
 
 	for (i = 0; i < 2; i++)
-		samcop_set_gpio_int_enable(&pdev->dev, i, ~0, platform_data->gpio_pdata.gpioenint[i]);
+		samcop_set_gpio_int_enable(&pdev->dev, i, ~0, pdata->gpio_pdata.gpioenint[i]);
 
 
 	/* initialize gpiodev_ops */
-	platform_data->gpiodev_ops.get = samcop_get_gpio_bit;
-	platform_data->gpiodev_ops.set = samcop_set_gpio_bit;
-	platform_data->gpiodev_ops.to_irq = samcop_gpio_to_irq;
+	pdata->gpiodev_ops.get = samcop_get_gpio_bit;
+	pdata->gpiodev_ops.set = samcop_set_gpio_bit;
+	pdata->gpiodev_ops.to_irq = samcop_gpio_to_irq;
 
-	if (platform_data && platform_data->num_child_devs != 0)
-		platform_add_devices(platform_data->child_devs, platform_data->num_child_devs);
+	if (pdata && pdata->num_child_devs != 0) {
+		for (i = 0; i < pdata->num_child_devs; i++) {
+			pdata->child_devs[i]->dev.parent = &pdev->dev;
+			platform_device_register(pdata->child_devs[i]);
+		}
+	}
 
 	return 0;
 
@@ -1317,7 +1313,6 @@ static int samcop_probe(struct platform_device *pdev)
  enomem0:
 	iounmap(samcop->mapping);
  enomem1:
-	free_irq_space(samcop->irq_base, SAMCOP_NR_IRQS);
  enomem2:
 	kfree(samcop);
  enomem3:
@@ -1367,7 +1362,6 @@ static int samcop_remove(struct platform_device *pdev)
 
 	dma_release_declared_memory(&pdev->dev);
 	iounmap(samcop->mapping);
-	free_irq_space(samcop->irq_base, SAMCOP_NR_IRQS);
 
 	kfree(samcop);
 

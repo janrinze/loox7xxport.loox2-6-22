@@ -29,7 +29,7 @@
 #include "pxa2xx_base.h"
 #endif
 
-#include <asm/linkup-l1110.h>
+#include <asm/hardware/linkup-l1110.h>
 
 /***************** Initialization *****************/
 
@@ -54,7 +54,7 @@ static int buffered_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 	int reset = state->flags & SS_RESET;
 
 	SLEEVE_DEBUG(3,"vcc=%d vpp=%d reset=%d\n", 
-		      vcc, vpp, reset);
+		      vcc, state->Vpp, reset);
 
 	switch (vcc) {
 	case 0:
@@ -98,7 +98,7 @@ static int
 generic_remove_sleeve(struct device *dev)
 {
         SLEEVE_DEBUG(1,"%s\n", dev->driver->name);
-//	soc_common_drv_pcmcia_remove (dev);
+	soc_common_drv_pcmcia_remove (dev);
 	ipaq_sleeve_clear_egpio(IPAQ_EGPIO_OPT_ON);
 	
 	return 0;
@@ -107,7 +107,7 @@ generic_remove_sleeve(struct device *dev)
 static int 
 generic_suspend_sleeve(struct device *dev, pm_message_t state)
 {
-        SLEEVE_DEBUG(1,"%s\n", sleeve_dev->driver->name);
+        SLEEVE_DEBUG(1, "%s\n", dev->driver->name);
 	h3600_pcmcia_suspend_sockets();	
 	ipaq_sleeve_clear_egpio(IPAQ_EGPIO_OPT_ON);
 	return 0;
@@ -179,7 +179,7 @@ static struct ipaq_sleeve_device_id gprs_tbl[] __devinitdata = {
 
 static struct ipaq_sleeve_driver gprs_driver = {
 	.driver = {
-		.name =	  "Compaq GSM/GPRS Sleeve",
+		.name =	  "Compaq GSM and GPRS Sleeve",
 		.probe =	  cf_probe_sleeve,
 		.remove =   generic_remove_sleeve,
 		.suspend =  generic_suspend_sleeve,
@@ -239,7 +239,7 @@ static struct ipaq_sleeve_device_id bluetooth_cf_tbl[] __devinitdata = {
 
 static struct ipaq_sleeve_driver bluetooth_cf_driver = {
 	.driver = {
-		.name =	  "Compaq Bluetooth/CF Sleeve",
+		.name =	  "Compaq Bluetooth and CF Sleeve",
 		.probe =	  pcmcia_probe_sleeve,
 		.remove =	  generic_remove_sleeve,
 		.suspend =  generic_suspend_sleeve,
@@ -262,7 +262,7 @@ static struct ipaq_sleeve_device_id nexian_camera_cf_tbl[] __devinitdata = {
 
 static struct ipaq_sleeve_driver nexian_camera_cf_driver = {
 	.driver = {
-		.name =	  "Nexian Nexicam Camera/CF Sleeve",
+		.name =	  "Nexian Nexicam Camera and CF Sleeve",
 		.probe =	  pcmcia_probe_sleeve,
 		.remove =   generic_remove_sleeve,
 		.suspend =  generic_suspend_sleeve,
@@ -307,6 +307,9 @@ static void L1110_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
 				     struct pcmcia_state *state)
 {
 	short prs = readl(&dual_pcmcia_sleeve[skt->nr]->prc);
+
+	h3600_common_pcmcia_socket_state(skt, state);
+
 	state->bvd1 = prs & LINKUP_PRS_BVD1;
 	state->bvd2 = prs & LINKUP_PRS_BVD2;
 	state->wrprot = 0;
@@ -393,7 +396,7 @@ dual_pcmcia_probe_sleeve(struct device *dev)
 
         SLEEVE_DEBUG(1,"%s\n", dev->driver->name);
 	ipaq_sleeve_set_egpio(IPAQ_EGPIO_OPT_ON);
-//	soc_common_drv_pcmcia_probe (dev, &L1110_pcmcia_socket_ops, 0, 2);
+	soc_common_drv_pcmcia_probe (dev, &L1110_pcmcia_socket_ops, 0, 2);
 	MECR |= MECR_CIT | MECR_NOS;
         return 0;
 }
@@ -401,7 +404,7 @@ dual_pcmcia_probe_sleeve(struct device *dev)
 static int
 dual_pcmcia_remove_sleeve(struct device *dev)
 {
-//	soc_common_drv_pcmcia_remove (dev);
+	soc_common_drv_pcmcia_remove (dev);
 	__iounmap(dual_pcmcia_sleeve[0]);
 	__iounmap(dual_pcmcia_sleeve[1]);
 	return 0;
@@ -473,7 +476,7 @@ static int h3600_dual_cf_configure_socket(struct soc_pcmcia_socket *skt,
 
 
 	SLEEVE_DEBUG(3,"vcc=%d vpp=%d reset=%d\n", 
-                      vcc, vpp, reset);
+                      vcc, state->Vpp, reset);
 
 	switch (vcc) {
 	case 0:
@@ -514,7 +517,7 @@ dual_cf_probe_sleeve(struct device *dev)
 {
         SLEEVE_DEBUG(1,"%s\n",dev->driver->name);
 	ipaq_sleeve_set_egpio(IPAQ_EGPIO_OPT_ON);
-//        soc_common_drv_pcmcia_probe (dev, &h3600_dual_cf_sleeve_ops, 0, 2);
+        soc_common_drv_pcmcia_probe (dev, &h3600_dual_cf_sleeve_ops, 0, 2);
 	MECR |= MECR_CIT | MECR_NOS;
         return 0;
 }

@@ -256,22 +256,11 @@ config TOUCHSCREEN_ADC
 	help
 	  Touchscreen driver which uses Generic ADC API
 	  (linux/adc.h) to sample TS coordinates. Fully
-	  configurable via platform_data, but assumes 
-	  debouncing is performed on ADC level (the only filtering
-	  performed is cut off on minimal pressure).
-
-config TOUCHSCREEN_ADC_DEBOUNCE
-	tristate "Touchscreen driver for Generic ADC device, with debouncing"
-	depends on ADC
-	help
-	  Touchscreen driver which uses Generic ADC API
-	  (linux/adc.h) to sample TS coordinates. Fully
-	  configurable via platform_data, and performs
-	  debouncing. This driver is for ADS7846, TSC2046,
-	  and many other ADC chips.
+	  configurable via platform_data. Includes optional
+	  software debouncing.
 
 	  To compile this driver as a module, choose M here: the
-	  module will be called ts_adc_debounce.
+	  module will be called ts_adc.
 
 config TOUCHSCREEN_UCB1400
 	tristate "Philips UCB1400 touchscreen"

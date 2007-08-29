@@ -20,7 +20,7 @@
 #ifndef _INCLUDE_IPAQ_SAMCOP_H_ 
 #define _INCLUDE_IPAQ_SAMCOP_H_
 
-#include <linux/soc/samcop_adc.h>
+#include <linux/mfd/samcop_adc.h>
 #include <linux/gpiodev.h>
 
 

@@ -1,5 +1,6 @@
 /* linux/arch/arm/mach-s3c2440/mach-rx3715.c
  *
+ * Copyright 2006 Roman Moravcik <roman.moravcik@gmail.com>
  * Copyright (c) 2003,2004 Simtec Electronics
  *	Ben Dooks <ben@simtec.co.uk>
  *
@@ -23,7 +24,8 @@
 #include <linux/serial_core.h>
 #include <linux/serial.h>
 
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
+#include <asm/hardware/asic3_leds.h>
 
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/nand.h>
@@ -57,6 +59,9 @@
 #include <asm/plat-s3c24xx/devs.h>
 #include <asm/plat-s3c24xx/cpu.h>
 #include <asm/plat-s3c24xx/pm.h>
+
+DEFINE_LED_TRIGGER_SHARED_GLOBAL(rx3000_radio_trig);
+EXPORT_LED_TRIGGER_SHARED(rx3000_radio_trig);
 
 static struct map_desc rx3715_iodesc[] __initdata = {
 	/* dump ISA space somewhere unused */
@@ -145,6 +150,49 @@ static struct platform_device rx3000_udc = {
 	.id		= -1,
 };
 
+/* LEDs */
+static struct asic3_led rx3000_leds[] = {
+	{
+		.led_cdev  = {
+			.name	         = "rx3000:green",
+			.default_trigger = "ds2760-battery.0-full",
+			.flags		 = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 0,
+
+	},
+	{
+		.led_cdev  = {
+			.name	         = "rx3000:red",
+			.default_trigger = "ds2760-battery.0-charging",
+			.flags		 = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 1,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "rx3000:blue",
+			.default_trigger = "rx3000-radio",
+			.flags		 = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 2,
+	},
+};
+
+static struct asic3_leds_machinfo rx3000_leds_machinfo = {
+	.num_leds = ARRAY_SIZE(rx3000_leds),
+	.leds = rx3000_leds,
+	.asic3_pdev = &s3c_device_asic3,
+};
+
+static struct platform_device rx3000_leds_pdev = {
+	.name = "asic3-leds",
+	.dev = {
+		.platform_data = &rx3000_leds_machinfo,
+	},
+};
+
+
 static struct platform_device *child_devices[] __initdata = {
  	&rx3000_udc,
 	&rx3000_buttons,
@@ -152,6 +200,7 @@ static struct platform_device *child_devices[] __initdata = {
 	&rx3000_bt,
  	&rx3000_serial,
 	&rx3000_battery,
+	&rx3000_leds_pdev,
 };
 
 static struct asic3_platform_data rx3715_asic3_cfg = {
@@ -371,6 +420,8 @@ static void __init rx3715_init_machine(void)
         enable_irq_wake(IRQ_EINT0);
         enable_irq_wake(IRQ_EINT2);
         enable_irq_wake(IRQ_EINT13);
+	
+	led_trigger_register_shared("rx3000-radio", &rx3000_radio_trig);
 }
 
 

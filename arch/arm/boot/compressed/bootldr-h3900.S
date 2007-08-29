@@ -3,8 +3,8 @@
  * h3900-specific definitions and code.
  */
 
+#include <asm/arch/h3900.h>
 #include <asm/arch/h3900-init.h>
-#include <asm/arch/h3900-asic.h>
 #include <asm/hardware/ipaq-asic2.h>
 #include <asm/hardware/ipaq-asic3.h>
 

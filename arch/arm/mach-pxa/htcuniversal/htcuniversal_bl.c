@@ -19,7 +19,7 @@
 #include <asm/arch/htcuniversal-gpio.h>
 #include <asm/arch/htcuniversal-asic.h>
 #include <asm/hardware/ipaq-asic3.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #define HTCUNIVERSAL_MAX_INTENSITY 0xc7
 

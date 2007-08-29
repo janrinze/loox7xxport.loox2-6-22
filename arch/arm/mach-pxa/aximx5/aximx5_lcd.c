@@ -24,7 +24,7 @@
 
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/aximx5-gpio.h>
-#include <linux/mq11xx.h>
+#include <linux/mfd/mq11xx.h>
 
 #if 0
 #  define debug(s, args...) printk (KERN_INFO s, ##args)

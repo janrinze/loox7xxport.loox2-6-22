@@ -16,7 +16,7 @@
 #include <linux/init.h>
 #include <linux/input.h>
 #include <linux/module.h>
-#include <linux/soc/tsc2101.h>
+#include <linux/mfd/tsc2101.h>
 
 #define X_AXIS_MAX		3830
 #define X_AXIS_MIN		150

@@ -29,7 +29,7 @@
 #include <asm/arch/hx4700-asic.h>
 #include <asm/arch/hx4700-core.h>
 #include <asm/hardware/ipaq-asic3.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #include "../../../../drivers/pcmcia/soc_common.h"
 

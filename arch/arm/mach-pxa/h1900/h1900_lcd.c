@@ -45,7 +45,7 @@
 #include <asm/arch/h1900-asic.h>
 #include <asm/arch/h1900-gpio.h>
 
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 extern struct platform_device h1900_asic3;
 #define asic3 &h1900_asic3.dev

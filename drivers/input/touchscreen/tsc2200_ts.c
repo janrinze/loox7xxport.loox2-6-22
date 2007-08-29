@@ -27,7 +27,7 @@
 #include <linux/proc_fs.h>
 #include <linux/delay.h>
 #include <linux/input.h>
-#include <linux/soc/tsc2200.h>
+#include <linux/mfd/tsc2200.h>
 #include <linux/platform_device.h>
 
 #include <asm/mach/map.h>

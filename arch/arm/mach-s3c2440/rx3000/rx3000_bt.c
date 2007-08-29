@@ -21,7 +21,7 @@
 #include <asm/io.h>
 #include <asm/hardware.h>
 
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #include <asm/arch/regs-gpio.h>
 #include <asm/arch/regs-clock.h>

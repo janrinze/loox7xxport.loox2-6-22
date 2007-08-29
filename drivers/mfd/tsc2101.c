@@ -18,7 +18,7 @@
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/slab.h>
-#include <linux/soc/tsc2101.h> 
+#include <linux/mfd/tsc2101.h> 
 #include "tsc2101.h"
 
 extern void tsc2101_ts_setup(struct device *dev);

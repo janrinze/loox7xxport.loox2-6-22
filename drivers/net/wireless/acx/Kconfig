@@ -93,25 +93,11 @@ config ACX_HX4700
 	---help---
 	Include memory interface support in acx for the iPAQ hx4700.
 
-config ACX_H4000
-	tristate "ACX support for the iPAQ h4000 using ACX_MEM"
-	depends on MACH_H4000 && ACX_MEM
-	---help---
-	Include memory interface support in acx for the iPAQ h4000.
-
-
 config ACX_HTCUNIVERSAL
 	tristate "ACX support for the HTC Universal using ACX_MEM"
 	depends on HTCUNIVERSAL_CORE && HTC_ASIC3 && ACX_MEM
 	---help---
 	Include memory interface support in acx for the HTC Universal.
-
-
-config ACX_HTCBLUEANGEL
-	tristate "ACX support for the HTC Blueangel using ACX_MEM"
-	depends on MACH_BLUEANGEL && HTC_ASIC3 && ACX_MEM
-	---help---
-	Include memory interface support in acx for the HTC Blueangel.
 
 config ACX_HTCSABLE
 	tristate "ACX support for the HTC Sable (IPAQ hw6915) using ACX_MEM"

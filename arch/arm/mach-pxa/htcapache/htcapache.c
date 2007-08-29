@@ -81,6 +81,7 @@ struct htc_egpio_pinInfo pins[] = {
 struct htc_egpio_platform_data egpio_data = {
 	.invertAcks = 1,
 	.irq_base = IRQ_BOARD_START,
+	.gpio_base = GPIO_BASE_INCREMENT,
 	.nrRegs = 3,
 	.pins = pins,
 	.nr_pins = ARRAY_SIZE(pins),
@@ -182,29 +183,31 @@ static struct platform_device ad7877 = {
 	},
 };
 
-static int
-checkPenDown(void)
-{
-	return !gpio_get_value(GPIO_NR_HTCAPACHE_TS_PENDOWN);
-}
-
 static struct tsadc_platform_data tsadc = {
-	.pen_irq = IRQ_GPIO(GPIO_NR_HTCAPACHE_TS_PENDOWN),
-	.pin_irq_falling = 1,
-	.x_plate_ohms = 400, // XXX - don't know real value.
+	.pressure_factor = 100000, // XXX - adjust value
 	.max_sense = 4096,
 	.min_pressure = 1,   // XXX - don't know real value.
-	.ispendown = checkPenDown,
+	.pen_gpio = GPIO_NR_HTCAPACHE_TS_PENDOWN,
 
 	.x_pin = "ad7877:x",
 	.y_pin = "ad7877:y",
 	.z1_pin = "ad7877:z1",
 	.z2_pin = "ad7877:z2",
+	.num_xy_samples = 1,
+	.num_z_samples = 1,
+};
+
+static struct resource htcapache_pen_irq = {
+	.start = IRQ_GPIO(GPIO_NR_HTCAPACHE_TS_PENDOWN),
+	.end = IRQ_GPIO(GPIO_NR_HTCAPACHE_TS_PENDOWN),
+	.flags = IORESOURCE_IRQ | IORESOURCE_IRQ_LOWEDGE,
 };
 
 static struct platform_device htcapache_ts = {
 	.name = "ts-adc",
 	.id = -1,
+	.resource = &htcapache_pen_irq,
+	.num_resources = 1,
 	.dev    = {
 		.platform_data = &tsadc,
 	},

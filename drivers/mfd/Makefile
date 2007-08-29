@@ -6,8 +6,10 @@ obj-$(CONFIG_MFD_SM501)		+= sm501.o
 
 obj-$(CONFIG_HTC_ASIC2)		+= asic2_base.o soc-core.o
 obj-$(CONFIG_HTC_ASIC3)		+= asic3_base.o soc-core.o
+obj-$(CONFIG_HTC_PASIC3)	+= pasic3_base.o
 
 obj-$(CONFIG_HTC_EGPIO)		+= htc-egpio.o
+obj-$(CONFIG_HTC_BBKEYS)	+= htc-bbkeys.o
 
 obj-$(CONFIG_SOC_SAMCOP) 	+= samcop_base.o
 obj-$(CONFIG_SOC_HAMCOP) 	+= hamcop_base.o

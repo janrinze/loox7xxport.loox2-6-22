@@ -18,3 +18,14 @@ obj-$(CONFIG_MCP_UCB1x00_AUDIO) += ucb1x00-audio.o
 obj-$(CONFIG_MCP_UCB1x00_SIMPAD_SWITCHES)+= simpad-switches.o
 
 obj-y				+= adc/
+
+#obj-$(CONFIG_IPAQ_HAL) = ipaq_hal.o ipaq-mtd-asset.o
+#obj-$(CONFIG_IPAQ_MTD_ASSET) += ipaq-mtd-asset.o
+obj-$(CONFIG_IPAQ_SLEEVE) += ipaq-sleeve.o
+
+#obj-$(CONFIG_IPAQ_ASIC2_SLEEVE) += asic2_sleeve.o
+#obj-$(CONFIG_IPAQ_ASIC2_OWM) += asic2_owm.o
+
+#obj-$(CONFIG_IPAQ_SAMCOP_FSI) += samcop_fsi.o fsi_drv.o
+obj-$(CONFIG_IPAQ_SAMCOP_SLEEVE) += samcop_sleeve.o
+

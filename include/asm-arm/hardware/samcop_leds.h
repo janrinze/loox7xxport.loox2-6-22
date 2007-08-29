@@ -26,7 +26,6 @@ struct samcop_led {
 struct samcop_leds_machinfo {
 	int num_leds;
 	struct samcop_led *leds;
-	struct platform_device *samcop_pdev;
 
 	/* private */
 	struct clk *leds_clk;

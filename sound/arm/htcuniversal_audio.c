@@ -28,7 +28,7 @@
 #include <asm/irq.h>
 #include <asm/mach/irq.h>
 #include <asm/arch/pxa-regs.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <asm/arch/htcuniversal-gpio.h>
 #include <asm/arch/htcuniversal-asic.h>
 

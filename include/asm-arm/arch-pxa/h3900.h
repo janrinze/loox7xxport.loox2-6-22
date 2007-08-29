@@ -20,11 +20,14 @@
 #ifndef _INCLUDE_H3900_ASIC_H_ 
 #define _INCLUDE_H3900_ASIC_H_
 
+#include <linux/mfd/asic3_base.h>
+
 #define H3900_ASIC2_PHYS	(PXA_CS5_PHYS + 0x1000000)
 #define H3900_ASIC3_PHYS	(PXA_CS5_PHYS + 0x800000)
 #define H3900_ASIC3_SD_PHYS	PXA_CS5_PHYS
 
-#ifdef CONFIG_MACH_H3900
+#define H3900_ASIC3_IRQ_BASE IRQ_BOARD_START
+#define H3900_ASIC2_IRQ_BASE (H3900_ASIC3_IRQ_BASE + ASIC3_NR_IRQS)
 
 /* these gpio's are on GPIO_B */
 
@@ -50,8 +53,6 @@
 #define ASIC3GPIO_BATFALT_OUT		0x8001
 #define ASIC3GPIO_SLEEP_OUT		0x8001
 #define ASIC3CLOCK_INIT			0x0
-
-#endif  // CONFIG_MACH_H3900
 
 #ifndef _ASM_ONLY
 #include <linux/device.h>

@@ -17,12 +17,12 @@
 #include <linux/corgi_bl.h>
 #include <linux/err.h>
 
-#include <linux/soc/asic2_base.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic2_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <asm/hardware/ipaq-asic2.h>
 #include <asm/hardware/ipaq-asic3.h>
+#include <asm/arch/h3900.h>
 #include <asm/arch/h3900-gpio.h>
-#include <asm/arch/h3900-asic.h>
 
 #define H3900_DEFAULT_INTENSITY (0x100 / 4)
 

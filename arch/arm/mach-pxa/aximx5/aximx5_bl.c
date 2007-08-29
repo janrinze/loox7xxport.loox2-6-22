@@ -20,7 +20,7 @@
 #include <asm/arch/hardware.h>
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/aximx5-gpio.h>
-#include <linux/mq11xx.h>
+#include <linux/mfd/mq11xx.h>
 
 static struct mediaq11xx_base *mq_base;
 
