@@ -25,7 +25,7 @@
 #include <asm/arch/aximx5-gpio.h>
 #include <asm/irq.h>
 
-#include <linux/mq11xx.h>
+#include <linux/mfd/mq11xx.h>
 
 #if 0
 #  define debug_out(s, args...) printk (KERN_INFO s, ##args)

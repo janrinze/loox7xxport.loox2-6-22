@@ -36,9 +36,9 @@
 #include <linux/fb.h>
 #include <linux/gpio_keys.h>
 #include <linux/input.h>
-#include <linux/soc/asic2_base.h>
-#include <linux/soc/asic3_base.h>
-#include <linux/soc/tmio_mmc.h>
+#include <linux/mfd/asic2_base.h>
+#include <linux/mfd/asic3_base.h>
+#include <linux/mfd/tmio_mmc.h>
 
 #include <asm/irq.h>
 #include <asm/mach-types.h>
@@ -50,9 +50,9 @@
 #include <asm/mach/map.h>
 #include <asm/hardware/ipaq-asic2.h>
 #include <asm/hardware/ipaq-asic3.h>
+#include <asm/arch/h3900.h>
 #include <asm/arch/h3900-gpio.h>
 #include <asm/arch/h3900-init.h>
-#include <asm/arch/h3900-asic.h>
 #include <asm/arch/udc.h>
 #include <asm/arch/pxafb.h>
 
@@ -194,6 +194,7 @@ static struct platform_device *h3900_asic2_devices[] __initdata = {
 };
 
 static struct asic2_platform_data h3900_asic2_platform_data = {
+	.irq_base = H3900_ASIC2_IRQ_BASE,
         .child_devs     = h3900_asic2_devices,
         .num_child_devs = ARRAY_SIZE(h3900_asic2_devices),
 };
@@ -264,6 +265,7 @@ static struct tmio_mmc_hwconfig h3900_mmc_hwconfig = {
 };
 
 static struct asic3_platform_data asic3_platform_data = {
+	.irq_base = H3900_ASIC3_IRQ_BASE,
 	.gpio_a = {
 		.dir = ASIC3GPIO_INIT_DIR,            /* All outputs */
 	},

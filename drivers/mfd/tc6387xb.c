@@ -21,12 +21,12 @@
 #include <linux/device.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
-#include <linux/soc/tmio_mmc.h>
+#include <linux/mfd/tmio_mmc.h>
 
 #include <asm/hardware.h>
 #include <asm/mach-types.h>
 
-#include <soc/tc6387xb.h>
+#include <linux/mfd/tc6387xb.h>
 #include "soc-core.h"
 
 struct tc6387xb_data {

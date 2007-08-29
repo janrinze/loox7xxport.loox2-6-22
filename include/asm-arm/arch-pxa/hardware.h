@@ -78,6 +78,11 @@ extern int pxa_gpio_get_value(unsigned gpio);
 extern void pxa_gpio_set_value(unsigned gpio, int value);
 
 /*
+ * Return IRQ for GPIO
+ */
+extern int pxa_gpio_to_irq(unsigned gpio);
+
+/*
  * Routine to enable or disable CKEN
  */
 extern void pxa_set_cken(int clock, int enable);

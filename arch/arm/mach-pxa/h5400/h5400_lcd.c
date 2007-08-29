@@ -22,12 +22,13 @@
 #include <linux/platform_device.h>
 #include <linux/soc-old.h>
 #include <linux/err.h>
-#include <linux/mq11xx.h>
+#include <linux/mfd/mq11xx.h>
 
 #include <asm/mach-types.h>
 #include <asm/hardware.h>
+#include <asm/arch/h5400.h>
 #include <asm/arch/h5400-asic.h>
-#include <linux/soc/samcop_base.h>
+#include <linux/mfd/samcop_base.h>
 
 static struct lcd_device *mqfb_lcd_device;
 struct mediaq11xx_base *mq_base;
@@ -44,8 +45,8 @@ static spinlock_t fp_regs_lock;
  * LCD version has ENVEE bit 0, the phillips has that bit 1.
  */
 static struct mediaq11xx_init_data mq1100_init_phillips = {
-    /* DC */
-    {
+    .irq_base = H5000_MQ11XX_IRQ_BASE,
+    .DC = {
 	/* dc00 */		0x00000001,
 	/* dc01 */		0x00000003,
 	/* dc02 */		0x00000001,
@@ -53,24 +54,21 @@ static struct mediaq11xx_init_data mq1100_init_phillips = {
 	/* dc04 */		0x00000004,
 	/* dc05 */		0x00000003,
     },
-    /* CC */
-    {
+    .CC = {
 	/* cc00 */		0x00000000,
 	/* cc01 */		0x00001010,
 	/* cc02 */		0x00000a22,
 	/* cc03 */		0x00000000,
 	/* cc04 */		0x00000004,
     },
-    /* MIU */
-    {
+    .MIU = {
 	/* mm00 */		0x00000001,
 	/* mm01 */		0x1b676ca8,
 	/* mm02 */		0x00000000,
 	/* mm03 */		0x00001479,
 	/* mm04 */		0x6bfc2d76,
     },
-    /* GC */
-    {
+    .GC = {
 	/* gc00 */		0x051100c8, /* powered down */
 	/* gc01 */		0x00000000,
 	/* gc02 */		0x00f8013b,
@@ -99,8 +97,7 @@ static struct mediaq11xx_init_data mq1100_init_phillips = {
 	/* gc19 */		0x00000000,
 	/* gc1a */		0x00000000,
     },
-    /* FP */
-    {
+    .FP = {
 	/* fp00 */		0x00006120,
 	/* fp01 */		0x00bcc02c,
 	/* fp02 */		0xfffcfcfd,
@@ -222,8 +219,7 @@ static struct mediaq11xx_init_data mq1100_init_phillips = {
 	/* fp76 */		0x95f9c859,
 	/* fp77 */		0x30388dc9,
     },
-    /* GE */
-    {
+    .GE = {
 	/* ge00 NOT SET */	0x0,
 	/* ge01 NOT SET */	0x0,
 	/* ge02 NOT SET */	0x0,
@@ -240,8 +236,8 @@ static struct mediaq11xx_init_data mq1100_init_phillips = {
 };
 
 static struct mediaq11xx_init_data mq1100_init_sharp = {
-    /* DC */
-    {
+    .irq_base = H5000_MQ11XX_IRQ_BASE,
+    .DC = {
 	/* dc00 */		0x00000001,
 	/* dc01 */		0x00000003,
 	/* dc02 */		0x00000001,
@@ -249,24 +245,21 @@ static struct mediaq11xx_init_data mq1100_init_sharp = {
 	/* dc04 */		0x00000004,
 	/* dc05 */		0x00000003,
     },
-    /* CC */
-    {
+    .CC = {
 	/* cc00 */		0x00000000,
 	/* cc01 */		0x00001010,
 	/* cc02 */		0x000002a2,
 	/* cc03 */		0x00000000,
 	/* cc04 */		0x00000004,
     },
-    /* MIU */
-    {
+    .MIU = {
 	/* mm00 */		0x00000001,
 	/* mm01 */		0x1b676ca8,
 	/* mm02 */		0x00000000,
 	/* mm03 */		0x00001479,
 	/* mm04 */		0x6bfc2d76,
     },
-    /* GC */
-    {
+    .GC = {
 	/* gc00 */		0x080100c8, /* powered down */
 	/* gc01 */		0x00000000,
 	/* gc02 */		0x00f0011a,
@@ -295,8 +288,7 @@ static struct mediaq11xx_init_data mq1100_init_sharp = {
 	/* gc19 */		0x00000000,
 	/* gc1a */		0x00000000,
     },
-    /* FP */
-    {
+    .FP = {
 	/* fp00 */		0x00006120,
 	/* fp01 */		0x003d5008,
 	/* fp02 */		0xfffcfcfd,
@@ -418,8 +410,7 @@ static struct mediaq11xx_init_data mq1100_init_sharp = {
 	/* fp76 */		0x95f9c859,
 	/* fp77 */		0x30388dc9,
     },
-    /* GE */
-    {
+    .GE = {
 	/* ge00 NOT SET */	0x0,
 	/* ge01 NOT SET */	0x0,
 	/* ge02 NOT SET */	0x0,

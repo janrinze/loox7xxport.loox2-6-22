@@ -16,7 +16,7 @@
 #include <asm/mach-types.h>
 #include <asm/arch/h4000-gpio.h>
 #include <asm/arch/h4000-asic.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <asm/arch/pxa-regs.h>
 #include <asm/hardware.h>
 

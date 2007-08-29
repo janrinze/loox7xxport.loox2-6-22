@@ -28,8 +28,7 @@ static void samcop_leds_set(struct led_classdev *led_cdev,
 {
 	struct samcop_led *led = container_of(led_cdev, struct samcop_led,
 	                                     led_cdev);
-	struct samcop_leds_machinfo *machinfo = led->machinfo;
-	struct device *samcop_dev = &machinfo->samcop_pdev->dev;
+	struct device *samcop_dev = led_cdev->class_dev->dev->parent;
 
 	pr_debug("%s:%s %d-%s %d\n", __FILE__, __FUNCTION__, led->hw_num,
 	    led->led_cdev.name, b);
@@ -163,20 +162,19 @@ struct platform_driver samcop_leds_driver = {
 	},
 };
 
-int samcop_leds_register(void)
+static int __init samcop_leds_init(void)
 {
 	pr_debug("%s:%s\n", __FILE__, __FUNCTION__);
 	return platform_driver_register(&samcop_leds_driver);
 }
 
-void samcop_leds_unregister(void)
+static void __exit samcop_leds_exit(void)
 {
 	platform_driver_unregister(&samcop_leds_driver);
-	return;
 }
 
-EXPORT_SYMBOL_GPL(samcop_leds_register);
-EXPORT_SYMBOL_GPL(samcop_leds_unregister);
+module_init(samcop_leds_init);
+module_exit(samcop_leds_exit);
 
 MODULE_AUTHOR("Anton Vorontsov <cbou@mail.ru>");
 MODULE_DESCRIPTION("Samsung's SAMCOP LEDs driver");

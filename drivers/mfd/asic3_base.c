@@ -26,6 +26,7 @@
 #include <linux/irq.h>
 #include <linux/clk.h>
 #include <linux/ds1wm.h>
+#include <linux/gpiodev2.h>
 #include <asm/arch/clock.h>
 
 #include <asm/hardware.h>
@@ -33,8 +34,8 @@
 #include <asm/io.h>
 
 #include <asm/hardware/ipaq-asic3.h>
-#include <linux/soc/asic3_base.h>
-#include <linux/soc/tmio_mmc.h>
+#include <linux/mfd/asic3_base.h>
+#include <linux/mfd/tmio_mmc.h>
 #include "soc-core.h"
 
 
@@ -141,7 +142,7 @@ int asic3_gpio_get_value(struct device *dev, unsigned gpio)
 {
 	u32 mask = ASIC3_GPIO_bit(gpio);
 	printk("%s(%d)\n", __FUNCTION__, gpio);
-	switch (gpio >> 4) {
+	switch ((gpio & GPIO_BASE_MASK) >> 4) {
 	case _IPAQ_ASIC3_GPIO_BANK_A:
 		return asic3_get_gpio_status_a(dev) & mask;
 	case _IPAQ_ASIC3_GPIO_BANK_B:
@@ -164,7 +165,7 @@ void asic3_gpio_set_value(struct device *dev, unsigned gpio, int val)
 	if (val)  bitval = mask;
 	printk("%s(%d, %d)\n", __FUNCTION__, gpio, val);
 
-	switch (gpio >> 4) {
+	switch ((gpio & GPIO_BASE_MASK) >> 4) {
 	case _IPAQ_ASIC3_GPIO_BANK_A:
 		asic3_set_gpio_out_a(dev, mask, bitval);
 		return;
@@ -196,7 +197,7 @@ static int asic3_gpio_to_irq(struct device *dev, unsigned gpio)
 	struct asic3_data *asic = dev->driver_data;
 	printk("%s(%d)\n", __FUNCTION__, gpio);
 
-	return asic->irq_base + gpio;
+	return asic->irq_base + (gpio & GPIO_BASE_MASK);
 }
 
 void asic3_set_led(struct device *dev, int led_num, int duty_time,
@@ -1062,6 +1063,14 @@ static int asic3_probe(struct platform_device *pdev)
 	pdata->gpiodev_ops.set = asic3_gpio_set_value;
 	pdata->gpiodev_ops.to_irq = asic3_gpio_to_irq;
 
+	{
+	struct gpio_ops ops;
+	ops.get_value = asic3_gpio_get_value;
+	ops.set_value = asic3_gpio_set_value;
+	ops.to_irq = asic3_gpio_to_irq;
+	gpiodev_register(pdata->gpio_base, dev, &ops);
+	}
+
 	soc_add_devices(pdev, asic3_blocks, ARRAY_SIZE(asic3_blocks),
 			&pdev->resource[0],
 			asic->bus_shift - ASIC3_DEFAULT_ADDR_SHIFT,
@@ -1076,8 +1085,12 @@ static int asic3_probe(struct platform_device *pdev)
 		}
 	}
 
-	if (pdata && pdata->num_child_devs != 0)
-		platform_add_devices(pdata->child_devs, pdata->num_child_devs);
+	if (pdata && pdata->num_child_devs != 0) {
+		for (i = 0; i < pdata->num_child_devs; i++) {
+			pdata->child_devs[i]->dev.parent = &pdev->dev;
+			platform_device_register(pdata->child_devs[i]);
+		}
+	}
 
 	return 0;
 }

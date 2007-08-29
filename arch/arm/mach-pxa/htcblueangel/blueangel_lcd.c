@@ -44,7 +44,7 @@
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/pxafb.h>
 
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #define BLUEANGEL_ATI_W3200_PHYS      PXA_CS2_PHYS
 

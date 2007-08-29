@@ -16,7 +16,7 @@
 #include "leds.h"
 
 #include <asm/hardware/ipaq-asic3.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <asm/mach-types.h>
 #include <asm/hardware/asic3_leds.h>
 
@@ -169,20 +169,19 @@ struct platform_driver asic3_leds_driver = {
 	},
 };
 
-int asic3_leds_register(void)
+static int __init asic3_leds_init(void)
 {
 	dbg("%s:%s\n", __FILE__, __FUNCTION__);
 	return platform_driver_register(&asic3_leds_driver);
 }
 
-void asic3_leds_unregister(void)
+static void __exit asic3_leds_exit(void)
 {
 	platform_driver_unregister(&asic3_leds_driver);
-	return;
 }
 
-EXPORT_SYMBOL_GPL(asic3_leds_register);
-EXPORT_SYMBOL_GPL(asic3_leds_unregister);
+module_init(asic3_leds_init);
+module_exit(asic3_leds_exit);
 
 MODULE_AUTHOR("Anton Vorontsov <cbou@mail.ru>");
 MODULE_DESCRIPTION("HTC ASIC3 LEDs driver");

@@ -161,20 +161,20 @@ static struct platform_driver hamcop_leds_driver = {
 	},
 };
 
-int hamcop_leds_register(void)
+static int __init hamcop_leds_init(void)
 {
 	pr_debug("%s:%s\n", __FILE__, __FUNCTION__);
 	return platform_driver_register(&hamcop_leds_driver);
 }
 
-void hamcop_leds_unregister(void)
+static void __exit hamcop_leds_exit(void)
 {
 	platform_driver_unregister(&hamcop_leds_driver);
 	return;
 }
 
-EXPORT_SYMBOL_GPL(hamcop_leds_register);
-EXPORT_SYMBOL_GPL(hamcop_leds_unregister);
+module_init(hamcop_leds_init);
+module_exit(hamcop_leds_exit);
 
 MODULE_AUTHOR("Anton Vorontsov <cbou@mail.ru> ; Michal Panczyk <mpanczyk@gmail.com>");
 MODULE_DESCRIPTION("Samsung's HAMCOP LEDs driver");

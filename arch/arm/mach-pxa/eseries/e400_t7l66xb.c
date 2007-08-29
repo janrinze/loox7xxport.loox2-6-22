@@ -18,7 +18,7 @@
 #include <asm/arch/eseries-irq.h>
 #include <asm/arch/eseries-gpio.h>
 
-#include <soc/t7l66xb.h>
+#include <linux/mfd/t7l66xb.h>
 
 //FIXME - set properly when known
 #define GPIO_E400_TMIO_IRQ GPIO_ESERIES_TMIO_IRQ
@@ -67,6 +67,7 @@ static void e400_t7l66xb_resume(void) {
 }
 
 static struct t7l66xb_platform_data e400_t7l66xb_info = {
+	.irq_base 		= IRQ_BOARD_START,
 	.hw_init                = &e400_t7l66xb_hwinit,
 	.suspend                = &e400_t7l66xb_suspend,
 	.resume                 = &e400_t7l66xb_resume,
@@ -76,7 +77,7 @@ static struct platform_device e400_t7l66xb_device = {
 	.name           = "t7l66xb",
 	.id             = -1,
 	.dev            = {
-		.driver_data = &e400_t7l66xb_info, 
+		.platform_data = &e400_t7l66xb_info, 
 	},
 	.num_resources = ARRAY_SIZE(e400_t7l66xb_resources),
 	.resource      = e400_t7l66xb_resources,

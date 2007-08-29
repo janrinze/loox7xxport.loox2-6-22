@@ -79,6 +79,7 @@
 #define GPIOD_CALENDAR_BUTTON_N	 (1<<6)
 #define GPIOD_HEADPHONE_IN_N     (1<<7)
 #define GPIOD_IR_ON_N            (1<<8) /* active low */
+#define GPIOD_NR_IR_ON_N         (16*3 + 8) /* active low */
 #define GPIOD_MUX_SEL1           (1<<9) /* mux_sel[0:2]  */
 #define GPIOD_MUX_SEL0           (1<<10)
 #define GPIOD_PCI                (1<<11) /* ?? */

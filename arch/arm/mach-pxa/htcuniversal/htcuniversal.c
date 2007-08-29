@@ -15,7 +15,7 @@
 #include <linux/irq.h>
 #include <linux/input.h>
 #include <linux/gpio_keys.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <linux/ads7846.h>
 #include <linux/touchscreen-adc.h>
 
@@ -33,6 +33,7 @@
 #include <asm/arch/pxafb.h>
 #include <asm/arch/irda.h>
 #include <asm/arch/ohci.h>
+#include <asm/hardware/asic3_leds.h>
 
 #include <asm/arch/htcuniversal.h>
 #include <asm/arch/htcuniversal-gpio.h>
@@ -46,6 +47,82 @@
 #include "htcuniversal_bt.h"
 #include "htcuniversal_phone.h"
 #include "tsc2046_ts.h"
+
+DEFINE_LED_TRIGGER_SHARED_GLOBAL(htcuniversal_radio_trig);
+EXPORT_LED_TRIGGER_SHARED(htcuniversal_radio_trig);
+
+/*
+ * LEDs
+ */
+static struct asic3_led htcuniversal_leds[] = {
+	{
+		.led_cdev  = {
+			.name	        = "htcuniversal:red",
+			.default_trigger = "htcuniversal-charging",
+		},
+		.hw_num = 2,
+
+	},
+	{
+		.led_cdev  = {
+			.name	         = "htcuniversal:green",
+			.default_trigger = "htcuniversal-chargefull",
+		},
+		.hw_num = 1,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "htcuniversal:wifi-bt",
+			.default_trigger = "htcuniversal-radio",
+		},
+		.hw_num = 0,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "htcuniversal:phonebuttons",
+			.default_trigger = "htcuniversal-phonebuttons",
+		},
+		.hw_num = -1,
+		.gpio_num = ('D'-'A')*16+GPIOD_BL_KEYP_PWR_ON,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "htcuniversal:vibra",
+			.default_trigger = "htcuniversal-vibra",
+		},
+		.hw_num = -1,
+		.gpio_num = ('D'-'A')*16+GPIOD_VIBRA_PWR_ON,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "htcuniversal:flashlight1",
+			.default_trigger = "htcuniversal-flashlight1",
+		},
+		.hw_num = -1,
+		.gpio_num = ('A'-'A')*16+GPIOA_FLASHLIGHT,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "htcuniversal:kbdbacklight",
+			.default_trigger = "htcuniversal-kbdbacklight",
+		},
+		.hw_num = -1,
+		.gpio_num = ('D'-'A')*16+GPIOD_BL_KEYB_PWR_ON,
+	},
+};
+
+static struct asic3_leds_machinfo htcuniversal_leds_machinfo = {
+	.num_leds = ARRAY_SIZE(htcuniversal_leds),
+	.leds = htcuniversal_leds,
+	.asic3_pdev = &htcuniversal_asic3,
+};
+
+static struct platform_device htcuniversal_leds_pdev = {
+	.name = "asic3-leds",
+	.dev = {
+		.platform_data = &htcuniversal_leds_machinfo,
+	},
+};
 
 /*
  * IRDA
@@ -146,7 +223,7 @@ static struct resource htcuniversal_pen_irq = {
 	.flags = IORESOURCE_IRQ,
 };
 static struct platform_device htcuniversal_ts2 = {
-	.name = "ts-adc-debounce",
+	.name = "ts-adc",
 	.id = -1,
 	.resource = &htcuniversal_pen_irq,
 	.num_resources = 1,
@@ -332,6 +409,7 @@ static struct platform_device *htcuniversal_asic3_devices[] __initdata = {
 	&htcuniversal_phone,
 	&htcuniversal_power,
 	&htcuniversal_udc,
+	&htcuniversal_leds_pdev,
 };
 
 static struct asic3_platform_data htcuniversal_asic3_platform_data = {
@@ -454,11 +532,6 @@ static struct pxafb_mach_info sony_acx526akm = {
 //	.lccr4			= 0x80000000,
 };
 
-static void __init htcuniversal_init_irq(void)
-{
-	pxa_init_irq();
-}
-
 static struct platform_pxa_serial_funcs htcuniversal_pxa_bt_funcs = {
 	.configure = htcuniversal_bt_configure,
 };
@@ -499,6 +572,8 @@ static void __init htcuniversal_init(void)
 	platform_add_devices(devices, ARRAY_SIZE(devices) );
 	pxa_set_ficp_info(&htcuniversal_ficp_platform_data);
 	pxa_set_ohci_info(&htcuniversal_ohci_platform_data);
+
+	led_trigger_register_shared("htcuniversal-radio", &htcuniversal_radio_trig);
 }
 
 MACHINE_START(HTCUNIVERSAL, "HTC Universal")
@@ -507,7 +582,7 @@ MACHINE_START(HTCUNIVERSAL, "HTC Universal")
 	.io_pg_offst	= (io_p2v(0x40000000) >> 18) & 0xfffc,
 	.boot_params	= 0xa0000100,
 	.map_io		= htcuniversal_map_io,
-	.init_irq	= htcuniversal_init_irq,
+	.init_irq	= pxa_init_irq,
 	.init_machine	= htcuniversal_init,
 	.timer		= &pxa_timer,
 MACHINE_END

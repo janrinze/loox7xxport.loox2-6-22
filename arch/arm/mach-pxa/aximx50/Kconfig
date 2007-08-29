@@ -24,7 +24,7 @@ config X50_BUTTONS
 config X50_TS
 	tristate "ADS7846 / TSC2046 touchscreen support"
 	depends on MACH_X50
-	select TOUCHSCREEN_ADC_DEBOUNCE
+	select TOUCHSCREEN_ADC
 	help
 	  X50/X51(v) touchscreen support.
 

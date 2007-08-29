@@ -17,7 +17,7 @@
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
 #include <linux/irq.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/arch/irqs.h>

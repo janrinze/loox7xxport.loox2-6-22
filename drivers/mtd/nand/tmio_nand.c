@@ -52,7 +52,7 @@
 #include <asm/io.h>
 #include <asm/sizes.h>
 
-#include <linux/soc/tmio_nand.h>
+#include <linux/mfd/tmio_nand.h>
 #include "tmio_nand.h"
 
 /* 

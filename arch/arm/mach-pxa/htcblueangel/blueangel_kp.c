@@ -19,7 +19,7 @@
 #include <linux/input.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #include <asm/hardware/ipaq-asic3.h>
 #include <asm/hardware.h>

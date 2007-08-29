@@ -43,7 +43,7 @@
 #include <asm/arch/hardware.h>
 #include <asm/arch/pxa-regs.h>
 
-#include <asm/arch-pxa/h2200-asic.h>
+#include <asm/arch-pxa/h2200.h>
 #include <asm/arch-pxa/h2200-gpio.h>
 #include <asm/arch-pxa/h2200-leds.h>
 

@@ -43,9 +43,9 @@
 
 #include <asm/hardware/ipaq-asic2.h>
 
-#include <linux/soc/asic2_base.h>
-#include <linux/soc/asic2_adc.h>
-#include <linux/soc/asic2_ts.h>
+#include <linux/mfd/asic2_base.h>
+#include <linux/mfd/asic2_adc.h>
+#include <linux/mfd/asic2_ts.h>
 
 #define PERROR(format,arg...) printk(KERN_ERR __FILE__ ":%s - " format "\n", __FUNCTION__ , ## arg )
 

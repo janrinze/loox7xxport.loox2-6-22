@@ -21,7 +21,7 @@
 #include <asm/hardware.h>
 
 #include <asm/arch/regs-gpio.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <asm/arch/rx3000.h>
 #include <asm/arch/rx3000-asic3.h>
 #include <asm/io.h>

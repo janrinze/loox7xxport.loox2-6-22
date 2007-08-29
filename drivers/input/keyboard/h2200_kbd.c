@@ -22,12 +22,12 @@
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/irqs.h>
 
+#include <asm/arch/h2200.h>
 #include <asm/arch/h2200-irqs.h>
 #include <asm/arch/h2200-gpio.h>
-#include <asm/arch/h2200-asic.h>
 
 #include <asm/hardware/ipaq-hamcop.h>
-#include <linux/soc/hamcop_base.h>
+#include <linux/mfd/hamcop_base.h>
 
 #define JOYPAD_FILTER_WIDTH	(32768 / 20)	/* 1/20 second, using RTC */
 #define JOYPAD_REPEAT_DELAY	250		/* 250ms delay before repeat */

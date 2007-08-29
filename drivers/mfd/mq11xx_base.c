@@ -17,7 +17,7 @@
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
-#include <linux/mq11xx.h>
+#include <linux/mfd/mq11xx.h>
 #include <asm/io.h>
 
 #ifdef MQ_IRQ_MULTIPLEX
@@ -184,8 +184,7 @@ static spinlock_t mq_device_list_lock = SPIN_LOCK_UNLOCKED;
 #endif
 
 static struct mediaq11xx_init_data mqInitValid = {
-    /* DC */
-    {
+    .DC = {
 	/* dc00 */		0,
 	/* dc01 */		MQ_MASK_ALL,
 	/* dc02 */		MQ_MASK_ALL,
@@ -193,16 +192,14 @@ static struct mediaq11xx_init_data mqInitValid = {
 	/* dc04 */		MQ_MASK_ALL,
 	/* dc05 */		MQ_MASK_ALL,
     },
-    /* CC */
-    {
+    .CC = {
 	/* cc00 */		MQ_MASK_ALL,
 	/* cc01 */		MQ_MASK_ALL,
 	/* cc02 */		MQ_MASK_ALL,
 	/* cc03 */		MQ_MASK_ALL,
 	/* cc04 */		MQ_MASK_ALL,
     },
-    /* MIU */
-    {
+    .MIU = {
 	/* mm00 */		MQ_MASK_ALL,
 	/* mm01 */		MQ_MASK_ALL,
 	/* mm02 */		MQ_MASK_ALL,
@@ -211,8 +208,7 @@ static struct mediaq11xx_init_data mqInitValid = {
 	/* mm05 */		MQ_MASK_1168 | MQ_MASK_1178 | MQ_MASK_1188,
 	/* mm06 */		MQ_MASK_1168 | MQ_MASK_1178 | MQ_MASK_1188,
     },
-    /* GC */
-    {
+    .GC = {
 	/* gc00 */		MQ_MASK_ALL,
 	/* gc01 */		MQ_MASK_ALL,
 	/* gc02 */		MQ_MASK_ALL,
@@ -242,7 +238,7 @@ static struct mediaq11xx_init_data mqInitValid = {
 	/* gc1a */		MQ_MASK_ALL,
     },
     /* FP */
-    {
+    .FP = {
 	/* fp00 */		MQ_MASK_ALL,
 	/* fp01 */		MQ_MASK_ALL,
 	/* fp02 */		MQ_MASK_ALL,
@@ -364,8 +360,7 @@ static struct mediaq11xx_init_data mqInitValid = {
 	/* fp76 */		MQ_MASK_REGSET2,
 	/* fp77 */		MQ_MASK_REGSET2,
     },
-    /* GE */
-    {
+    .GE = {
 	/* ge00 NOT SET */	0,
 	/* ge01 NOT SET */	0,
 	/* ge02 NOT SET */	0,
@@ -387,8 +382,7 @@ static struct mediaq11xx_init_data mqInitValid = {
 	/* ge12 NOT SET */      0x0,
 	/* ge13 NOT SET */      0x0,
     },
-    /* SPI */
-    {
+    .SPI = {
       /* sp00 */		MQ_MASK_1132,
       /* sp01 */		0,
       /* sp02 NOT SET */	0,
@@ -1004,8 +998,8 @@ static struct irq_chip mq_irq_chip = {
 	.set_type	= mq_irq_type,
 };
 
-static int
-mq_irq_init (struct mq_data *mqdata)
+static int mq_irq_init(struct mq_data *mqdata, 
+	struct mediaq11xx_init_data *init_data)
 {
 	int i;
 
@@ -1015,10 +1009,9 @@ mq_irq_init (struct mq_data *mqdata)
 	/* Clear IRQ status */
 	mqdata->base.regs->IC.interrupt_status = 0xffffffff;
 
-	mqdata->base.irq_base = alloc_irq_space (MQ11xx_NUMIRQS);
-	if (mqdata->base.irq_base < 0) {
-		printk (KERN_ERR "There is no space for %d IRQs in core IRQ table!\n",
-			MQ11xx_NUMIRQS);
+	mqdata->base.irq_base = init_data->irq_base;
+	if (!mqdata->base.irq_base) {
+		printk(KERN_ERR "mq11xx: uninitialized irq_base!\n");
 		return -ENOMEM;
 	}
 
@@ -1054,8 +1047,6 @@ mq_irq_free (struct mq_data *mqdata)
 	mqdata->base.regs->IC.interrupt_status = 0xffffffff;
 
 	set_irq_handler(mqdata->irq_nr, handle_edge_irq);
-
-	free_irq_space (mqdata->base.irq_base, MQ11xx_NUMIRQS);
 }
 #endif
 
@@ -1175,7 +1166,7 @@ mq_initialize (struct device *dev, int num_resources,
 	mqdata->freelist [0].size = MQ11xx_FB_SIZE;
 
 #if defined MQ_IRQ_MULTIPLEX
-	if ((mqdata->irq_nr != -1) && mq_irq_init (mqdata))
+	if ((mqdata->irq_nr != -1) && mq_irq_init(mqdata, init_data))
 		goto err4;
 #endif
 

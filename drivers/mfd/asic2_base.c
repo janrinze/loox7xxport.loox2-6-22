@@ -31,7 +31,7 @@
 #include <asm/io.h>
 #include <asm/mach/irq.h>
 #include <asm/hardware/ipaq-asic2.h>
-#include <linux/soc/asic2_base.h>
+#include <linux/mfd/asic2_base.h>
 #include "soc-core.h"
 
 #define ASIC2_NR_IRQS	16
@@ -556,10 +556,10 @@ static int asic2_probe(struct platform_device *pdev)
 	memset(asic, 0, sizeof (*asic));
 	pdev->dev.driver_data = asic;
 
-	asic->irq_base = alloc_irq_space(ASIC2_NR_IRQS);
-	if (asic->irq_base == -1) {
-		printk ("asic2: unable to allocate %d irqs\n", ASIC2_NR_IRQS);
-		goto enomem2;
+	asic->irq_base = pdata->irq_base;
+	if (!asic->irq_base) {
+		printk ("asic2: uninitialized irq_base!\n");
+		goto enomem1;
 	}
 
 	asic->mapping = ioremap((unsigned long)pdev->resource[0].start, IPAQ_ASIC2_MAP_SIZE);
@@ -602,8 +602,13 @@ static int asic2_probe(struct platform_device *pdev)
 	if (!asic->devices)
 		goto enomem;
 
-	if (pdata && pdata->num_child_devs != 0)
-		platform_add_devices(pdata->child_devs, pdata->num_child_devs);
+	if (pdata && pdata->num_child_devs != 0) {
+		int i;
+		for (i = 0; i < pdata->num_child_devs; i++) {
+			pdata->child_devs[i]->dev.parent = &pdev->dev;
+			platform_device_register(pdata->child_devs[i]);
+		}
+	}
 
 	return 0;
 
@@ -613,8 +618,6 @@ static int asic2_probe(struct platform_device *pdev)
 	asic2_remove(pdev);
 	return rc;
  enomem1:
-	free_irq_space(asic->irq_base, ASIC2_NR_IRQS);
- enomem2:
 	kfree(asic);
  enomem3:
 	return -ENOMEM;
@@ -645,14 +648,12 @@ static int asic2_remove(struct platform_device *pdev)
 	}
 
 	set_irq_chained_handler(asic->irq_nr, NULL);
-	free_irq_space(asic->irq_base, ASIC2_NR_IRQS);
 
 	if (asic->devices) {
 		soc_free_devices(asic->devices, ARRAY_SIZE(asic2_blocks));
 	}
 
 	iounmap(asic->mapping);
-	free_irq_space(asic->irq_base, ASIC2_NR_IRQS);
 
 	kfree(asic);
 

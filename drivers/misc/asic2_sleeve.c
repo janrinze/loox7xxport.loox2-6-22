@@ -47,7 +47,7 @@
 #include <asm/arch/h3900-gpio.h>
 #endif
 
-#include <linux/soc/asic2_base.h>
+#include <linux/mfd/asic2_base.h>
 
 #define PDEBUG(format,arg...) printk(KERN_DEBUG __FILE__ ":%s - " format "\n", __FUNCTION__ , ## arg )
 #define PALERT(format,arg...) printk(KERN_ALERT __FILE__ ":%s - " format "\n", __FUNCTION__ , ## arg )

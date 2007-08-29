@@ -25,10 +25,11 @@
 #include <linux/platform_device.h>
 #include <linux/err.h>
 #include <linux/soc-old.h>
-#include <linux/mq11xx.h>
+#include <linux/mfd/mq11xx.h>
 
 #include <asm/mach-types.h>
 #include <asm/arch/pxa-regs.h>
+#include <asm/arch/h2200.h>
 #include <asm/arch/h2200-gpio.h>
 
 #if 0
@@ -46,8 +47,8 @@ static void h2200_mq_set_power (int on);
 
 /* MediaQ 1178 init state */
 static struct mediaq11xx_init_data mq1178_init_data = {
-    /* DC */
-    {
+    .irq_base = H2200_MQ11XX_IRQ_BASE,
+    .DC = {
 	/* dc00 */		0x00000001,
 	/* dc01 */		0x00000042,
 	/* dc02 */		0x00000001,
@@ -55,16 +56,14 @@ static struct mediaq11xx_init_data mq1178_init_data = {
 	/* dc04 */		0x00000004,
         /* dc05 */		0x00000009,
     },
-    /* CC */
-    {
+    .CC = {
 	/* cc00 */		0x00000000, /* wince 0x00000002 */
 	/* cc01 */		0x00201010,
 	/* cc02 */		0x00000000,
 	/* cc03 */		0x00000000,
 	/* cc04 */		0x00000004,
     },
-    /* MIU */
-    {
+    .MIU = {
 	/* mm00 */		0x00000001,
 	/* mm01 */		0x1b676ca0,
 	/* mm02 */		0x00000000,
@@ -73,8 +72,7 @@ static struct mediaq11xx_init_data mq1178_init_data = {
         /* mm05 */		0x00170211,
         /* mm06 */		0x00000000,
     },
-    /* GC */
-    {
+    .GC = {
 	/* gc00 */		0x051100c8, /* powered down */
 	/* gc01 */		0x00000200,
 	/* gc02 */		0x00f8013b,
@@ -103,8 +101,7 @@ static struct mediaq11xx_init_data mq1178_init_data = {
 	/* gc19 */		0x00000000,
 	/* gc1a */		0x00000000, /* wince 0x004e82bb */
     },
-    /* FP */
-    {
+    .FP = {
 	/* fp00 */		0x00006020,
 	/* fp01 */		0x000c5008, /* wince 0x000cd008 */
 	/* fp02 */		0x9ffdfcfd,
@@ -226,8 +223,7 @@ static struct mediaq11xx_init_data mq1178_init_data = {
 	/* fp76 */		0x0,
 	/* fp77 */		0x0,
     },
-    /* GE */
-    {
+    .GE = {
 	/* ge00 NOT SET */	0x0,
 	/* ge01 NOT SET */	0x0,
 	/* ge02 NOT SET */	0x0,
@@ -249,11 +245,9 @@ static struct mediaq11xx_init_data mq1178_init_data = {
 	/* ge12 NOT SET */	0x0,
 	/* ge13 NOT SET */	0x0,
     },
-    /* SPI */
-    { },
+    .SPI = { },
 
-    /* set_power */
-    h2200_mq_set_power
+    .set_power = h2200_mq_set_power,
 };
 
 static int save_lcd_power;

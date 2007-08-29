@@ -23,6 +23,11 @@ struct tmio_hwconfig {
 
 struct tc6387xb_platform_data
 {
+	/* Standard MFD properties */
+	int irq_base;
+	struct platform_device **child_devs;
+	int num_child_devs;
+
 	void (* hw_init) (void);
 	void (* suspend) (void);
 	void (* resume)  (void);

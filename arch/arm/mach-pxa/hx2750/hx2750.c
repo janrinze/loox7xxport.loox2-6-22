@@ -20,7 +20,7 @@
 #include <linux/input.h>
 #include <linux/gpio_keys.h>
 #include <linux/mmc/host.h>
-#include <linux/soc/tsc2101.h>
+#include <linux/mfd/tsc2101.h>
 
 #include <asm/mach-types.h>
 #include <asm/hardware.h>

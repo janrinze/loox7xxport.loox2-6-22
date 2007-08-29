@@ -103,14 +103,14 @@ static void toppoly_lcd_power(int on, struct fb_var_screeninfo *si)
 		pxa_gpio_mode(GPIO74_LCD_FCLK_MD);
 		pxa_gpio_mode(GPIO75_LCD_LCLK_MD); // done by pxafb
 		*/
-		magician_egpio_set(EGPIO2_MAGICIAN_TOPPOLY_POWER, 1);
+		gpio_set_value(EGPIO_MAGICIAN_TOPPOLY_POWER, 1);
 		pxa_gpio_mode(GPIO104_MAGICIAN_LCD_POWER_1_MD);
 		pxa_gpio_mode(GPIO104_MAGICIAN_LCD_POWER_1_MD);
 		pxa_gpio_mode(GPIO104_MAGICIAN_LCD_POWER_1_MD);
 
 		gpio_set_value(GPIO106_MAGICIAN_LCD_POWER_3, 1);
 		udelay(2000);
-		magician_egpio_set(EGPIO_NR_MAGICIAN_LCD_POWER, 1);
+		gpio_set_value(EGPIO_MAGICIAN_LCD_POWER, 1);
 		udelay(2000);
 		/* LCCR0 = 0x04000081; // <-- already done by pxafb_enable_controller */
 		udelay(2000);
@@ -126,7 +126,7 @@ static void toppoly_lcd_power(int on, struct fb_var_screeninfo *si)
 		gpio_set_value(GPIO104_MAGICIAN_LCD_POWER_1, 0);
 		udelay(1000);
 		gpio_set_value(GPIO106_MAGICIAN_LCD_POWER_3, 0);
-		magician_egpio_set(EGPIO_NR_MAGICIAN_LCD_POWER, 0);
+		gpio_set_value(EGPIO_MAGICIAN_LCD_POWER, 0);
 	}
 }
 

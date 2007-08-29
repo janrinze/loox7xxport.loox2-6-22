@@ -24,14 +24,14 @@
 #include <linux/device.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
-#include <linux/soc/tmio_mmc.h>
+#include <linux/mfd/tmio_mmc.h>
 
 #include <asm/hardware.h>
 #include <asm/mach-types.h>
 #include <asm/io.h>
 #include <asm/arch/pxa-regs.h>
 
-#include <soc/t7l66xb.h>
+#include <linux/mfd/t7l66xb.h>
 #include "soc-core.h"
 
 #define platform_get_platdata(_dev)      ((_dev)->dev.platform_data)
@@ -206,6 +206,7 @@ static int t7l66xb_resume(struct platform_device *dev)
 
 static int t7l66xb_probe(struct platform_device *dev)
 {
+	struct t7l66xb_platform_data *pdata = dev->dev.platform_data;
 	unsigned long pbase = (unsigned long)dev->resource[0].start;
 	unsigned long plen = dev->resource[0].end - dev->resource[0].start;
 	int err = -ENOMEM;
@@ -215,11 +216,13 @@ static int t7l66xb_probe(struct platform_device *dev)
 	if (!data)
 		goto out;
 
-	data->irq_base = alloc_irq_space (T7L66XB_NR_IRQS);
+	data->irq_base = pdata->irq_base;
 	data->irq_nr   = dev->resource[1].start;
 
-	if (data->irq_base == -1)
+	if (!data->irq_base) {
+		printk("t7166xb: uninitialized irq_base!\n");
 		goto out_free_data;
+	}
 
 	data->mapbase = ioremap(pbase, plen);
 	if(!data->mapbase)
@@ -252,7 +255,6 @@ static int t7l66xb_probe(struct platform_device *dev)
 out_free_devices:
 // FIXME!!!	t7l66xb_remove_devices(data);
 out_free_irqs:
-	free_irq_space(data->irq_base, T7L66XB_NR_IRQS);
 out_free_data:
 	kfree(data);
 out:
@@ -285,7 +287,6 @@ static int t7l66xb_remove(struct platform_device *dev)
 	/* Free core resources */
 	iounmap (tchip->mapbase);
 //	t7l66xb_remove_devices(tchip); FIXME!!!
-	free_irq_space (tchip->irq_base, T7L66XB_NR_IRQS);
 	kfree (tchip);
 
 	return 0;

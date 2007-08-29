@@ -728,13 +728,11 @@ static void __init do_pre_smp_initcalls(void)
 	spawn_softlockup_task();
 }
 
-#if !defined(CONFIG_LAB)
 static void run_init_process(char *init_filename)
 {
 	argv_init[0] = init_filename;
 	kernel_execve(init_filename, argv_init, envp_init);
 }
-#endif
 
 /* This is a non __init function. Force it to be noinline otherwise gcc
  * makes it inline to init() and it becomes part of init.text section

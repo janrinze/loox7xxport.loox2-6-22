@@ -793,6 +793,11 @@ struct mq11xx_udc_mach_info {
  * just use canned values for the known display types.
  */
 struct mediaq11xx_init_data {
+	/* Standard MFD properties */
+	int irq_base;
+	struct platform_device **child_devs;
+	int num_child_devs;
+
 	u32 DC[0x6];
 	u32 CC[0x5];
 	u32 MIU[0x7];

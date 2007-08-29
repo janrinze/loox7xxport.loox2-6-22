@@ -32,6 +32,7 @@
 
 #include <linux/ads7846.h>
 #include <linux/touchscreen-adc.h>
+#include <linux/pda_power.h>
 
 #include <asm/arch/looxc550.h>
 
@@ -121,6 +122,56 @@ static struct pxa2xx_udc_mach_info looxc550_udc_info __initdata = {
 	.gpio_pullup	= GPIO_NR_LOOXC550_USB_PULLUP
 };
 
+/*************************** Power driver **************************/
+
+static int looxc550_is_ac_online(void)
+{
+	return !gpio_get_value(GPIO_NR_LOOXC550_AC_IN_N);
+}
+
+static int looxc550_is_usb_online(void)
+{
+	return !gpio_get_value(GPIO_NR_LOOXC550_USB_DETECT_N);
+}
+
+static void looxc550_set_charge(int flags)
+{
+	gpio_set_value(GPIO_NR_LOOXC550_CHARGE_EN_N
+			, !(flags & PDA_POWER_CHARGE_AC));
+
+	gpio_set_value(GPIO_NR_LOOXC550_USB_CHARGE_RATE_N
+			, !(flags & PDA_POWER_CHARGE_USB));
+};
+
+static struct pda_power_pdata looxc550_power_data = {
+	.is_ac_online = looxc550_is_ac_online,
+	.is_usb_online = looxc550_is_usb_online,
+	.set_charge = looxc550_set_charge
+};
+
+static struct resource looxc550_power_resources[] = {
+	[0] = {
+		.name = "ac",
+		.flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE |
+		         IORESOURCE_IRQ_LOWEDGE,
+	},
+	[1] = {
+		.name = "usb",
+		.flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE |
+		         IORESOURCE_IRQ_LOWEDGE,
+	},
+};
+
+static struct platform_device looxc550_power = {
+	.name = "pda-power",
+	.id = -1,
+	.resource = looxc550_power_resources,
+	.num_resources = ARRAY_SIZE(looxc550_power_resources),
+	.dev = {
+		.platform_data = &looxc550_power_data
+	},
+};
+
 /**************************** Entry point **************************/
 struct ads7846_ssp_platform_data looxc550_ssp_params = {
 	.port = 1,
@@ -151,7 +202,7 @@ static struct resource looxc550_pen_irq = {
 	.flags = IORESOURCE_IRQ,
 };
 static struct platform_device ads7846_ts = {
-	.name = "ts-adc-debounce",
+	.name = "ts-adc",
 	.id = -1,
 	.resource = &looxc550_pen_irq,
 	.num_resources = 1,
@@ -167,6 +218,7 @@ static struct platform_device looxc550_keyboard = {
 static struct platform_device *devices[] __initdata = {
 	&ads7846_ssp,
 	&ads7846_ts,
+	&looxc550_power,
 	&looxc550_keyboard
 };
 

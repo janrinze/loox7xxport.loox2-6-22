@@ -24,12 +24,21 @@ config HTC_ASIC2
 config HTC_ASIC3
 	tristate "HTC ASIC3 (iPAQ h1900/h3900/h4000/hx4700/rx3000) support"
 
+config HTC_PASIC3
+	tristate "HTC PASIC3 (HTC Blueangel/Magician) support"
+
 config HTC_EGPIO
 	tristate "HTC EGPIO support"
 	help
 	    This driver supports the CPLD egpio chip present on
 	    several HTC phones.  It provides basic support for input
 	    pins, output pins, and irqs.
+
+config HTC_BBKEYS
+	tristate "HTC Bit-Banging micro-controller support"
+	help
+	    This driver supports the front keypad, front lcd power,
+	    and front leds on several HTC phones.
 
 config HTC_ASIC3_DS1WM
 	bool "Support HTC ASIC3 builtin DS1WM block"

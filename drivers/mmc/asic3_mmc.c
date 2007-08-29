@@ -47,8 +47,8 @@
 #include <linux/mmc/protocol.h>
 #include <linux/scatterlist.h>
 #include <linux/soc-old.h>
-#include <linux/soc/asic3_base.h>
-#include <linux/soc/tmio_mmc.h>
+#include <linux/mfd/asic3_base.h>
+#include <linux/mfd/tmio_mmc.h>
 
 #include <asm/io.h>
 #include <asm/irq.h>

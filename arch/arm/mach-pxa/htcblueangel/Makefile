@@ -10,7 +10,6 @@ obj-$(CONFIG_MACH_BLUEANGEL_BACKLIGHT) += blueangel_bl.o
 obj-$(CONFIG_MACH_BLUEANGEL_PCMCIA)  += blueangel_pcmcia.o
 obj-$(CONFIG_MACH_BLUEANGEL_SUSPEND) += blueangel_suspend.o
 obj-$(CONFIG_MACH_BLUEANGEL_LEDS)    += blueangel_leds.o
-obj-$(CONFIG_MACH_BLUEANGEL_ASIC3_LEDS)    += blueangel_asic3_leds.o
 obj-$(CONFIG_MACH_BLUEANGEL_KEYPAD)  += blueangel_kp.o
 obj-$(CONFIG_MACH_BLUEANGEL_POWER)   += blueangel_power.o
 obj-$(CONFIG_MACH_BLUEANGEL_ROM)     += blueangel_rom.o

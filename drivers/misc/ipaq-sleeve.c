@@ -242,7 +242,9 @@ static void ipaq_sleeve_insert(void)
 	snprintf(active_sleeve.dev.bus_id, BUS_ID_SIZE, "%04x:%04x",
 		 active_sleeve.vendor, active_sleeve.device);
 
-	device_register (&active_sleeve.dev);
+	if (device_register (&active_sleeve.dev) != 0) {
+		printk(KERN_ERR "Could not register sleeve device\n");
+	};
 }
 
 static void ipaq_sleeve_eject(void) 
@@ -252,7 +254,7 @@ static void ipaq_sleeve_eject(void)
 
 	device_unregister (&active_sleeve.dev);
 
-	SLEEVE_DEBUG(1,"active_sleeve.driver=%p sleeve removed\n", active_sleeve.driver);
+	SLEEVE_DEBUG(1,"active_sleeve.driver=%p sleeve removed\n", active_sleeve.dev.driver);
 	if (active_sleeve.dev.driver && active_sleeve.dev.driver->remove)
 		active_sleeve.dev.driver->remove(&active_sleeve.dev);
 
@@ -361,7 +363,7 @@ EXPORT_SYMBOL(ipaq_sleeve_driver_unregister);
 
 /*******************************************************************************/
 
-static void ipaq_sleeve_task_handler(void *x)
+static void ipaq_sleeve_task_handler(struct work_struct *x)
 {
 	int opt_det;
 	/* debounce */
@@ -376,10 +378,10 @@ static void ipaq_sleeve_task_handler(void *x)
 		ipaq_sleeve_eject();
 }
 
-DECLARE_WORK(ipaq_sleeve_task, ipaq_sleeve_task_handler, NULL);
+DECLARE_WORK(ipaq_sleeve_task, ipaq_sleeve_task_handler);
 
 irqreturn_t
-ipaq_sleeve_presence_interrupt (int irq, void *dev_id, struct pt_regs *regs)
+ipaq_sleeve_presence_interrupt (int irq, void *dev_id)
 {
 	schedule_work (&ipaq_sleeve_task);
 	return IRQ_HANDLED;
@@ -405,7 +407,7 @@ int ipaq_sleeve_register(struct ipaq_sleeve_ops *ops, void *devp)
 	active_sleeve.dev.bus = &ipaq_sleeve_bus_type;
 
 	schedule_work(&ipaq_sleeve_task);
-	SLEEVE_DEBUG(2,"init_module successful init major= %d\n", ipaq_sleeve_major);
+	SLEEVE_DEBUG(2,"init_module successful\n");
 
 	return 0;
 }
@@ -435,8 +437,9 @@ ipaq_sleeve_init (void)
 {
 	int result;
 
-	if (!machine_is_ipaq())
-		return -ENODEV;
+/* Is this really neccessary? Kconfig should take care about that... */
+/*	if (!machine_is_ipaq())
+		return -ENODEV;*/
 
 	result = bus_register(&ipaq_sleeve_bus_type);
 	if (result) {

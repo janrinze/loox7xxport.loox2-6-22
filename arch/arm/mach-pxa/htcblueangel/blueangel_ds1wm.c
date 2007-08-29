@@ -16,7 +16,7 @@
 #include <linux/platform_device.h>
 
 #include <linux/io.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <linux/delay.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>

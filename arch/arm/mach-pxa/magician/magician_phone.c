@@ -73,7 +73,7 @@ static void magician_gsm_reset(void)
 	/* stop display to avoid interference? */
 	gpio_set_value(GPIO74_LCD_FCLK, 0);
 
-	magician_egpio_set (EGPIO_NR_MAGICIAN_GSM_POWER, 1);
+	gpio_set_value(EGPIO_MAGICIAN_GSM_POWER, 1);
 
 	msleep (150);
 	gpio_set_value(GPIO74_LCD_FCLK, 1);
@@ -152,7 +152,7 @@ void magician_gsm_off(void)
 
 	disable_irq_wake(gpio_to_irq(GPIO10_MAGICIAN_GSM_IRQ));
 
-	magician_egpio_set(EGPIO_NR_MAGICIAN_GSM_POWER, 0);
+	gpio_set_value(EGPIO_MAGICIAN_GSM_POWER, 0);
 }
 
 static void magician_phone_configure (int state)

@@ -8,5 +8,3 @@ obj-$(CONFIG_IPAQ_H5400_LCD)	+= h5400_lcd.o
 obj-$(CONFIG_IPAQ_H5400_BL)	+= h5400_bl.o
 obj-$(CONFIG_IPAQ_H5400_WIFI)	+= h5400_wifi.o
 obj-$(CONFIG_IPAQ_H5400_AUDIO)	+= h5400_audio.o
-obj-$(CONFIG_IPAQ_H5400_POWER)  += h5400_power.o
-obj-$(CONFIG_IPAQ_H5400_LEDS)   += h5400_leds.o

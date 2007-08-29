@@ -26,6 +26,7 @@
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/ioport.h>
+#include <linux/gpiodev2.h>
 
 #include <asm/hardware.h>
 #include <asm/irq.h>
@@ -122,8 +123,13 @@ void s3c2410_gpio_pullup(unsigned int pin, unsigned int to)
 
 EXPORT_SYMBOL(s3c2410_gpio_pullup);
 
+struct gpio_ops gpio_desc[16];
 void s3c2410_gpio_setpin(unsigned int pin, unsigned int to)
 {
+	if (pin >= GPIO_BASE_INCREMENT)
+		return gpiodev2_set_value(pin, to);
+
+	{
 	void __iomem *base = S3C24XX_GPIO_BASE(pin);
 	unsigned long offs = S3C2410_GPIO_OFFSET(pin);
 	unsigned long flags;
@@ -137,16 +143,22 @@ void s3c2410_gpio_setpin(unsigned int pin, unsigned int to)
 	__raw_writel(dat, base + 0x04);
 
 	local_irq_restore(flags);
+	}
 }
 
 EXPORT_SYMBOL(s3c2410_gpio_setpin);
 
 unsigned int s3c2410_gpio_getpin(unsigned int pin)
 {
+	if (pin >= GPIO_BASE_INCREMENT)
+		return gpiodev2_get_value(pin);
+
+	{
 	void __iomem *base = S3C24XX_GPIO_BASE(pin);
 	unsigned long offs = S3C2410_GPIO_OFFSET(pin);
 
 	return __raw_readl(base + 0x04) & (1<< offs);
+	}
 }
 
 EXPORT_SYMBOL(s3c2410_gpio_getpin);
@@ -170,6 +182,9 @@ EXPORT_SYMBOL(s3c2410_modify_misccr);
 
 int s3c2410_gpio_getirq(unsigned int pin)
 {
+	if (pin >= GPIO_BASE_INCREMENT)
+		return gpiodev2_to_irq(pin);
+
 	if (pin < S3C2410_GPF0 || pin > S3C2410_GPG15)
 		return -1;	/* not valid interrupts */
 

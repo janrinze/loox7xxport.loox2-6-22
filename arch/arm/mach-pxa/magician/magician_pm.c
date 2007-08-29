@@ -174,8 +174,8 @@ static int magician_pxa_pm_enter(suspend_state_t state)
 
 		if (resume == 0) {
 			printk(KERN_NOTICE "magician_pm back to sleep (AC = %d, USB= %d)\n",
-				magician_egpio_get(EGPIO_NR_MAGICIAN_CABLE_STATE_AC),
-				magician_egpio_get(EGPIO_NR_MAGICIAN_CABLE_STATE_USB));
+				gpio_get_value(EGPIO_MAGICIAN_CABLE_STATE_AC),
+				gpio_get_value(EGPIO_MAGICIAN_CABLE_STATE_USB));
 
 			pxa_pm_enter(state);
 		}

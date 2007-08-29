@@ -11,8 +11,10 @@
 #define _HX4700_H
 
 #include <asm/arch/irqs.h>
+#include <linux/gpiodev2.h>
 
 #define HX4700_ASIC3_IRQ_BASE IRQ_BOARD_START
+#define HX4700_ASIC3_GPIO_BASE GPIO_BASE_INCREMENT
 
 
 struct hx4700_bt_funcs {

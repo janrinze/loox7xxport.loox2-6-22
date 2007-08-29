@@ -18,7 +18,7 @@
 #include <asm/hardware.h>
 
 #include <asm/arch/pxa-regs.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <asm/arch/htcsable-gpio.h>
 #include <asm/arch/htcsable-asic.h>
 #include <asm/io.h>

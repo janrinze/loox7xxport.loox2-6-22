@@ -13,7 +13,7 @@
 #include <linux/platform_device.h>
 #include <linux/leds.h>
 
-#include <asm/arch/h2200-asic.h>
+#include <asm/arch/h2200.h>
 
 struct h2200_led_data {
 	unsigned long		led_num;

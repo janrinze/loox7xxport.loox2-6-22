@@ -1,6 +1,8 @@
 /*
- * Hardware definitions for HP iPAQ Handheld Computers
+ * Hardware definition for HP iPAQ H4000 Handheld Computer
  *
+ * Copyright (c) 2006  Anton Vorontsov <cbou@mail.ru>
+ * Copyright (c) 2006-7  Paul Sokolovsky <pmiscml@gmail.com>
  * Copyright 2000-2003 Hewlett-Packard Company.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +29,8 @@
 #include <linux/delay.h>
 #include <linux/gpiodev.h>
 #include <linux/dpm.h>
+#include <linux/input.h>
+#include <linux/input_pda.h>
 #include <asm/irq.h>
 #include <asm/mach-types.h>
 #include <asm/hardware.h>
@@ -37,6 +41,7 @@
 #include <asm/mach/arch.h>
 #include "../generic.h"
 // Specific devices
+#include <asm/arch/irda.h>
 #include <linux/ads7846.h>
 #include <linux/touchscreen-adc.h>
 #include <linux/adc_battery.h>
@@ -44,29 +49,167 @@
 #include <linux/rs232_serial.h>
 #include <asm/arch/pxa2xx_udc_gpio.h>
 #include <asm/arch/pxafb.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
+#include <asm/hardware/asic3_leds.h>
 #include <asm/arch/h4000.h>
 #include <asm/arch/h4000-gpio.h>
 #include <asm/arch/h4000-init.h>
 #include <asm/arch/h4000-asic.h>
+#include <linux/corgi_bl.h>
+#include <linux/gpio_keys.h>
 
 
 void h4000_ll_pm_init(void);
 
+DEFINE_LED_TRIGGER_SHARED_GLOBAL(h4000_radio_trig);
+EXPORT_LED_TRIGGER_SHARED(h4000_radio_trig);
+
 /* Misc devices */
-extern struct platform_device h4000_bl;
 static struct platform_device h4000_lcd       = { .name = "h4000-lcd", };
 static struct platform_device h4300_kbd       = { .name = "h4300-kbd", };
-static struct platform_device h4000_buttons   = { .name = "h4000-buttons", };
 static struct platform_device h4000_pcmcia    = { .name = "h4000-pcmcia", };
 static struct platform_device h4000_batt      = { .name = "h4000-batt", };
 static struct platform_device h4000_bt        = { .name = "h4000-bt", };
 static struct platform_device h4000_irda      = { .name = "h4000-irda", };
 
+/* Backlight */
+static void h4000_set_bl_intensity(int intensity)
+{
+	/* LCD brightness is driven by PWM0.
+	 * We'll set the pre-scaler to 8, and the period to 1024, this
+	 * means the backlight refresh rate will be 3686400/(8*1024) =
+	 * 450 Hz which is quite enough.
+	 */
+	PWM_CTRL0 = 7;            /* pre-scaler */
+	PWM_PWDUTY0 = intensity; /* duty cycle */
+	PWM_PERVAL0 = H4000_MAX_INTENSITY;      /* period */
+
+	if (intensity > 0) {
+		pxa_set_cken(CKEN0_PWM0, 1);
+		asic3_set_gpio_out_b(&h4000_asic3.dev,
+			GPIOB_BACKLIGHT_POWER_ON, GPIOB_BACKLIGHT_POWER_ON);
+	} else {
+		pxa_set_cken(CKEN0_PWM0, 0);
+		asic3_set_gpio_out_b(&h4000_asic3.dev,
+			GPIOB_BACKLIGHT_POWER_ON, 0);
+	}
+}
+
+static struct corgibl_machinfo h4000_bl_machinfo = {
+        .default_intensity = H4000_MAX_INTENSITY / 4,
+        .limit_mask = 0xffff,
+        .max_intensity = H4000_MAX_INTENSITY,
+        .set_bl_intensity = h4000_set_bl_intensity,
+};
+
+static struct platform_device h4000_bl = {
+        .name = "corgi-bl",
+        .dev = {
+    		.platform_data = &h4000_bl_machinfo,
+	},
+};
+
+/* IrDA */
+static void h4000_irda_transceiver_mode(struct device *dev, int mode)
+{
+	unsigned long flags;
+
+	local_irq_save(flags);
+
+	if (mode & IR_OFF) {
+		DPM_DEBUG("h4000_irda: Turning off port\n");
+		gpio_set_value(H4000_ASIC3_GPIO_BASE + GPIOD_NR_IR_ON_N, 1);
+	} else {
+		DPM_DEBUG("h4000_irda: Turning on port\n");
+		gpio_set_value(H4000_ASIC3_GPIO_BASE + GPIOD_NR_IR_ON_N, 0);
+	}
+
+	local_irq_restore(flags);
+}
+
+static struct pxaficp_platform_data h4000_ficp_platform_data = {
+	.transceiver_cap  = IR_SIRMODE | IR_OFF,
+	.transceiver_mode = h4000_irda_transceiver_mode,
+};
+
+/* LEDs */
+static struct asic3_led h4000_leds[] = {
+	{
+		.led_cdev  = {
+			.name	         = "h4000:red",
+			.default_trigger = "main-battery-charging",
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 0,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "h4000:right-green",
+			.default_trigger = "main-battery-full",
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 1,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "h4000:left-green",
+			.default_trigger = "h4000-wifi",
+		},
+		.hw_num = -1,
+		.gpio_num = 4,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "h4000:blue",
+			.default_trigger = "bluetooth",
+		},
+		.hw_num = -1,
+		.gpio_num = 5,
+	},
+};
+
+static struct asic3_leds_machinfo h4000_leds_machinfo = {
+	.num_leds = ARRAY_SIZE(h4000_leds),
+	.leds = h4000_leds,
+	.asic3_pdev = &h4000_asic3,
+};
+
+static struct platform_device h4000_leds_pdev = {
+	.name = "asic3-leds",
+	.dev = {
+		.platform_data = &h4000_leds_machinfo,
+	},
+};
+
+/* Keys/buttons */
+static struct gpio_keys_button gpio_buttons[] = {
+	{ KEY_POWER,	GPIO_NR_H4000_POWER_BUTTON_N,	1, "Power button"	},
+	{ KEY_ENTER,	GPIO_NR_H4000_ACTION_BUTTON_N,	1, "Action button"	},
+	{ KEY_UP,	GPIO_NR_H4000_UP_BUTTON_N,	1, "Up button"		},
+	{ KEY_DOWN,	GPIO_NR_H4000_DOWN_BUTTON_N,	1, "Down button"	},
+	{ KEY_LEFT,	GPIO_NR_H4000_LEFT_BUTTON_N,	1, "Left button"	},
+	{ KEY_RIGHT,	GPIO_NR_H4000_RIGHT_BUTTON_N,	1, "Right button"	},
+	{ _KEY_RECORD,    H4000_ASIC3_GPIO_BASE+H4000_RECORD_BTN_IRQ,		1, "Record button" },
+	{ _KEY_HOMEPAGE,  H4000_ASIC3_GPIO_BASE+H4000_TASK_BTN_IRQ,		1, "Home button" },
+	{ _KEY_MAIL,      H4000_ASIC3_GPIO_BASE+H4000_MAIL_BTN_IRQ,		1, "Mail button" },
+	{ _KEY_CONTACTS,  H4000_ASIC3_GPIO_BASE+H4000_CONTACTS_BTN_IRQ, 	1, "Contacts button" },
+	{ _KEY_CALENDAR,  H4000_ASIC3_GPIO_BASE+H4000_CALENDAR_BTN_IRQ,	1, "Calendar button" },
+};
+
+static struct gpio_keys_platform_data gpio_keys_data = {
+        .buttons = gpio_buttons,
+        .nbuttons = ARRAY_SIZE(gpio_buttons),
+};
+
+static struct platform_device h4000_buttons = {
+        .name = "gpio-keys",
+        .dev = { .platform_data = &gpio_keys_data, }
+};
+
 /* Power */
 static int h4000_is_ac_online(void)
 {
-	return !GET_H4000_GPIO(AC_IN_N);
+	return !gpio_get_value(GPIO_NR_H4000_AC_IN_N);
 }
 
 static struct pda_power_pdata h4000_power_pdata = {
@@ -78,8 +221,8 @@ static struct resource h4000_power_resourses[] = {
 		.name = "ac",
 		.flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE |
 		         IORESOURCE_IRQ_LOWEDGE,
-		.start = H4000_IRQ(AC_IN_N),
-		.end = H4000_IRQ(AC_IN_N),
+		.start = gpio_to_irq(GPIO_NR_H4000_AC_IN_N),
+		.end = gpio_to_irq(GPIO_NR_H4000_AC_IN_N),
 	},
 };
 
@@ -227,7 +370,7 @@ static struct resource h4000_pen_irq = {
 	.flags = IORESOURCE_IRQ,
 };
 static struct platform_device h4000_ts        = { 
-	.name = "ts-adc-debounce",
+	.name = "ts-adc",
 	.id = -1,
 	.resource = &h4000_pen_irq,
 	.num_resources = 1,
@@ -307,6 +450,7 @@ static struct platform_device *h4000_asic3_devices[] __initdata = {
 	&h4000_batt,
 	&h4000_bt,
 	&h4000_irda,
+	&h4000_leds_pdev,
 };
 
 static struct asic3_platform_data h4000_asic3_platform_data = {
@@ -356,6 +500,7 @@ static struct asic3_platform_data h4000_asic3_platform_data = {
 		.sleep_conf     = 0x000c,
 	},
 	.irq_base = H4000_ASIC3_IRQ_BASE,
+	.gpio_base = H4000_ASIC3_GPIO_BASE,
 
 	.child_devs     = h4000_asic3_devices,
 	.num_child_devs = ARRAY_SIZE(h4000_asic3_devices),
@@ -458,12 +603,15 @@ static void __init h4000_init(void)
 	h4000_ll_pm_init();
 #endif
 	set_pxa_fb_info(&sony_acx502bmu);
+	pxa_set_ficp_info(&h4000_ficp_platform_data);
 	platform_device_register(&ads7846_ssp);
 	platform_device_register(&h4000_asic3);
 	printk("machine_arch_type=%d\n", machine_arch_type);
+
+	led_trigger_register_shared("h4000-radio", &h4000_radio_trig);
 }
 
-MACHINE_START(H4000, "HP iPAQ H4000")
+MACHINE_START(H4000, "HP iPAQ H4100")
 	/* Maintainer h4000 port team h4100-port@handhelds.org */
 	.phys_io	= 0x40000000,
 	.io_pg_offst	= (io_p2v(0x40000000) >> 18) & 0xfffc,
@@ -474,7 +622,7 @@ MACHINE_START(H4000, "HP iPAQ H4000")
 	.timer		= &pxa_timer,
 MACHINE_END
 
-MACHINE_START(H4300, "HP iPAQ H4000")
+MACHINE_START(H4300, "HP iPAQ H4300")
 	/* Maintainer h4000 port team h4100-port@handhelds.org */
 	.phys_io	= 0x40000000,
 	.io_pg_offst	= (io_p2v(0x40000000) >> 18) & 0xfffc,

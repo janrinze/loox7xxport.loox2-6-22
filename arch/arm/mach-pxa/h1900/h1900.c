@@ -29,7 +29,7 @@
 #include <linux/lcd.h>
 #include <linux/backlight.h>
 #include <linux/fb.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <linux/platform_device.h>
 #include <linux/apm-emulation.h>
 

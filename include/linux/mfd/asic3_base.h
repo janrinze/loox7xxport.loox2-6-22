@@ -1,3 +1,6 @@
+#ifndef _ASIC3_BASE_H
+#define _ASIC3_BASE_H
+
 #include <asm/types.h>
 #include <linux/gpiodev.h>
 
@@ -86,6 +89,7 @@ struct asic3_platform_data
 
 	/* Standard MFD properties */
 	int irq_base;
+	int gpio_base;
 	struct platform_device **child_devs;
 	int num_child_devs;
 
@@ -102,3 +106,6 @@ struct asic3_platform_data
 	unsigned int bus_shift;
 	struct tmio_mmc_hwconfig *tmio_mmc_hwconfig;
 };
+
+#endif /* _ASIC3_BASE_H */
+

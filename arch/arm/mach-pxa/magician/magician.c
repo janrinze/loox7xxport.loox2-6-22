@@ -20,6 +20,7 @@
 #include <linux/input.h>
 #include <linux/input_pda.h>
 #include <linux/interrupt.h>
+#include <linux/irq.h>
 #include <linux/delay.h>
 #include <linux/spi/spi.h>
 #include <linux/corgi_bl.h>
@@ -29,6 +30,7 @@
 #include <linux/gpio_keys.h>
 #include <linux/pda_power.h>
 #include <linux/mfd/htc-egpio.h>
+#include <linux/mfd/pasic3.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/map.h>
 #include <linux/mtd/partitions.h>
@@ -142,9 +144,10 @@ static void __init magician_map_io(void)
 
 static void __init magician_init_irq(void)
 {
-	/* int irq; */
-
 	pxa_init_irq();
+
+	/* we can't have ds1wm set the irq type because magician needs IAS=0 but rising edge */
+	set_irq_type(gpio_to_irq(GPIO107_MAGICIAN_DS1WM_IRQ), IRQ_TYPE_EDGE_RISING);
 }
 
 /*
@@ -183,20 +186,28 @@ static struct resource egpio_resources[] = {
 struct htc_egpio_pinInfo egpio_pins[] = {
 	/* Output pins that default on */
 	{
-		.pin_nr = EGPIO_NR_MAGICIAN_GSM_RESET,
-		.type = HTC_EGPIO_TYPE_OUTPUT,
+		.pin_nr         = EGPIO_MAGICIAN_GSM_RESET - MAGICIAN_EGPIO_BASE,
+		.type           = HTC_EGPIO_TYPE_OUTPUT,
 		.output_initial = 1,
 	},
 	{
-		.pin_nr = EGPIO_NR_MAGICIAN_IN_SEL1,
-		.type = HTC_EGPIO_TYPE_OUTPUT,
+		.pin_nr         = EGPIO_MAGICIAN_IN_SEL1 - MAGICIAN_EGPIO_BASE,
+		.type           = HTC_EGPIO_TYPE_OUTPUT,
 		.output_initial = 1,
+	},
+	/* Input pins with associated IRQ */
+	{
+		.pin_nr         = EGPIO_MAGICIAN_EP_INSERT - MAGICIAN_EGPIO_BASE,
+		.type           = HTC_EGPIO_TYPE_INPUT,
+		.input_irq      = MAGICIAN_EGPIO(3, 1) - MAGICIAN_EGPIO_BASE,
+			/* 'pin' corresponding to IRQ_MAGICIAN_EP_IRQ */
 	},
 };
 
 struct htc_egpio_platform_data egpio_data = {
 	.bus_shift   = 1,			/* 32bit alignment instead of 16bit */
 	.irq_base    = IRQ_BOARD_START,		/* 16 IRQs, we only have 4 though */
+	.gpio_base   = GPIO_BASE_INCREMENT,
 	.nrRegs      = 7,
 	.ackRegister = 3,
 	.pins        = egpio_pins,
@@ -213,16 +224,6 @@ struct platform_device egpio = {
 	.num_resources = ARRAY_SIZE(egpio_resources),
 };
 EXPORT_SYMBOL(egpio); /* needed for magician_pm only */
-
-/* Compatibility wrappers */
-int magician_egpio_get(int bit) {
-	return egpio_data.ops.get(&egpio.dev, bit);
-}
-EXPORT_SYMBOL(magician_egpio_get);
-void magician_egpio_set(int bit, int value) {
-	egpio_data.ops.set(&egpio.dev, bit, value);
-}
-EXPORT_SYMBOL(magician_egpio_set);
 
 /*
  * USB Device Controller
@@ -267,8 +268,9 @@ static struct gpio_keys_button magician_button_table[] = {
 	{KEY_VOLUMEUP,   GPIO100_MAGICIAN_KEY_VOL_UP,      0, "Volume slider (up)"},
 	{KEY_VOLUMEDOWN, GPIO101_MAGICIAN_KEY_VOL_DOWN,    0, "Volume slider (down)"},
 	{KEY_PHONE,      GPIO102_MAGICIAN_KEY_PHONE_LIFT,  0, "Phone lift button"},
+	{KEY_PLAY,       GPIO99_MAGICIAN_HEADPHONE_IN,     0, "Headset button"},
 
-	{SW_HEADPHONE_INSERT, GPIO99_MAGICIAN_HEADPHONE_IN, 0, "Headphone switch", EV_SW},
+	{SW_HEADPHONE_INSERT, EGPIO_MAGICIAN_EP_INSERT,    0, "Headphone switch", EV_SW},
 };
 
 static struct gpio_keys_platform_data magician_gpio_keys_data = {
@@ -307,15 +309,15 @@ static void magician_set_bl_intensity(int intensity)
 		PWM_PERVAL0 = 0xc8;
 		if (intensity > 0xc7) {
 			PWM_PWDUTY0 = intensity - 0x48;
-			magician_egpio_set(EGPIO_NR_MAGICIAN_BL_POWER2, 1);
+			gpio_set_value(EGPIO_MAGICIAN_BL_POWER2, 1);
 		} else {
 			PWM_PWDUTY0 = intensity;
-			magician_egpio_set(EGPIO_NR_MAGICIAN_BL_POWER2, 0);
+			gpio_set_value(EGPIO_MAGICIAN_BL_POWER2, 0);
 		}
-		magician_egpio_set(EGPIO_NR_MAGICIAN_BL_POWER, 1);
+		gpio_set_value(EGPIO_MAGICIAN_BL_POWER, 1);
 		pxa_set_cken(CKEN0_PWM0, 1);
 	} else {
-		magician_egpio_set(EGPIO_NR_MAGICIAN_BL_POWER, 0);
+		gpio_set_value(EGPIO_MAGICIAN_BL_POWER, 0);
 		pxa_set_cken(CKEN0_PWM0, 0);
 	}
 }
@@ -341,18 +343,18 @@ static struct platform_device magician_bl = {
 
 static int magician_is_ac_online(void)
 {
-	return magician_egpio_get(EGPIO_NR_MAGICIAN_CABLE_STATE_AC);
+	return gpio_get_value(EGPIO_MAGICIAN_CABLE_STATE_AC);
 }
 
 static int magician_is_usb_online(void)
 {
-	return magician_egpio_get(EGPIO_NR_MAGICIAN_CABLE_STATE_USB);
+	return gpio_get_value(EGPIO_MAGICIAN_CABLE_STATE_USB);
 }
 
 static void magician_set_charge(int flags)
 {
 	gpio_set_value(GPIO30_MAGICIAN_nCHARGE_EN, !flags);
-	magician_egpio_set(EGPIO_NR_MAGICIAN_CHARGE_EN, flags);
+	gpio_set_value(EGPIO_MAGICIAN_CHARGE_EN, flags);
 }
 
 static char *magician_supplicants[] = {
@@ -397,7 +399,7 @@ static struct platform_device magician_power = {
  */
 
 /*
- * Option 1: common ts-adc-debounce driver, readout problems
+ * Option 1: common ts-adc driver, readout problems
  */
 static struct ads7846_ssp_platform_data ads7846_ssp_params = {
 	.port = 2, /* SSP2 */
@@ -430,7 +432,7 @@ static struct resource ads7846_pen_irq = {
 };
 
 static struct platform_device ads7846_ts = {
-	.name = "ts-adc-debounce",
+	.name = "ts-adc",
 	.id = -1,
 	.resource = &ads7846_pen_irq,
 	.num_resources = 1,
@@ -520,11 +522,101 @@ static struct platform_device pxa_spi_ssp2 = {
 #endif
 
 /*
- * Magician LEDs
+ * LEDs
  */
+
+static struct pasic3_led pasic3_leds[] = {
+	{
+		.led = {
+			.name            = "magician:red",
+			.default_trigger = "ds2760-battery.0-charging", /* and alarm */
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 0,
+		.bit2   = PASIC3_BIT2_LED0, /* 0x08 */
+		.mask   = PASIC3_MASK_LED0,
+	},
+	{
+		.led = {
+			.name            = "magician:green",
+			.default_trigger = "ds2760-battery.0-charging-or-full", /* and GSM radio */
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 1,
+		.bit2   = PASIC3_BIT2_LED1, /* 0x10 */
+		.mask   = PASIC3_MASK_LED1,
+	},
+	{
+		.led = {
+			.name            = "magician:blue",
+			.default_trigger = "magician-bluetooth",
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 2,
+		.bit2   = PASIC3_BIT2_LED2, /* 0x20 */
+		.mask   = PASIC3_MASK_LED2,
+	},
+};
+
+static struct platform_device pasic3;
+
+static struct pasic3_leds_machinfo __devinit pasic3_leds_machinfo = {
+	.num_leds = ARRAY_SIZE(pasic3_leds),
+	.power_gpio = EGPIO_MAGICIAN_LED_POWER,
+	.leds = pasic3_leds,
+};
+
+static struct platform_device pasic3_led = {
+	.name = "pasic3-led",
+	.id   = -1,
+	.dev  = {
+		.platform_data = &pasic3_leds_machinfo,
+	},
+};
+
 static struct platform_device magician_led = {
-	.name   = "magician-led",
-	.id     = -1,
+	.name = "magician-led",
+	.id   = -1,
+};
+
+/*
+ * PASIC3 with DS1WM
+ */
+
+static struct platform_device *pasic3_devices[] = {
+	&pasic3_led,
+};
+
+static struct resource pasic3_resources[] = {
+	[0] = {
+		.start  = PXA_CS2_PHYS,
+		.end	= PXA_CS2_PHYS + 0x18,
+		.flags  = IORESOURCE_MEM,
+	},
+	/* No IRQ handler in the PASIC3, DS1WM needs an external IRQ */
+	[1] = {
+		.start  = gpio_to_irq(GPIO107_MAGICIAN_DS1WM_IRQ),
+		.end    = gpio_to_irq(GPIO107_MAGICIAN_DS1WM_IRQ),
+		.flags  = IORESOURCE_IRQ,
+	}
+};
+
+static struct pasic3_platform_data pasic3_platform_data = {
+	.bus_shift	= 2,
+
+	.child_devs	= pasic3_devices,
+	.num_child_devs	= ARRAY_SIZE(pasic3_devices),
+	.clock_rate	= 4000000,
+};
+
+static struct platform_device pasic3 = {
+	.name		= "pasic3",
+	.id		= -1,
+	.num_resources	= ARRAY_SIZE(pasic3_resources),
+	.resource	= pasic3_resources,
+	.dev = {
+		.platform_data = &pasic3_platform_data,
+	},
 };
 
 /*
@@ -553,14 +645,14 @@ static void magician_mci_setpower(struct device *dev, unsigned int vdd)
 	struct pxamci_platform_data* p_d = dev->platform_data;
 
         if ((1 << vdd) & p_d->ocr_mask)
-		magician_egpio_set(EGPIO_NR_MAGICIAN_SD_POWER, 1);
+		gpio_set_value(EGPIO_MAGICIAN_SD_POWER, 1);
 	else
-		magician_egpio_set(EGPIO_NR_MAGICIAN_SD_POWER, 0);
+		gpio_set_value(EGPIO_MAGICIAN_SD_POWER, 0);
 }
 
 static int magician_mci_get_ro(struct device *dev)
 {
-	return (!magician_egpio_get(EGPIO_NR_MAGICIAN_nSD_READONLY));
+	return (!gpio_get_value(EGPIO_MAGICIAN_nSD_READONLY));
 }
 
 static void magician_mci_exit(struct device *dev, void *data)
@@ -604,9 +696,9 @@ static void magician_set_vpp(struct map_info *map, int vpp)
 	if (vpp == old_vpp)
 		return;
 	if (vpp)
-		magician_egpio_set(EGPIO_NR_MAGICIAN_FLASH_VPP, 1);
+		gpio_set_value(EGPIO_MAGICIAN_FLASH_VPP, 1);
 	else
-		magician_egpio_set(EGPIO_NR_MAGICIAN_FLASH_VPP, 0);
+		gpio_set_value(EGPIO_MAGICIAN_FLASH_VPP, 0);
 	old_vpp = vpp;
 }
 
@@ -669,7 +761,7 @@ struct physmap_flash_data magician_flash_data = {
 	.set_vpp = magician_set_vpp,
 #ifdef CONFIG_MTD_PARTITIONS
 	.nr_parts = ARRAY_SIZE(wince_partitions),
-	.parts = &wince_partitions,
+	.parts = wince_partitions,
 #endif
 };
 
@@ -694,9 +786,10 @@ static struct platform_device *devices[] __initdata = {
 	&magician_ts,		// old touchscreen driver based on hx4700
 	&ads7846_ssp,
 	&ads7846_ts,		// common adc-debounce touchscreen driver
-	&magician_led,		// needs the cpld to power on/off the LED circuit
 	&magician_phone,
 	&magician_flash,
+	&pasic3,
+	&magician_led,
 #if 0
 	&pxa_spi_ssp2,
 #endif

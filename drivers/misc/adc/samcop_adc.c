@@ -25,7 +25,7 @@
 #include <linux/platform_device.h>
 #include <linux/clk.h>
 #include <linux/adc.h>
-#include <linux/soc/samcop_adc.h>
+#include <linux/mfd/samcop_adc.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/completion.h>

@@ -17,6 +17,7 @@
 #include <linux/i2c.h>
 #include <linux/pm.h>
 #include <linux/sysctl.h>
+#include <linux/irq.h>
 
 #include <asm/hardware.h>
 #include <asm/irq.h>

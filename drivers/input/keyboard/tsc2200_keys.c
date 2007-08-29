@@ -29,7 +29,7 @@
 #include <asm/arch/pxa-regs.h>
 #include <asm/mach-types.h>
 
-#include <linux/soc/tsc2200.h>
+#include <linux/mfd/tsc2200.h>
 
 #ifdef DEBUG
 #define dprintk(x...) printk(x)

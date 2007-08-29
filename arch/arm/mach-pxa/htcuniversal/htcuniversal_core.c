@@ -21,7 +21,7 @@
 #include <asm/arch/htcuniversal-gpio.h>
 #include <asm/arch/htcuniversal-asic.h>
 
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <asm/hardware/ipaq-asic3.h>
 
 volatile u_int16_t *egpios;

@@ -20,7 +20,7 @@
 #include <asm/io.h>
 #include <asm/arch/pxa-regs.h>
 
-#include <asm/arch/h2200-asic.h>
+#include <asm/arch/h2200.h>
 #include <asm/hardware/ipaq-hamcop.h>
 
 

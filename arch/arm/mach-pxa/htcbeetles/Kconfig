@@ -8,7 +8,7 @@ menuconfig MACH_HTCBEETLES
 		for this PDA.
 
 config HTCBEETLES_TS
-	tristate "Beetles TS driver (BROKEN, DEPRECATED, use ts-adc-debounce instead)"
+	tristate "Beetles TS driver (BROKEN, DEPRECATED, use ts-adc instead)"
 	depends on MACH_HTCBEETLES
 	help
-	  BROKEN, DEPRECATED, use ts-adc-debounce instead
+	  BROKEN, DEPRECATED, use ts-adc instead

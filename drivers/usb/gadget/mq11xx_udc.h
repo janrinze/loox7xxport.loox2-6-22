@@ -14,7 +14,7 @@
 
 #ifdef __MQ11XX_INTERNAL
 
-#include <linux/mq11xx.h>
+#include <linux/mfd/mq11xx.h>
 
 /* MediaQ UDC request structure.
  */

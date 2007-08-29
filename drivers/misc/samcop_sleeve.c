@@ -28,7 +28,7 @@
 #include <asm/ipaq-sleeve.h>
 #include <asm/hardware/ipaq-ops.h>
 #include <asm/hardware/ipaq-samcop.h>
-#include <asm/hardware/samcop_base.h>
+#include <linux/mfd/samcop_base.h>
 #include <asm/irq.h>
 #include <asm/system.h>
 #include <asm/mach-types.h>
@@ -260,9 +260,9 @@ static struct ipaq_sleeve_ops samcop_sleeve_ops = {
 };
 
 static int
-samcop_eps_suspend (struct device *dev, pm_message_t state)
+samcop_eps_suspend (struct platform_device *dev, pm_message_t state)
 {
-	struct eps_data *eps = dev->driver_data;
+	struct eps_data *eps = platform_get_drvdata(dev);
 
 	down (&eps->lock);
 
@@ -270,9 +270,9 @@ samcop_eps_suspend (struct device *dev, pm_message_t state)
 }
 
 static int
-samcop_eps_resume (struct device *dev)
+samcop_eps_resume (struct platform_device *dev)
 {
-	struct eps_data *eps = dev->driver_data;
+	struct eps_data *eps = platform_get_drvdata (dev);
 
 	up (&eps->lock);
 
@@ -280,11 +280,11 @@ samcop_eps_resume (struct device *dev)
 }
 
 static int
-samcop_eps_probe (struct device *dev)
+samcop_eps_probe (struct platform_device *dev)
 {
 	int result = 0;
 	struct eps_data *eps;
-	struct platform_device *sdev = to_platform_device (dev);
+	//struct platform_device *dev = dev;
 	unsigned long flags;
 
 	eps = kmalloc (sizeof (*eps), GFP_KERNEL);
@@ -293,12 +293,12 @@ samcop_eps_probe (struct device *dev)
 
 	init_MUTEX (&eps->lock);
 
-	eps->parent = dev->parent;
+	eps->parent = dev->dev.parent;
 
-	eps->map = ioremap ((unsigned long)sdev->resource[0].start, (unsigned long)sdev->resource[0].end - (unsigned long)sdev->resource[0].start + 1);
-	eps->irq_base = sdev->resource[1].start;
+	eps->map = ioremap ((unsigned long)dev->resource[0].start, (unsigned long)dev->resource[0].end - (unsigned long)dev->resource[0].start + 1);
+	eps->irq_base = dev->resource[1].start;
 
-	dev->driver_data = eps;
+	platform_set_drvdata(dev, eps);
 
 	SET_H5400_GPIO (OPT_SPI_CLK, 0);
 	SET_H5400_GPIO (OPT_SPI_DOUT, 0);
@@ -355,9 +355,9 @@ samcop_eps_probe (struct device *dev)
 }
 
 static int
-samcop_eps_cleanup (struct device *dev)
+samcop_eps_cleanup (struct platform_device *dev)
 {
-	struct eps_data *eps = dev->driver_data;
+	struct eps_data *eps = platform_get_drvdata (dev);
 	free_irq (eps->irq_base + _IRQ_SAMCOP_EPS_ODET, NULL);
 	ipaq_sleeve_unregister ();
 	iounmap (eps->map);
@@ -368,26 +368,30 @@ samcop_eps_cleanup (struct device *dev)
 
 //static platform_device_id samcop_eps_device_ids[] = { { IPAQ_SAMCOP_EPS_DEVICE_ID }, { 0 } };
 
-static struct device_driver
+static struct platform_driver
 samcop_eps_device_driver = {
-	.name    = "samcop sleeve",
+	.driver = {
+		.name    = "samcop sleeve",
+	},
 	.probe   = samcop_eps_probe,
 	.remove  = samcop_eps_cleanup,
+#ifdef CONFIG_PM
 	.suspend = samcop_eps_suspend,
 	.resume  = samcop_eps_resume
+#endif
 };
 
 // go over h5400_eps_init to make sure nothing is missed
 static int __init
 samcop_eps_init (void)
 {
-	return driver_register (&samcop_eps_device_driver);
+	return platform_driver_register (&samcop_eps_device_driver);
 }
 
 static void __exit
 samcop_eps_exit (void)
 {
-	driver_unregister (&samcop_eps_device_driver);
+	platform_driver_unregister (&samcop_eps_device_driver);
 }
 
 module_init (samcop_eps_init);

@@ -17,7 +17,7 @@
 #include <linux/irq.h>
 #include <linux/platform_device.h>
 #include <linux/gpio_keys.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <asm/mach-types.h>
 #include <asm/hardware/asic3_keys.h>
 #include <asm/arch/htcuniversal-gpio.h>

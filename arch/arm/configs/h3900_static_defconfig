@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
-# Linux kernel version: 2.6.21-hh11
-# Wed Jul 11 05:52:25 2007
+# Linux kernel version: 2.6.21-hh12
+# Tue Jul 17 20:51:10 2007
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -675,7 +675,6 @@ CONFIG_INPUT_TOUCHSCREEN=y
 # CONFIG_TOUCHSCREEN_TOUCHWIN is not set
 CONFIG_TOUCHSCREEN_ASIC2=y
 # CONFIG_TOUCHSCREEN_ADC is not set
-# CONFIG_TOUCHSCREEN_ADC_DEBOUNCE is not set
 # CONFIG_TOUCHSCREEN_UCB1400 is not set
 CONFIG_INPUT_MISC=y
 CONFIG_INPUT_UINPUT=m

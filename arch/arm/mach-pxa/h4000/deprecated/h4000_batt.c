@@ -14,7 +14,7 @@
 #include <linux/sched.h>
 #include <linux/pm.h>
 #include <linux/delay.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <linux/platform_device.h>
 #include <linux/battery.h>
 

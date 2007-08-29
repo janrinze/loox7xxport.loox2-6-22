@@ -41,11 +41,12 @@
 #include <asm/arch/udc.h>
 
 #include <asm/hardware/ipaq-asic3.h>
+#include <asm/hardware/asic3_leds.h>
 #include <asm/hardware/asic3_keys.h>
 #include <asm/arch/htcblueangel.h>
 #include <asm/arch/htcblueangel-gpio.h>
 #include <asm/arch/htcblueangel-asic.h>
-#include <linux/soc/tsc2200.h>
+#include <linux/mfd/tsc2200.h>
 #include <linux/serial_core.h>
 #include <linux/touchscreen-adc.h>
 #include <linux/adc_battery.h>
@@ -57,11 +58,74 @@
 #include <linux/lcd.h>
 #include <linux/backlight.h>
 #include <linux/fb.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
-#include <linux/soc/tmio_mmc.h>    /* TODO: replace with asic3 */
+#include <linux/mfd/tmio_mmc.h>    /* TODO: replace with asic3 */
 
 extern struct platform_device blueangel_tsc2200;
+
+DEFINE_LED_TRIGGER_SHARED_GLOBAL(blueangel_radio_trig);
+EXPORT_LED_TRIGGER_SHARED(blueangel_radio_trig);
+
+/* LEDs */
+
+static struct asic3_led blueangel_asic3_leds[] = {
+	{
+		.led_cdev  = {
+ 			.name	         = "blueangel:red",
+ 			.default_trigger = "ds2760-battery.0-charging-or-full",
+		},
+		.hw_num = 0,
+
+	},
+	{
+		.led_cdev  = {
+			.name	         = "blueangel:green",
+ 			.default_trigger = "ds2760-battery.0-full",
+		},
+		.hw_num = 1,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "blueangel:phonebuttons",
+			.default_trigger = "blueangel-phonebuttons",
+		},
+		.hw_num = -1,
+		.gpio_num = ('B'-'A')*16+GPIOB_PHONEL_PWR_ON,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "blueangel:vibra",
+			.default_trigger = "blueangel-vibra",
+		},
+		.hw_num = -1,
+		.gpio_num = ('B'-'A')*16+GPIOB_VIBRA_PWR_ON,
+	},
+	{
+		.led_cdev  = {
+			.name	         = "blueangel:kbdbacklight",
+			.default_trigger = "blueangel-kbdbacklight",
+		},
+		.hw_num = -1,
+		.gpio_num = ('C'-'A')*16+GPIOC_KEYBL_PWR_ON,
+	},
+};
+
+static struct asic3_leds_machinfo blueangel_leds_machinfo = {
+	.leds = blueangel_asic3_leds,
+	.num_leds = ARRAY_SIZE(blueangel_asic3_leds),
+	.asic3_pdev = &blueangel_asic3,
+};
+
+static struct platform_device blueangel_leds_pdev = {
+	.name = "asic3-leds",
+	.dev = {
+		.platform_data = &blueangel_leds_machinfo,
+	},
+};
+
+/* Serial */
+
 static struct platform_pxa_serial_funcs pxa_serial_funcs [] = {
 	{}, /* No special FFUART options */
 	{}, /* No special BTUART options */
@@ -104,7 +168,7 @@ static struct resource blueangel_pen_irq = {
 	.flags = IORESOURCE_IRQ,
 };
 static struct platform_device tsc2200_ts = {
-        .name = "ts-adc-debounce",
+        .name = "ts-adc",
         .id = -1,
         .resource = &blueangel_pen_irq,
         .num_resources = 1,
@@ -273,6 +337,7 @@ static struct platform_device *blueangel_asic3_devices[] __initdata = {
 	&blueangel_asic3_keys,
 	&blueangel_leds,
 	&blueangel_pcmcia,
+	&blueangel_leds_pdev,
 };
 
 
@@ -409,9 +474,8 @@ static struct platform_device *devices[] __initdata = {
 
 static void __init blueangel_init(void)
 {
-
 	platform_add_devices (devices, ARRAY_SIZE (devices));
-	
+	led_trigger_register_shared("blueangel-radio", &blueangel_radio_trig);
 }
 
 MACHINE_START(BLUEANGEL, "HTC Blueangel")

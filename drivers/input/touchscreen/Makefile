@@ -43,4 +43,3 @@ obj-$(CONFIG_TOUCHSCREEN_ASIC2) += asic2_ts.o
 obj-$(CONFIG_TOUCHSCREEN_IPAQ_MICRO)	+= micro_ts.o
 #obj-$(CONFIG_TOUCHSCREEN_TSC2200)	+= tsc2200_ts.o
 obj-$(CONFIG_TOUCHSCREEN_ADC)		+= ts-adc.o
-obj-$(CONFIG_TOUCHSCREEN_ADC_DEBOUNCE)	+= ts-adc-debounce.o

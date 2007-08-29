@@ -28,6 +28,7 @@ struct hamcop_platform_data
 {
 	/* Standard MFD properties */
 	int irq_base;
+	int gpio_base;
 	struct platform_device **child_devs;
 	int num_child_devs;
 

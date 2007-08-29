@@ -17,7 +17,7 @@
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/platform_device.h>
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 #include <linux/gpio_keys.h>
 #include <asm/mach-types.h>
 #include <asm/hardware/asic3_keys.h>

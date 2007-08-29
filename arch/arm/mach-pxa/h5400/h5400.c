@@ -37,12 +37,13 @@
 #include <linux/input.h>
 #include <linux/input_pda.h>
 #include <linux/adc.h>
-#include <linux/soc/samcop_adc.h>
+#include <linux/mfd/samcop_adc.h>
 #include <linux/gpiodev_keys.h>
 #include <linux/gpiodev_diagonal.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/partitions.h>
 #include <linux/mtd/physmap.h>
+#include <linux/pda_power.h>
 
 #include <asm/irq.h>
 #include <asm/mach-types.h>
@@ -64,7 +65,8 @@
 #include <asm/arch/pxa-dmabounce.h>
 #include <asm/arch/irq.h>
 #include <asm/types.h>
-#include <linux/soc/samcop_base.h>
+#include <linux/mfd/samcop_base.h>
+#include <asm/hardware/samcop_leds.h>
 
 #include "../generic.h"
 
@@ -238,6 +240,147 @@ static int h5400_pm_callback( int req )
 	return result;
 }
 #endif
+
+/*
+ * LEDs
+ */
+
+DEFINE_LED_TRIGGER_SHARED_GLOBAL(h5400_radio_trig);
+EXPORT_SYMBOL(h5400_radio_trig);
+
+static struct samcop_led h5400_leds[] = {
+	{
+		.led_cdev = {
+			.name = "h5400:red-right",
+			.default_trigger = "ds2760-battery.0-charging",
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 0,
+	},
+	{
+		.led_cdev = {
+			.name = "h5400:green-right",
+			.default_trigger = "ds2760-battery.0-full",
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 1,
+	},
+	{
+		.led_cdev = {
+			.name = "h5400:red-left",
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 2,
+	},
+	{
+		.led_cdev = {
+			.name = "h5400:green-left",
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 3,
+	},
+	{
+		.led_cdev = {
+			.name = "h5400:blue",
+			.default_trigger = "h5400-radio",
+			.flags = LED_SUPPORTS_HWTIMER,
+		},
+		.hw_num = 4,
+	},
+};
+
+static struct samcop_leds_machinfo h5400_leds_info = {
+	.leds = h5400_leds,
+	.num_leds = 5,
+};
+
+static struct platform_device samcop_leds_pdev = {
+	.name = "samcop-leds",
+	.id = -1,
+	.dev = {
+		.platform_data = &h5400_leds_info,
+	},
+};
+
+/*
+ * Power
+ */
+
+static int h5000_is_ac_online(void)
+{
+	return !!(samcop_get_gpio_a(&h5400_samcop.dev) &
+	         SAMCOP_GPIO_GPA_ADP_IN_STATUS);
+}
+
+static int h5000_is_usb_online(void)
+{
+	return !!(samcop_get_gpio_a(&h5400_samcop.dev) &
+	         SAMCOP_GPIO_GPA_USB_DETECT);
+}
+
+static void h5000_set_charge(int flags)
+{
+	SET_H5400_GPIO(CHG_EN, !!flags);
+	SET_H5400_GPIO(EXT_CHG_RATE, !!(flags & PDA_POWER_CHARGE_AC));
+	SET_H5400_GPIO(USB_CHG_RATE, !!(flags & PDA_POWER_CHARGE_USB));
+}
+
+static char *h5000_supplicants[] = {
+	"ds2760-battery.0"
+};
+
+static struct pda_power_pdata h5000_power_pdata = {
+	.is_ac_online = h5000_is_ac_online,
+	.is_usb_online = h5000_is_usb_online,
+	.set_charge = h5000_set_charge,
+	.supplied_to = h5000_supplicants,
+	.num_supplicants = ARRAY_SIZE(h5000_supplicants),
+};
+
+static struct resource h5000_power_resourses[] = {
+	[0] = {
+		.name = "ac",
+		.flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE |
+		         IORESOURCE_IRQ_LOWEDGE,
+	},
+	[1] = {
+		.name = "usb",
+		.flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE |
+		         IORESOURCE_IRQ_LOWEDGE,
+	},
+};
+
+static struct platform_device h5000_power_pdev = {
+	.name = "pda-power",
+	.id = -1,
+	.resource = h5000_power_resourses,
+	.num_resources = ARRAY_SIZE(h5000_power_resourses),
+	.dev = {
+		.platform_data = &h5000_power_pdata,
+	},
+};
+
+static void h5000_fixup_power_irqs(void)
+{
+	unsigned int ac_irq, usb_irq;
+
+	if (((read_cpuid(CPUID_ID) >> 4) & 0xfff) == 0x2d0) {
+		/* h51xx | h55xx */
+		ac_irq = H5000_SAMCOP_IRQ_BASE + _IRQ_SAMCOP_WAKEUP1;
+		usb_irq = H5000_SAMCOP_IRQ_BASE + _IRQ_SAMCOP_WAKEUP2;
+	}
+	else {
+		/* h54xx */
+		ac_irq = H5000_SAMCOP_IRQ_BASE + _IRQ_SAMCOP_WAKEUP2;
+		usb_irq = H5000_SAMCOP_IRQ_BASE + _IRQ_SAMCOP_WAKEUP3;
+	}
+
+	h5000_power_pdev.resource[0].start = ac_irq;
+	h5000_power_pdev.resource[0].end = ac_irq;
+	h5000_power_pdev.resource[1].start = usb_irq;
+	h5000_power_pdev.resource[1].end = usb_irq;
+}
+
 
 /***********************************************************************************/
 /*      Flash                                                                      */
@@ -474,6 +617,11 @@ static struct pxa2xx_udc_mach_info h5400_udc_mach_info = {
 
 /* ------------------- */
 
+static struct platform_device *samcop_child_devs[] = {
+	&h5000_power_pdev,
+	&samcop_leds_pdev,
+};
+
 static struct resource samcop_resources[] = {
 	[0] = {
 		.start	= H5400_SAMCOP_BASE,
@@ -487,6 +635,7 @@ static struct resource samcop_resources[] = {
 };
 
 static struct samcop_platform_data samcop_platform_data = {
+	.irq_base = H5000_SAMCOP_IRQ_BASE,
 	.clocksleep = SAMCOP_CPM_CLKSLEEP_UCLK_ON,
 	.pllcontrol = 0x60002,		/* value from wince via bootblaster */
 	.samcop_adc_pdata = {
@@ -496,14 +645,16 @@ static struct samcop_platform_data samcop_platform_data = {
 		.set_power = h5000_light_sensor_set_power,
 	},
 	.gpio_pdata = {
-		.gpacon1 = 0xaaaaaaaa,
-		.gpacon2 = 0x6a,
+		.gpacon1 = 0xa2aaaaaa,
+		.gpacon2 = 0x5a,
 		.gpadat = 0x0,
 		.gpaup = 0x0,
 		.gpioint = { 0x66666666, 0x60006, 0x0, },
 		.gpioflt = { 0x3fff0000, 0x3fff3fff, 0x3fff, 0, 0, 0x3fff3fff, 0, },
 		.gpioenint = { 0x3f, 0x7f, },
 	},
+	.child_devs = samcop_child_devs,
+	.num_child_devs = ARRAY_SIZE(samcop_child_devs),
 
 };
 
@@ -567,6 +718,8 @@ static struct platform_device h5400_pxa_joypad = {
 static void __init
 h5400_init (void)
 {
+	led_trigger_register_shared("h5400-radio", &h5400_radio_trig);
+	h5000_fixup_power_irqs ();
 	platform_device_register (&h5000_flash[0]);
 	platform_device_register (&h5000_flash[1]);
 	platform_device_register (&h5400_samcop);

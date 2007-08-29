@@ -32,7 +32,7 @@
 #include <asm/arch/h5400-gpio.h>
 #include <asm/arch/h5400-asic.h>
 #include <asm/arch/h5400-init.h>
-#include <linux/soc/samcop_base.h>
+#include <linux/mfd/samcop_base.h>
 #include <asm/arch/serial.h>
 
 static void h5400_bluetooth_power(int on)

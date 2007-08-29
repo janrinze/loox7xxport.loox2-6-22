@@ -18,7 +18,7 @@
 #include <asm/arch/eseries-irq.h>
 #include <asm/arch/eseries-gpio.h>
 
-#include <soc/t7l66xb.h>
+#include <linux/mfd/t7l66xb.h>
 
 static struct resource e740_t7l66xb_resources[] = {
 	[0] = {
@@ -63,6 +63,7 @@ static void e740_t7l66xb_resume(void) {
 }
 
 static struct t7l66xb_platform_data e740_t7l66xb_info = {
+	.irq_base 		= IRQ_BOARD_START,
 	.hw_init                = &e740_t7l66xb_hwinit,
 	.suspend                = &e740_t7l66xb_suspend,
 	.resume                 = &e740_t7l66xb_resume,
@@ -72,7 +73,7 @@ static struct platform_device e740_t7l66xb_device = {
 	.name           = "t7l66xb",
 	.id             = -1,
 	.dev            = {
-		.driver_data = &e740_t7l66xb_info, 
+		.platform_data = &e740_t7l66xb_info, 
 	},
 	.num_resources = ARRAY_SIZE(e740_t7l66xb_resources),
 	.resource      = e740_t7l66xb_resources,

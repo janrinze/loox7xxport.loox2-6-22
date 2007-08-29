@@ -16,7 +16,7 @@
 #include <linux/delay.h>
 #include <linux/platform_device.h>
 #include <linux/adc.h>
-#include <linux/soc/tsc2200.h>
+#include <linux/mfd/tsc2200.h>
 
 #include <asm/arch/hardware.h>
 #include <asm/irq.h>

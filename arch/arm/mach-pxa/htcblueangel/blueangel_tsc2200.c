@@ -14,7 +14,7 @@
 #include <asm/arch/htcblueangel-asic.h>
 #include <asm/arch/ssp.h>
 
-#include <linux/soc/tsc2200.h>
+#include <linux/mfd/tsc2200.h>
 
 
 /*

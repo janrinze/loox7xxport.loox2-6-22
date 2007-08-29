@@ -22,7 +22,7 @@
 #include <linux/input.h>
 #include <linux/gpio_keys.h>
 
-#include <linux/soc/asic3_base.h>
+#include <linux/mfd/asic3_base.h>
 
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/nand.h>
