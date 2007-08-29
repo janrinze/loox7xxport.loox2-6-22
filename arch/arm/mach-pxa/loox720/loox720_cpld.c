@@ -16,7 +16,7 @@ static u32 reg_cache[8]={
 int loox720_cpld_irq_base = -1;
 EXPORT_SYMBOL(loox720_cpld_irq_base);
 
-static u32 *cpld_mem = 0;
+static volatile u32 *cpld_mem = 0;
 
 struct cpld_bit
 {
@@ -26,9 +26,11 @@ struct cpld_bit
 
 struct loox720_irq_data
 {
-	u16 irq_mask;
+	u32 irq_mask;
 	int irq_base;
+	spinlock_t spinlock;
 };
+
 struct loox720_irq_data * loox720_cpld_irq_data;
 
 static struct cpld_bit loox720_cpld_bits[] = 
@@ -60,11 +62,13 @@ static struct cpld_bit loox720_cpld_bits[] =
     {
 	.bit   = LOOX720_CPLD_SD_BIT,
 	.value = 1
-    }/*,
+    },
+/*
     {
 	.bit   = LOOX720_CPLD_SND_AMPLIFIER_BIT,	// not sure if this is necessary. probably refers to audio amplifier.
 	.value = 1
-    },*/
+    },
+*/
 };
 
 u32	loox720_cpld_reg_read(int regno)
@@ -134,7 +138,6 @@ void	loox720_egpio_set_bit(int bit, int val)
 		loox720_egpio_cache_enable_bits(pos, BIT_MSK(bit));
 	    else
 		loox720_egpio_cache_clear_bits(pos, BIT_MSK(bit));
-		
 	    loox720_cpld_reg_write(pos, reg_cache[pos]);
 	}
 }
@@ -142,24 +145,18 @@ EXPORT_SYMBOL(loox720_egpio_set_bit);
 
 void	loox720_cpld_ack_irq(unsigned int irq)
 {
-	struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
-	printk(KERN_INFO "CPLD: Acknowledged IRQ %d.\n", irq - irq_data->irq_base);
 }
 
 void 	loox720_cpld_mask_irq(unsigned int irq)
 {
 	struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
 	irq_data->irq_mask |= 1 << (irq - irq_data->irq_base);
-	loox720_cpld_reg_write(0, irq_data->irq_mask << 16);
-	printk(KERN_INFO "CPLD: Masked IRQ %d.\n", irq - irq_data->irq_base);
 }
 
 void	loox720_cpld_unmask_irq(unsigned int irq)
 {
 	struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
 	irq_data->irq_mask &= ~(1 << (irq - irq_data->irq_base));
-	loox720_cpld_reg_write(0, (irq_data->irq_mask << 16) | (1 << (irq - irq_data->irq_base)));
-	printk(KERN_INFO "CPLD: Unmasked IRQ %d.\n", irq - irq_data->irq_base);
 }
 
 static struct irq_chip loox720_irq_chip = {
@@ -171,25 +168,28 @@ static struct irq_chip loox720_irq_chip = {
 
 static void loox720_cpld_irq_demux(unsigned int irq, struct irq_desc *desc)
 {
-	int i, irq_num;
-	u32 fired_irqs;
-	u16 old_mask;
+    unsigned int mask;
+    int loop;
 	struct loox720_irq_data * irq_data = desc->handler_data;
-	old_mask = irq_data->irq_mask;
-	irq_data->irq_mask = 0xFFFF;
-	loox720_cpld_reg_write(0, 0xFFFF0000);
-	fired_irqs = loox720_cpld_reg_read(0);
-	desc->chip->ack(irq);
-	irq_data->irq_mask = old_mask;
-	loox720_cpld_reg_write(0, (irq_data->irq_mask << 16) | fired_irqs);
-	for(i=0; i<LOOX720_CPLD_IRQ_COUNT; i++)
-		if(fired_irqs & (1 << i) & (~irq_data->irq_mask))
-		{
-			printk(KERN_INFO "CPLD: Received IRQ %d.\n", i);
-			irq_num = irq_data->irq_base + i;
-			desc = irq_desc + irq_num;
-			desc->handle_irq(irq_num, desc);
-		}
+    do {
+        loop = 0;
+        mask = cpld_mem[0] & (~irq_data->irq_mask);
+		cpld_mem[0] = 0xFFFF0000 | mask;
+        if (mask) {
+            irq = irq_data->irq_base;
+            desc = irq_desc + irq;
+            do {
+                if (mask & 1)
+                    desc_handle_irq(irq, desc);
+                irq++;
+                desc++;
+                mask >>= 1;
+            } while (mask);
+            loop = 1;
+        }
+    } while (loop);
+	cpld_mem[0] = 0x00000000 | irq_data->irq_mask; // Clear masked IRQs to emulate behaviour of standard IRQ controller,
+												   // which doesn't set bits of masked IRQs, after they fire when masked.
 }
 
 static int __init loox720_cpld_init(void)
@@ -228,7 +228,8 @@ static int __init loox720_cpld_init(void)
 	}
 	loox720_cpld_irq_data->irq_base = loox720_cpld_irq_base;
 	loox720_cpld_irq_data->irq_mask = 0xFFFF;
-	loox720_cpld_reg_write(0, 0xFFFFFFFF); // Mask and clear all interrupts
+	spin_lock_init(&loox720_cpld_irq_data->spinlock);
+	cpld_mem[0] = cpld_mem[0]; // Mask and clear all interrupts
 	for (i=0; i<LOOX720_CPLD_IRQ_COUNT; i++)
 	{
 		int irq = i + loox720_cpld_irq_base;
