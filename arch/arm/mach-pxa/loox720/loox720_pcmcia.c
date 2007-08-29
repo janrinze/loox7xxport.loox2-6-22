@@ -33,7 +33,7 @@
 #include "../../../../drivers/pcmcia/soc_common.h"
 
 static struct pcmcia_irqs irqs[] = {
-	{ 1, LOOX720_IRQ_GPIO_CF_DETECT, "PCMCIA1 CD" }
+	{ 1, LOOX720_CPLD_IRQ(CARD_DETECT), "PCMCIA1 CD" }
 };
 
 static int loox720_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
@@ -61,9 +61,9 @@ static int loox720_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 	pxa_gpio_mode(GPIO56_nPWAIT_MD);
 	pxa_gpio_mode(GPIO57_nIOIS16_MD);
 
-	skt->irq = (skt->nr == 1) ? LOOX720_IRQ_GPIO_CF_IRQ : LOOX720_CPLD_IRQ(WIFI);
+	skt->irq = (skt->nr == 1) ? LOOX720_CPLD_IRQ(CF) : LOOX720_CPLD_IRQ(WIFI);
 	printk(KERN_INFO "loox720_pcmcia: Using IRQ %d for socket %d.\n", skt->irq, skt->nr);
-	return 0;//soc_pcmcia_request_irqs(skt, irqs, ARRAY_SIZE(irqs));
+	return soc_pcmcia_request_irqs(skt, irqs, ARRAY_SIZE(irqs));
 }
 
 static void loox720_pcmcia_hw_shutdown(struct soc_pcmcia_socket *skt)
@@ -79,13 +79,12 @@ static void loox720_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
 				    struct pcmcia_state *state)
 {
 	if(skt->nr == 1){
-		state->detect = 0;//GPLR_BIT(LOOX720_GPIO_CF_DETECT) ? 0 : 1;
-		state->ready  = 0;//GPLR_BIT(LOOX720_GPIO_CF_IRQ) ? 1 : 0;
+		state->detect = (loox720_cpld_reg_read(1) & LOOX720_CPLD_CF_DETECT_N) 0 : 1;
+		state->ready  = (loox720_cpld_reg_read(1) & LOOX720_CPLD_CF_READY) ? 1 : 0;
 	}
 	else{
-		u32 cardstate = loox720_cpld_reg_read(1) & 0x60;
 		state->detect = 1;
-		state->ready  = (cardstate == 0x60) ? 1 : 0;
+		state->ready  = ((loox720_cpld_reg_read & (LOOX720_CPLD_WIFI_ENABLED | LOOX720_CPLD_WIFI_READY)) == (LOOX720_CPLD_WIFI_ENABLED | LOOX720_CPLD_WIFI_READY)) ? 1 : 0;
 	}
 
 	state->bvd1   = 1;  /* not available */

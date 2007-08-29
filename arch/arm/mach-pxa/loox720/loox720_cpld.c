@@ -76,28 +76,18 @@ static struct cpld_bit loox720_cpld_bits[] =
 u32	loox720_cpld_reg_read(int regno)
 {
 	u32 retval = 0;
-	if(regno>3)
+/*	if(regno>3)
 	{
 		printk(KERN_INFO "skipping cpld_reg_read(%d)\n", regno);
 		return 0;
-	}
+	} */
 	if(cpld_mem) retval = cpld_mem[regno];
-    printk(KERN_INFO "cpld_reg_read(%02X) = %08X\n", regno, retval);
     return retval;
 }
 EXPORT_SYMBOL(loox720_cpld_reg_read);
 
 void	loox720_cpld_reg_write(int regno, u32 value)
 {
-/*    if (regno<4 && regno)
-    {
-	printk(KERN_INFO "skipping cpld_reg_write(%d) %08X\n", regno, value);
-	return;
-    }
-*/
-    
-    printk(KERN_INFO "cpld_reg_write(%02X, %04X)\n", regno, value);
-    
     if (cpld_mem)
       cpld_mem[regno] = value;
 }
