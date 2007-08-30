@@ -120,6 +120,7 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 			{
 				loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 0);
 				GPCR_BIT(LOOX720_GPIO_CF_PWR);//loox720_clear_egpio(LOOX720_EGPIO_WIFI_PWR);
+				loox720_disable_led(LOOX720_LED_LEFT, LOOX720_LED_COLOR_B);
 			}
 			break;
 		case 50:
@@ -131,6 +132,7 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 			{
 				loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 1);
 				GPSR_BIT(LOOX720_GPIO_CF_PWR);//loox720_set_egpio(LOOX720_EGPIO_WIFI_PWR);
+				loox720_enable_led(LOOX720_LED_LEFT, LOOX720_LED_COLOR_B | LOOX720_LED_BLINK);
 			}
 			break;
 		default:
