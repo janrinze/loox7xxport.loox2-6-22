@@ -101,12 +101,12 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 
 	if(state->flags & SS_RESET) {
 		if(skt->nr == 1)
-			{}//loox720_set_egpio(LOOX720_EGPIO_CF0_RESET);
+			loox720_egpio_set_bit(LOOX720_CPLD_CF_RESET_N, 0);
 		else
 			GPSR_BIT(LOOX720_GPIO_CF0_RESET);//loox720_set_egpio(LOOX720_EGPIO_CF1_RESET);
 	} else {
 		if(skt->nr == 1)
-			{}//loox720_clear_egpio(LOOX720_EGPIO_CF0_RESET);
+			loox720_egpio_set_bit(LOOX720_CPLD_CF_RESET_N, 1);
 		else
 			GPCR_BIT(LOOX720_GPIO_CF0_RESET);//loox720_clear_egpio(LOOX720_EGPIO_CF1_RESET);
 	}
@@ -115,7 +115,7 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 	switch (state->Vcc) {
 		case 0:
 			if(skt->nr == 1)
-			{}//GPCR_BIT(LOOX720_GPIO_CF_PWR);
+				loox720_egpio_set_bit(LOOX720_CPLD_CF_POWER, 0);
 			else
 			{
 				loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 0);
@@ -127,7 +127,7 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 		case 33:
 			/* Apply power to socket */
 			if(skt->nr == 1)
-				{}//GPSR_BIT(LOOX720_GPIO_CF_PWR);
+				loox720_egpio_set_bit(LOOX720_CPLD_CF_POWER, 1);
 			else
 			{
 				loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 1);

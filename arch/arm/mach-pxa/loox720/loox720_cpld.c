@@ -65,12 +65,14 @@ static struct cpld_bit loox720_cpld_bits[] =
 	.bit   = LOOX720_CPLD_SD_BIT,
 	.value = 1
     },
-/*
     {
 	.bit   = LOOX720_CPLD_SND_AMPLIFIER_BIT,	// not sure if this is necessary. probably refers to audio amplifier.
 	.value = 1
     },
-*/
+	{
+	.bit	= LOOX720_CPLD_SOUND_BIT,
+	.value	= 1
+	}
 };
 
 u32	loox720_cpld_reg_read(int regno)
