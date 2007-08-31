@@ -30,12 +30,14 @@
 
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/audio.h>
+#include <asm/hardware.h>
 
 #include "../codecs/wm8750.h"
 #include "pxa2xx-pcm.h"
 #include "pxa2xx-i2s.h"
 
 #include <asm/arch/loox720-cpld.h>
+#include <asm/arch/loox720-gpio.h>
 
 static struct snd_soc_machine loox;
 
@@ -45,6 +47,7 @@ static int loox_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_codec_dai *codec_dai = rtd->dai->codec_dai;
 	struct snd_soc_cpu_dai *cpu_dai = rtd->dai->cpu_dai;
+	struct snd_soc_codec *codec = rtd->socdev->codec;
 	unsigned int clk = 0;
 	int ret = 0;
 
@@ -86,6 +89,12 @@ static int loox_hw_params(struct snd_pcm_substream *substream,
 		SND_SOC_CLOCK_IN);
 	if (ret < 0)
 		return ret;
+
+	pxa_gpio_mode(GPIO_NR_LOOX720_I2S_SYSCLK_MD);
+
+	snd_soc_write(codec, WM8750_ADCDAC, 0x00);
+	snd_soc_write(codec, WM8750_IFACE, 0x02);
+	snd_soc_write(codec, WM8750_SRATE, 0x20);
 
 	return 0;
 }
@@ -133,6 +142,7 @@ static int __init loox_init(void)
 	int ret;
 	
 	loox720_egpio_set_bit(LOOX720_CPLD_SOUND_BIT, 1);
+	loox720_egpio_set_bit(LOOX720_CPLD_SND_AMPLIFIER_BIT, 1);
 
 	loox_snd_device = platform_device_alloc("soc-audio", -1);
 	if (!loox_snd_device)
@@ -151,6 +161,8 @@ static int __init loox_init(void)
 static void __exit loox_exit(void)
 {
 	platform_device_unregister(loox_snd_device);
+    loox720_egpio_set_bit(LOOX720_CPLD_SOUND_BIT, 0);
+    loox720_egpio_set_bit(LOOX720_CPLD_SND_AMPLIFIER_BIT, 0);
 }
 
 module_init(loox_init);
