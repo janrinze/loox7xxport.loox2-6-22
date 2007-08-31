@@ -127,24 +127,11 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 			}
 			break;
 		case 50:
-            /* Apply power to socket */
-            if(skt->nr == 1)
-			{
-				loox720_egpio_set_bit(LOOX720_CPLD_CF_3V3_BIT, 0);
-                loox720_egpio_set_bit(LOOX720_CPLD_CF_5V_BIT, 1);
-			}
-            else
-            {
-                loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 1);
-                GPSR_BIT(LOOX720_GPIO_CF_PWR);//loox720_set_egpio(LOOX720_EGPIO_WIFI_PWR);
-                loox720_enable_led(LOOX720_LED_LEFT, LOOX720_LED_COLOR_B | LOOX720_LED_BLINK);
-            }
-            break;
 		case 33:
 			/* Apply power to socket */
 			if(skt->nr == 1)
 			{
-                loox720_egpio_set_bit(LOOX720_CPLD_CF_5V_BIT, 0);
+                loox720_egpio_set_bit(LOOX720_CPLD_CF_5V_BIT, 1);
                 loox720_egpio_set_bit(LOOX720_CPLD_CF_3V3_BIT, 1);
 			}
 			else
