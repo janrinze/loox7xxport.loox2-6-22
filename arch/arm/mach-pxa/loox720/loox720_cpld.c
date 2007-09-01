@@ -134,17 +134,17 @@ EXPORT_SYMBOL(loox720_egpio_set_bit);
 void	loox720_cpld_ack_irq(unsigned int irq)
 {
     struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
-    spin_lock(&irq_data->pendinglock);
-		irq_data->pending_irqs &= 1 << (irq - irq_data->irq_base);
-    spin_unlock(&irq_data->pendinglock);
+	spin_lock(&irq_data->pendinglock);
+		irq_data->pending_irqs &= ~(1 << (irq - irq_data->irq_base));
+	spin_unlock(&irq_data->pendinglock);
 }
 
 void 	loox720_cpld_mask_irq(unsigned int irq)
 {
 	struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
-    spin_lock(&irq_data->masklock);
+	spin_lock(&irq_data->masklock);
 		irq_data->irq_mask |= 1 << (irq - irq_data->irq_base);
-    spin_unlock(&irq_data->masklock);
+	spin_unlock(&irq_data->masklock);
 	spin_lock(&irq_data->lock);
 		if(!irq_data->in_service_loop)
 			cpld_mem[0] = irq_data->irq_mask << 16;
@@ -154,9 +154,9 @@ void 	loox720_cpld_mask_irq(unsigned int irq)
 void	loox720_cpld_unmask_irq(unsigned int irq)
 {
 	struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
-    spin_lock(&irq_data->masklock);
+	spin_lock(&irq_data->masklock);
 		irq_data->irq_mask &= ~(1 << (irq - irq_data->irq_base));
-    spin_unlock(&irq_data->masklock);
+	spin_unlock(&irq_data->masklock);
     spin_lock(&irq_data->lock);
         if(!irq_data->in_service_loop)
             cpld_mem[0] = irq_data->irq_mask << 16;
@@ -173,32 +173,24 @@ static struct irq_chip loox720_irq_chip = {
 static void loox720_cpld_irq_demux(unsigned int irq, struct irq_desc *desc)
 {
     unsigned int mask;
-    int loop;
 	struct irq_desc * proc_desc;
 	unsigned int proc_irq;
 	struct loox720_irq_data * irq_data = desc->handler_data;
+	unsigned int pending;
+
 	spin_lock(&irq_data->lock);
 		irq_data->in_service_loop = 1;
 		cpld_mem[0] = 0xFFFF0000;
 	spin_unlock(&irq_data->lock);
+
     do {
-        loop = 0;
-        if (irq_data->pending_irqs) {
-            proc_irq = irq_data->irq_base;
-            proc_desc = irq_desc + proc_irq;
-            do {
-                if (irq_data->pending_irqs & 1)
-                    desc_handle_irq(proc_irq, proc_desc);
-                proc_irq++;
-                proc_desc++;
-                irq_data->pending_irqs >>= 1;
-            } while (irq_data->pending_irqs);
-        }
         mask = cpld_mem[0] & (~irq_data->irq_mask);
-		cpld_mem[0] = mask;
-	    spin_lock(&irq_data->pendinglock);
-			irq_data->pending_irqs = mask;
-	    spin_unlock(&irq_data->pendinglock);
+		pending = irq_data->pending_irqs;
+		cpld_mem[0] = mask & ~pending;
+		spin_lock(&irq_data->pendinglock);
+			irq_data->pending_irqs |= mask;
+		spin_unlock(&irq_data->pendinglock);
+		mask |= pending;
         if (mask) {
             proc_irq = irq_data->irq_base;
             proc_desc = irq_desc + proc_irq;
@@ -209,15 +201,13 @@ static void loox720_cpld_irq_demux(unsigned int irq, struct irq_desc *desc)
                 proc_desc++;
                 mask >>= 1;
             } while (mask);
-            loop = 1;
         }
-		if(irq_data->pending_irqs)
-			loop = 1;
-    } while (loop);
-    spin_lock(&irq_data->lock);
+    } while (cpld_mem[0] || irq_data->pending_irqs);
+
+	spin_lock(&irq_data->lock);
 		irq_data->in_service_loop = 0;
 		cpld_mem[0] = irq_data->irq_mask << 16;
-    spin_unlock(&irq_data->lock);
+	spin_unlock(&irq_data->lock);
 }
 
 static int __init loox720_cpld_init(void)
@@ -259,15 +249,15 @@ static int __init loox720_cpld_init(void)
 	loox720_cpld_irq_data->in_service_loop = 0;
 	loox720_cpld_irq_data->pending_irqs = 0;
 	spin_lock_init(&loox720_cpld_irq_data->lock);
-    spin_lock_init(&loox720_cpld_irq_data->masklock);
-    spin_lock_init(&loox720_cpld_irq_data->pendinglock);
+	spin_lock_init(&loox720_cpld_irq_data->masklock);
+	spin_lock_init(&loox720_cpld_irq_data->pendinglock);
 	cpld_mem[0] = cpld_mem[0]; // Mask and clear all interrupts
 	for (i=0; i<LOOX720_CPLD_IRQ_COUNT; i++)
 	{
 		int irq = i + loox720_cpld_irq_base;
         set_irq_chip(irq, &loox720_irq_chip);
 		set_irq_chip_data(irq, loox720_cpld_irq_data);
-        set_irq_handler(irq, handle_level_irq);
+        set_irq_handler(irq, handle_edge_irq);
         set_irq_flags(irq, IRQF_VALID | IRQF_PROBE);
 	}
     set_irq_chained_handler(LOOX720_IRQ(CPLD_INT), loox720_cpld_irq_demux);
