@@ -29,8 +29,10 @@ struct loox720_irq_data
 	u32 in_service_loop;
 	u32 pending_irqs;
 	u32 irq_mask;
+	unsigned char individual_mask[32];
 	int irq_base;
 	spinlock_t lock;
+	spinlock_t masklock;
 };
 
 struct loox720_irq_data * loox720_cpld_irq_data;
@@ -70,11 +72,6 @@ static struct cpld_bit loox720_cpld_bits[] =
 u32	loox720_cpld_reg_read(int regno)
 {
 	u32 retval = 0;
-/*	if(regno>3)
-	{
-		printk(KERN_INFO "skipping cpld_reg_read(%d)\n", regno);
-		return 0;
-	} */
 	if(cpld_mem) retval = cpld_mem[regno];
     return retval;
 }
@@ -131,65 +128,37 @@ EXPORT_SYMBOL(loox720_egpio_set_bit);
 
 void	loox720_cpld_ack_irq(unsigned int irq)
 {
-    struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
-	irq_data->pending_irqs &= 1 << (irq - irq_data->irq_base);
+	
 }
 
 void 	loox720_cpld_mask_irq(unsigned int irq)
 {
 	struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
 	irq_data->irq_mask |= 1 << (irq - irq_data->irq_base);
-	spin_lock(&irq_data->lock);
-		if(!irq_data->in_service_loop)
-			cpld_mem[0] = irq_data->irq_mask << 16;
-	spin_unlock(&irq_data->lock);
 }
 
 void	loox720_cpld_unmask_irq(unsigned int irq)
 {
 	struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
-	irq_data->irq_mask &= ~(1 << (irq - irq_data->irq_base));
-    spin_lock(&irq_data->lock);
-        if(!irq_data->in_service_loop)
-            cpld_mem[0] = irq_data->irq_mask << 16;
-    spin_unlock(&irq_data->lock);
+		irq_data->irq_mask &= ~(1 << (irq - irq_data->irq_base));
 }
 
 static struct irq_chip loox720_irq_chip = {
     .name       = "CPLD",
-    .ack        = loox720_cpld_ack_irq,
     .mask       = loox720_cpld_mask_irq,
     .unmask     = loox720_cpld_unmask_irq,
 };
 
-static void loox720_cpld_irq_demux(unsigned int irq, struct irq_desc *desc)
+static /*unsigned int*/ void loox720_cpld_irq_demux(unsigned int irq, struct irq_desc *desc)
 {
     unsigned int mask;
-    int loop, count;
 	struct irq_desc * proc_desc;
 	unsigned int proc_irq;
 	struct loox720_irq_data * irq_data = desc->handler_data;
-	spin_lock(&irq_data->lock);
-		irq_data->in_service_loop = 1;
-		cpld_mem[0] = 0xFFFF0000;
-	spin_unlock(&irq_data->lock);
-	count = 0;
-    do {
-        loop = 0;
-		count++;
-        if (irq_data->pending_irqs) {
-            proc_irq = irq_data->irq_base;
-            proc_desc = irq_desc + proc_irq;
-            do {
-                if (irq_data->pending_irqs & 1)
-                    desc_handle_irq(proc_irq, proc_desc);
-                proc_irq++;
-                proc_desc++;
-                irq_data->pending_irqs >>= 1;
-            } while (irq_data->pending_irqs);
-        }
-        irq_data->pending_irqs = mask = cpld_mem[0] & (~irq_data->irq_mask);
-		cpld_mem[0] = mask;
+
+	
+	mask = (cpld_mem[0] & (~irq_data->irq_mask))&0xffff;
+	cpld_mem[0] = mask;// ack all to be handled irqs
         if (mask) {
             proc_irq = irq_data->irq_base;
             proc_desc = irq_desc + proc_irq;
@@ -200,11 +169,7 @@ static void loox720_cpld_irq_demux(unsigned int irq, struct irq_desc *desc)
                 proc_desc++;
                 mask >>= 1;
             } while (mask);
-            loop = 1;
-        }
-    } while (loop);
-	irq_data->in_service_loop = 0;
-	cpld_mem[0] = irq_data->irq_mask << 16;
+	}
 }
 
 static int __init loox720_cpld_init(void)
@@ -216,7 +181,7 @@ static int __init loox720_cpld_init(void)
 	loox720_cpld_irq_base = IRQ_BOARD_START;
     printk(KERN_INFO "Loox 720 CPLD Driver\n");
 
-    cpld_mem = (u32*)ioremap(LOOX720_CPLD_PHYS, LOOX720_CPLD_SIZE);
+    cpld_mem = (u32*)ioremap_nocache(LOOX720_CPLD_PHYS, LOOX720_CPLD_SIZE);
     if (!cpld_mem)
     {
 		printk(KERN_ERR "ioremap failed.\n");
@@ -244,29 +209,31 @@ static int __init loox720_cpld_init(void)
 	loox720_cpld_irq_data->irq_base = loox720_cpld_irq_base;
 	loox720_cpld_irq_data->irq_mask = 0xFFFF;
 	loox720_cpld_irq_data->in_service_loop = 0;
-	loox720_cpld_irq_data->pending_irqs = 0;
 	spin_lock_init(&loox720_cpld_irq_data->lock);
-	cpld_mem[0] = cpld_mem[0]; // Mask and clear all interrupts
+	spin_lock_init(&loox720_cpld_irq_data->masklock);
+	cpld_mem[0] = 0xFFFFFFFF; // Mask and clear all interrupts
 	for (i=0; i<LOOX720_CPLD_IRQ_COUNT; i++)
 	{
 		int irq = i + loox720_cpld_irq_base;
-        set_irq_chip(irq, &loox720_irq_chip);
+	        set_irq_chip(irq, &loox720_irq_chip);
 		set_irq_chip_data(irq, loox720_cpld_irq_data);
-        set_irq_handler(irq, handle_level_irq);
-        set_irq_flags(irq, IRQF_VALID | IRQF_PROBE);
+		set_irq_handler(irq, handle_simple_irq);
+    		set_irq_flags(irq, IRQF_VALID | IRQF_PROBE);
 	}
-    set_irq_chained_handler(LOOX720_IRQ(CPLD_INT), loox720_cpld_irq_demux);
-	set_irq_data(LOOX720_IRQ(CPLD_INT), loox720_cpld_irq_data);
+    set_irq_data(LOOX720_IRQ(CPLD_INT), loox720_cpld_irq_data);
     set_irq_type(LOOX720_IRQ(CPLD_INT), IRQT_RISING);
-
+    set_irq_chained_handler(LOOX720_IRQ(CPLD_INT), loox720_cpld_irq_demux);
+    cpld_mem[0] = 0xFFFF; // clear interrupts and start our handlers..
     return 0;
 }
 
 static void __exit loox720_cpld_exit(void)
 {
+	cpld_mem[0] = 0xFFFFFFFF; // Mask and clear all interrupts
+	cpld_mem[0] = 0xFFFFFFFF; // Mask and clear all interrupts
 	if (loox720_cpld_irq_base!=-1)
 	{
-		int i;
+	    int i;
 	    for (i = 0 ; i < LOOX720_CPLD_IRQ_COUNT ; i++)
 		{
 	        int irq = i + loox720_cpld_irq_base;
@@ -276,7 +243,7 @@ static void __exit loox720_cpld_exit(void)
 	        set_irq_flags(irq, 0);
 	    }
 	    set_irq_chained_handler(LOOX720_IRQ(CPLD_INT), NULL);
-		set_irq_data(LOOX720_IRQ(CPLD_INT), NULL);
+	    set_irq_data(LOOX720_IRQ(CPLD_INT), NULL);
 	}
 	if (loox720_cpld_irq_data)
 		kfree(loox720_cpld_irq_data);
@@ -287,6 +254,6 @@ static void __exit loox720_cpld_exit(void)
 module_init( loox720_cpld_init );
 module_exit( loox720_cpld_exit );
 
-MODULE_AUTHOR("Piotr Czechowicz & Tomasz Figa");
+MODULE_AUTHOR("Piotr Czechowicz & Tomasz Figa & Jan Rinze Peterzon");
 MODULE_DESCRIPTION("Loox 720 CPLD driver");
 MODULE_LICENSE("GPL");
