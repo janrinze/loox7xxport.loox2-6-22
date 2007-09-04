@@ -144,7 +144,12 @@ static pxa_freqs_t pxa2xx_freqs[] =
 #elif defined(CONFIG_PXA27x)
     {104000, 104000, PXA27x_CCCR(1,  8, 2), 0, PXA27x_CCLKCFG(1, 0, 1)},
     {156000, 104000, PXA27x_CCCR(1,  8, 6), 0, PXA27x_CCLKCFG(1, 1, 1)},
+#if defined(CONFIG_MACH_LOOX720)
+    /* reduce screennoise for Loox702 by setting system speed at 208 MHz */
+    {208000, 208000, PXA27x_CCCR(1, 16, 2), 1, PXA27x_CCLKCFG(1, 0, 1)},
+#else
     {208000, 208000, PXA27x_CCCR(0, 16, 2), 1, PXA27x_CCLKCFG(0, 0, 1)},
+#endif
     {312000, 208000, PXA27x_CCCR(1, 16, 3), 1, PXA27x_CCLKCFG(1, 0, 1)},
     {416000, 208000, PXA27x_CCCR(1, 16, 4), 1, PXA27x_CCLKCFG(1, 0, 1)},
     {520000, 208000, PXA27x_CCCR(1, 16, 5), 1, PXA27x_CCLKCFG(1, 0, 1)}
