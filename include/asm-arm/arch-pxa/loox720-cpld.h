@@ -26,11 +26,11 @@ Bitmasks of LED modes in LEDs' cache.
 #define LOOX720_LED1_BLINK		4
 #define LOOX720_LED1_BLINK2		8
 
-#define LOOX720_LED2_GREEN  	16
-#define LOOX720_LED2_ORANGE 	32
+#define LOOX720_LED2_GREEN		16
+#define LOOX720_LED2_RED		32
+#define LOOX720_LED2_ORANGE		48
 #define LOOX720_LED2_BLINK	 	64
 #define LOOX720_LED2_BLINK2	  	128
-#define LOOX720_LED2_RED		48
 
 /*
 Bitmasks of bits in reg #4:
@@ -56,8 +56,13 @@ CPLD output bits numbers
 
 #define LOOX720_CPLD_BATTERY_BIT		144
 #define LOOX720_CPLD_USB_PULLUP_BIT		145
-#define LOOX720_CPLD_LCD_CONSOLE_BIT	146	/* If it's low, then FB console doesn't show up */
+#define LOOX720_CPLD_LCD_CONSOLE_BIT		146	/* If it's low, then FB console doesn't show up */
 #define LOOX720_CPLD_LCD_BIT			147
+#define LOOX720_CPLD_LED2_EN_1			148
+#define LOOX720_CPLD_LED2_EN_2			149
+
+#define LOOX720_CPLD_LED1_EN_1			152
+#define LOOX720_CPLD_LED1_EN_2			153
 
 #define LOOX720_CPLD_LCD_COLOR_BIT		160
 #define LOOX720_CPLD_LCD_BIT2			161

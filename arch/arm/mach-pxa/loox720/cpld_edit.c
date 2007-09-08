@@ -27,6 +27,8 @@ static struct proc_dir_entry *proc_intf;
 static char procfs_buffer[PROCFS_MAX_SIZE];
 static unsigned long procfs_buffer_size = 0;
 
+void loox720_set_leds_cache(u8 value);
+
 static void handle_request(void)
 {
 	char *p = NULL;
@@ -45,6 +47,10 @@ static void handle_request(void)
 			break;
 		case '0':
 			loox720_cpld_reg_write(0, id);
+			break;
+		case 'd':
+			printk(KERN_ERR "CPLD-edit: setting led cache to %02X\n", id);
+			loox720_set_leds_cache(id);
 			break;
 		default:
 			printk(KERN_ERR "CPLD-edit: Unknown request\n");

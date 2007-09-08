@@ -37,19 +37,19 @@ static void update_battery_charging(void)
 	if (!battery_full)
 	{
 	    SET_LOOX720_GPIO_N( CHARGE_EN, 1 );
-	    loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B | LOOX720_LED_BLINK);
+	    loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_C | LOOX720_LED_BLINK);
 	}
 	else
 	{
 	    SET_LOOX720_GPIO_N( CHARGE_EN, 0 );
-	    loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B);
+	    loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_C);
 	}
     }
     else
     {
 	printk(KERN_INFO "battery: external power is disconnected.\n");
 	SET_LOOX720_GPIO_N( CHARGE_EN, 0 );
-        loox720_disable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B);
+        loox720_disable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_C);
     }
 }
 
