@@ -9,6 +9,7 @@ extern u32 loox720_egpio_cache_get(int regno);
 extern void loox720_egpio_cache_set(int regno, u32 value);
 
 static u8 loox720_leds_cache = 0x00;
+
 /*
 	Loox 720 leds are driven by CPLD. For each LED, there are 4+1 bits on CPLD.
 	
@@ -60,7 +61,7 @@ loox720_leds_cache structure:
 	bit 2 - led 1 blink
 	bit 3 - led 1 inverted blink mode (working with blink bit set)
 	bit 4 - led 2 green
-	bit 5 - led 2 orange
+	bit 5 - led 2 red
 	bit 6 - led 2 blink
 	bit 7 - led 2 inverted blink mode (working with blink bit set)
 */
@@ -68,51 +69,58 @@ loox720_leds_cache structure:
 static void	loox720_update_leds( void )
 {
 	u32 v = 0;
-	u32 mask = 0;
-	if(loox720_leds_cache & (LOOX720_LED1_BLUE | LOOX720_LED1_GREEN))
+	u32 mask = 0x03100000;
+	
+	// LED1 (left one)
+	switch (loox720_leds_cache & 0x0F)
 	{
-		mask |= LOOX720_CPLD_LED1_BIT_D;
-		if(loox720_leds_cache & LOOX720_LED1_BLINK)
-			mask |= LOOX720_CPLD_LED1_BLINK;
-		else
-			mask |= (LOOX720_CPLD_LED1_BIT_C | LOOX720_CPLD_LED1_BIT_B);
-		if(loox720_leds_cache & LOOX720_LED1_BLINK2)
-			mask |= (LOOX720_CPLD_LED1_BIT_C | LOOX720_CPLD_LED1_BIT_B);
-		if(loox720_leds_cache & LOOX720_LED1_GREEN)
-			mask |= LOOX720_CPLD_LED1_BIT_A;
-		if(loox720_leds_cache & LOOX720_LED1_BLUE)
-			mask |= LOOX720_CPLD_LED1_BIT_B;
-		if((loox720_leds_cache & (LOOX720_LED1_BLUE | LOOX720_LED1_GREEN)) == (LOOX720_LED1_BLUE | LOOX720_LED1_GREEN))
-			mask &= ~(LOOX720_CPLD_LED1_BIT_A | LOOX720_CPLD_LED1_BIT_B);
+	    // blue
+	    case 0x1: mask |= 0xE00; break;
+	    case 0x5: mask |= 0x8A00; break;
+	    case 0xD: mask |= 0x8E00; break;
+	    
+	    // green
+	    case 0x2: mask |= 0xF00; break;
+	    case 0x6: mask |= 0x8900; break;
+	    case 0xE: mask |= 0x8F00; break;
+	    
+	    // both
+	    case 0x7: mask |= 0x8800; break;
+	    
+	    default: mask |= 0x300; break;
 	}
-	if(loox720_leds_cache & LOOX720_LED2_RED)
+	
+	// LED2 (right one)
+	switch ((loox720_leds_cache >> 4) & 0x0F)
 	{
-		if(loox720_leds_cache & LOOX720_LED2_BLINK)
-		{
-			mask |= LOOX720_CPLD_LED2_BLINK;
-			if(!(loox720_leds_cache & LOOX720_LED2_BLINK2))
-				mask |= LOOX720_CPLD_LED2_BIT_B;
-		}
-		if((loox720_leds_cache & LOOX720_LED2_BLINK2) || (!(loox720_leds_cache & LOOX720_LED2_BLINK)))
-		{
-			if(loox720_leds_cache & LOOX720_LED2_GREEN)
-				mask |= LOOX720_CPLD_LED2_BIT_C;
-			if(loox720_leds_cache & LOOX720_LED2_ORANGE)
-				mask |= LOOX720_CPLD_LED2_BIT_A;
-		}
-		else
-		{
-			if(loox720_leds_cache & LOOX720_LED2_ORANGE)
-				mask |= LOOX720_CPLD_LED2_BIT_A | LOOX720_CPLD_LED2_BIT_C;
-			if(loox720_leds_cache & LOOX720_LED2_GREEN)
-				mask &= ~(LOOX720_CPLD_LED2_BIT_C);
-		}
+	    // green
+	    case 0x1: mask |= 0x40; break;
+	    case 0x5: mask |= 0x4020; break;
+	    case 0xD: mask |= 0x4040; break;
+	    
+	    // red
+	    case 0x2: mask |= 0x50; break;
+	    case 0xE: mask |= 0x4050; break;
+	    
+	    // orange
+	    case 0x3: mask |= 0x10; break;
+	    case 0x7: mask |= 0x4070; break;
+	    case 0xF: mask |= 0x4010; break;
+	    
+	    default: mask |= 0x30; break;
 	}
-	v = (loox720_egpio_cache_get(4) & ~(0xFFFF)) | mask;
+	
+	v = (loox720_egpio_cache_get(4) & ~(0x0330CFF0)) | mask;
 	loox720_egpio_cache_set(4, v);
 	loox720_cpld_reg_write(4, v);
-	loox720_egpio_set_bit(128, 1);
 }
+
+void loox720_set_leds_cache(u8 value)
+{
+    loox720_leds_cache = value;
+    loox720_update_leds();
+}
+EXPORT_SYMBOL(loox720_set_leds_cache);
 
 void	loox720_enable_led(int led, int mode)
 {
