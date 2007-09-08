@@ -24,8 +24,49 @@
 
 #include "loox720_core.h"
 
-static unsigned int serial_irq = 0xffffffff;
 static unsigned int ac_irq = 0xffffffff;
+static unsigned int battery_irq = 0xffffffff;
+
+static void update_battery_charging(void)
+{
+    int connected = GET_LOOX720_GPIO(AC_IN_N) == 0;
+    if (connected)
+    {
+        int battery_full = GET_LOOX720_GPIO(BATTERY_FULL_N) == 0;
+	printk(KERN_INFO "battery: external power: %d; battery_full: %d\n", connected, battery_full);
+	if (!battery_full)
+	{
+	    SET_LOOX720_GPIO_N( CHARGE_EN, 1 );
+	    loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B | LOOX720_LED_BLINK);
+	}
+	else
+	{
+	    SET_LOOX720_GPIO_N( CHARGE_EN, 0 );
+	    loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B);
+	}
+    }
+    else
+    {
+	printk(KERN_INFO "battery: external power is disconnected.\n");
+	SET_LOOX720_GPIO_N( CHARGE_EN, 0 );
+        loox720_disable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B);
+    }
+}
+
+static int
+battery_isr(int irq, void *data)
+{
+    int full = GET_LOOX720_GPIO(BATTERY_FULL_N) == 0;
+    printk( KERN_INFO "battery_isr: battery_full=%d\n", full);
+    if (full)
+        set_irq_type( battery_irq, IRQT_RISING ); 
+    else
+        set_irq_type( battery_irq, IRQT_FALLING ); 
+
+    update_battery_charging();
+    
+    return IRQ_HANDLED;
+}
 
 static int
 ac_isr(int irq, void *data)
@@ -36,51 +77,55 @@ ac_isr(int irq, void *data)
 	    return IRQ_NONE;
 
 	connected = GET_LOOX720_GPIO(AC_IN_N) == 0;
-	
 	printk( KERN_INFO "ac_isr: connected=%d\n", connected );
+
 	if (connected)
 	    set_irq_type( ac_irq, IRQT_RISING ); 
 	else
 	    set_irq_type( ac_irq, IRQT_FALLING ); 
-
-	if (connected)
-	    loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B | LOOX720_LED_BLINK);
-	else
-	    loox720_disable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B);
 	    
-//	SET_LOOX720_GPIO_N( CHARGE_EN, connected );
+	update_battery_charging();
+
 	return IRQ_HANDLED;
 }
 
 static int
 loox720_core_probe( struct platform_device *pdev )
 {
-	int connected;
+	int connected = GET_LOOX720_GPIO(AC_IN_N) == 0;
+        int battery_full = GET_LOOX720_GPIO(BATTERY_FULL_N) == 0;
+
 	printk( KERN_NOTICE "Loox 720 Core Hardware Driver\n" );
 
 	ac_irq = LOOX720_IRQ(AC_IN_N);
-	
-	connected = GET_LOOX720_GPIO(AC_IN_N) == 0;
+	battery_irq = LOOX720_IRQ(BATTERY_FULL_N);
 	
 	printk( KERN_INFO "AC: connected=%d\n", connected );
         if (request_irq( ac_irq, ac_isr, SA_INTERRUPT,
 			    "Loox 720 AC Detect", NULL ) != 0) {
 		printk( KERN_ERR "Unable to configure AC detect interrupt.\n" );
-		free_irq( serial_irq, NULL );
 		return -ENODEV;
+	}
+	
+	if (request_irq( battery_irq, battery_isr, SA_INTERRUPT, "Loox 720 Battery Full", NULL) != 0) 
+	{
+	    printk( KERN_ERR "Unable to configure battery-full detect interrupt.\n" );
+	    free_irq( ac_irq, NULL );
+	    return -ENODEV;
 	}
 
 	if (connected)
 	    set_irq_type( ac_irq, IRQT_RISING ); 
 	else
 	    set_irq_type( ac_irq, IRQT_FALLING ); 
+	    
+	if (battery_full)
+	    set_irq_type( battery_irq, IRQT_RISING );
+	else
+	    set_irq_type( battery_irq, IRQT_FALLING );
+	
+	update_battery_charging();
 
-    if (connected)
-        loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B | LOOX720_LED_BLINK);
-    else
-        loox720_disable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_B);
-
-//	SET_LOOX720_GPIO_N( CHARGE_EN, connected );*/
 	return 0;
 }
 
@@ -88,7 +133,9 @@ static int
 loox720_core_remove( struct platform_device *dev )
 {
 	if (ac_irq != 0xffffffff)
-		free_irq( ac_irq, NULL );
+	    free_irq( ac_irq, NULL );
+	if (battery_irq != 0xffffffff)
+	    free_irq( battery_irq, NULL );
 	return 0;
 }
 

@@ -54,6 +54,7 @@ CPLD output bits numbers
 
 #define LOOX720_CPLD_CF_3V3_BIT			140
 
+#define LOOX720_CPLD_BATTERY_BIT		144
 #define LOOX720_CPLD_USB_PULLUP_BIT		145
 #define LOOX720_CPLD_LCD_CONSOLE_BIT	146	/* If it's low, then FB console doesn't show up */
 #define LOOX720_CPLD_LCD_BIT			147
