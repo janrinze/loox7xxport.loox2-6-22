@@ -69,7 +69,7 @@ loox720_leds_cache structure:
 static void	loox720_update_leds( void )
 {
 	u32 v = 0;
-	u32 mask = 0x03100000;
+	u32 mask = 0x03500000;
 	
 	// LED1 (left one)
 	switch (loox720_leds_cache & 0x0F)
@@ -110,7 +110,7 @@ static void	loox720_update_leds( void )
 	    default: mask |= 0x30; break;
 	}
 	
-	v = (loox720_egpio_cache_get(4) & ~(0x0330CFF0)) | mask;
+	v = (loox720_egpio_cache_get(4) & ~(0x0370CFF0)) | mask;
 	loox720_egpio_cache_set(4, v);
 	loox720_cpld_reg_write(4, v);
 }
