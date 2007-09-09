@@ -42,14 +42,14 @@ config DRAM_BASE
 		On the Loox 720, RAM starts at 0xaa000000. You should not
 		need to modify this value.
 
-config CONFIG_LOOX720_LIMIT_CPUFREQ
+config LOOX720_LIMIT_CPUFREQ
 	bool 'Limit high CPU frequency to 520MHz'
 	depends on MACH_LOOX720
 	default yes
 	help
 		Not all LOOX pdas work on 624MHz. So, to avoid hangs, enable this.
 
-config CONFIG_LOOX720_GPIOED
+config LOOX720_GPIOED
 	tristate 'access GPIO from userland'
 	depends on MACH_LOOX720
 	default m
