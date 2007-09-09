@@ -60,6 +60,7 @@ CPLD output bits numbers
 #define LOOX720_CPLD_LCD_BIT			147
 #define LOOX720_CPLD_LED2_EN_1			148
 #define LOOX720_CPLD_LED2_EN_2			149
+#define LOOX720_CPLD_LED2_EN_3			150
 
 #define LOOX720_CPLD_LED1_EN_1			152
 #define LOOX720_CPLD_LED1_EN_2			153
