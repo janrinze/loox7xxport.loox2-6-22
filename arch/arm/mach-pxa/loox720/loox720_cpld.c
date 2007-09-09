@@ -87,6 +87,10 @@ static struct cpld_bit loox720_cpld_bits[] =
 	.bit   = LOOX720_CPLD_LED2_EN_2,
 	.value = 1
     },
+    {
+	.bit   = LOOX720_CPLD_LED2_EN_3,
+	.value = 1
+    }
 };
 
 u32	loox720_cpld_reg_read(int regno)
