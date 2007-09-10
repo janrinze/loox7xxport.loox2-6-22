@@ -38,7 +38,7 @@
 
 
 static struct pxafb_mode_info loox720_lcd_mode_info = {
-	.pixclock		= 57692,
+	.pixclock		= 96153, // Old value = 57692
 	.bpp			= 16,
 	.xres			= 480,
 	.yres			= 640,
@@ -46,7 +46,7 @@ static struct pxafb_mode_info loox720_lcd_mode_info = {
 	.left_margin		= 20,
 	.right_margin		= 8,
 	.vsync_len		= 1,
-	.upper_margin		= 8,
+	.upper_margin		= 6,
 	.lower_margin		= 9,
 	.sync			= 0,
 };
