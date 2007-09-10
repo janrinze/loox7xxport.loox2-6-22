@@ -53,7 +53,6 @@ loox720_bt_configure( int state )
 		{
 			printk( KERN_NOTICE "loox720_bt.c: Firmware timeout!\n");
 		}
-		led_trigger_event_shared(loox720_radio_trig, LED_FULL);
 		break;
 
 	case PXA_UART_CFG_PRE_SHUTDOWN:
@@ -62,7 +61,6 @@ loox720_bt_configure( int state )
 		loox720_egpio_set_bit( LOOX720_CPLD_BLUETOOTH_POWER, 0 );
 		loox720_disable_led( LOOX720_LED_LEFT, LOOX720_LED_COLOR_A );
 		mdelay(1);
-		led_trigger_event_shared(loox720_radio_trig, LED_OFF);
 		break;
 
 	default:

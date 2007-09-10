@@ -92,9 +92,11 @@ static int loox_hw_params(struct snd_pcm_substream *substream,
 
 	pxa_gpio_mode(GPIO_NR_LOOX720_I2S_SYSCLK_MD);
 
+/*
 	snd_soc_write(codec, WM8750_ADCDAC, 0x00);
 	snd_soc_write(codec, WM8750_IFACE, 0x02);
 	snd_soc_write(codec, WM8750_SRATE, 0x20);
+*/
 
 	return 0;
 }

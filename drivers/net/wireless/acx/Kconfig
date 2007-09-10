@@ -1,6 +1,6 @@
 config ACX
 	tristate "TI acx100/acx111 802.11b/g wireless chipsets"
-	depends on NET_RADIO && EXPERIMENTAL
+	depends on WLAN_80211 && EXPERIMENTAL
 	select FW_LOADER
 	---help---
 	A driver for 802.11b/g wireless cards based on

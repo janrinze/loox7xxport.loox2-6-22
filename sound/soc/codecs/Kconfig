@@ -83,6 +83,10 @@ config SND_SOC_WM9713
 	help
 	  Say Y or M if you want to support the WM9713 codec.
 
+config SND_SOC_WM8753
+	tristate
+	depends on SND_SOC
+
 config SND_SOC_WM9712
 	tristate "SoC driver for the WM9712 codec"
 	depends SND_SOC

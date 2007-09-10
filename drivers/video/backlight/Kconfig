@@ -64,6 +64,14 @@ config BACKLIGHT_PROGEAR
 	  If you have a Frontpath ProGear say Y to enable the
 	  backlight driver.
 
+config BACKLIGHT_CARILLO_RANCH
+	tristate "Intel Carillo Ranch Backlight Driver"
+	depends on BACKLIGHT_CLASS_DEVICE && LCD_CLASS_DEVICE && PCI && X86 && FB_LE80578
+	default n
+	help
+	  If you have a Intel LE80578 (Carillo Ranch) say Y to enable the
+	  backlight driver.
+
 config BACKLIGHT_HX2750
 	tristate "iPAQ HX2750 Backlight Driver"
 	depends on BACKLIGHT_CLASS_DEVICE && MACH_HX2750

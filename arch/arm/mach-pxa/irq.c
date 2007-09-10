@@ -15,7 +15,6 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
-#include <linux/ptrace.h>
 
 #include <asm/hardware.h>
 #include <asm/irq.h>
@@ -91,6 +90,26 @@ static struct irq_chip pxa_internal_chip_high = {
 	.unmask		= pxa_unmask_high_irq,
 };
 
+#endif
+
+/* Note that if an input/irq line ever gets changed to an output during
+ * suspend, the relevant PWER, PRER, and PFER bits should be cleared.
+ */
+#ifdef CONFIG_PXA27x
+
+/* PXA27x:  Various gpios can issue wakeup events.  This logic only
+ * handles the simple cases, not the WEMUX2 and WEMUX3 options
+ */
+#define PXA27x_GPIO_NOWAKE_MASK \
+	((1 << 8) | (1 << 7) | (1 << 6) | (1 << 5) | (1 << 2))
+#define	WAKEMASK(gpio) \
+	(((gpio) <= 15) \
+		? ((1 << (gpio)) & ~PXA27x_GPIO_NOWAKE_MASK) \
+		: ((gpio == 35) ? (1 << 24) : 0))
+#else
+
+/* pxa 210, 250, 255, 26x:  gpios 0..15 can issue wakeups */
+#define	WAKEMASK(gpio) (((gpio) <= 15) ? (1 << (gpio)) : 0)
 #endif
 
 /* Note that if an input/irq line ever gets changed to an output during

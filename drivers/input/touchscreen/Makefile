@@ -32,6 +32,7 @@ ifeq ($(CONFIG_TOUCHSCREEN_WM9705),y)
 wm97xx-ts-objs += wm9705.o
 endif
 
+obj-$(CONFIG_TOUCHSCREEN_USB_COMPOSITE)	+= usbtouchscreen.o
 obj-$(CONFIG_TOUCHSCREEN_PENMOUNT)	+= penmount.o
 obj-$(CONFIG_TOUCHSCREEN_TOUCHRIGHT)	+= touchright.o
 obj-$(CONFIG_TOUCHSCREEN_TOUCHWIN)	+= touchwin.o
