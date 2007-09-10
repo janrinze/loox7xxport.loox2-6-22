@@ -3,7 +3,7 @@
 
 struct gpio_keys_button {
 	/* Configuration parameters */
-	int keycode;
+	int code;		/* input event code (KEY_*, SW_*) */;
 	int gpio;
 	int active_low;
 	char *desc;

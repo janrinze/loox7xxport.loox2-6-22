@@ -249,7 +249,7 @@ not_relocated:	mov	r0, #0
 		mov	r3, r7
 		bl	decompress_kernel
 
-		add	r0, r0, #127
+		add	r0, r0, #127 + 128	@ alignment + stack
 		bic	r0, r0, #127		@ align the kernel length
 /*
  * r0     = decompressed kernel length
@@ -271,6 +271,7 @@ not_relocated:	mov	r0, #0
 		stmia	r1!, {r9 - r14}
 		cmp	r2, r3
 		blo	1b
+		add	sp, r1, #128		@ relocate the stack
 
 		bl	cache_clean_flush
 		add	pc, r5, r0		@ call relocation code
@@ -478,6 +479,7 @@ __common_mmu_cache_on:
  */
 		.align	5
 reloc_start:	add	r9, r5, r0
+		sub	r9, r9, #128		@ do not copy the stack
 		debug_reloc_start
 		mov	r1, r4
 1:
@@ -488,6 +490,7 @@ reloc_start:	add	r9, r5, r0
 
 		cmp	r5, r9
 		blo	1b
+		add	sp, r1, #128		@ relocate the stack
 		debug_reloc_end
 
 call_kernel:	bl	cache_clean_flush
@@ -855,6 +858,7 @@ memdump:	mov	r12, r0
 		mov	pc, r10
 #endif
 
+		.ltorg
 reloc_end:
 
 		.align

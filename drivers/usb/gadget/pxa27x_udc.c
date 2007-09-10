@@ -1569,7 +1569,7 @@ static void udc_disable(struct pxa27x_udc *dev)
 	udc_clear_mask_UDCCR(UDCCR_UDE);
 
         /* Disable clock for USB device */
-	pxa_set_cken(CKEN11_USB, 0);
+	pxa_set_cken(CKEN_USB, 0);
 
 	ep0_idle(dev);
 	dev->gadget.speed = USB_SPEED_UNKNOWN;
@@ -1610,7 +1610,7 @@ static void udc_enable(struct pxa27x_udc *dev)
 	udc_clear_mask_UDCCR(UDCCR_UDE);
 
         /* Enable clock for USB device */
-	pxa_set_cken(CKEN11_USB, 1);
+	pxa_set_cken(CKEN_USB, 1);
 
 	UDCICR0 = UDCICR1 = 0;
 
@@ -2371,7 +2371,7 @@ static int pxa27x_udc_suspend(struct platform_device *_dev, pm_message_t state)
 	}
 
 	udc_clear_mask_UDCCR(UDCCR_UDE);
-	pxa_set_cken(CKEN11_USB, 0);
+	pxa_set_cken(CKEN_USB, 0);
 
 	return 0;
 }

@@ -123,7 +123,7 @@ static int pxakbd_probe(struct platform_device *dev)
 			  DRIVER_NAME, dev);
 	if (err) {
 		printk(KERN_ERR "Cannot request keypad IRQ\n");
-		pxa_set_cken(CKEN19_KEYPAD, 0);
+		pxa_set_cken(CKEN_KEYPAD, 0);
 		return -1;
 	}
 
@@ -136,7 +136,7 @@ static int pxakbd_probe(struct platform_device *dev)
 	 * Enable keyboard.
 	 */
 
-	pxa_set_cken(CKEN19_KEYPAD, 1);
+	pxa_set_cken(CKEN_KEYPAD, 1);
 
 	/* Setup GPIOs. */
 	for (i = 0; i < pdev->nr_rows + pdev->nr_cols; i++)
@@ -154,7 +154,7 @@ static int pxakbd_remove(struct platform_device *dev)
 	struct input_dev *button_dev = dev->dev.driver_data;
 	input_unregister_device(button_dev);
 	free_irq(IRQ_KEYPAD, NULL);
-	pxa_set_cken(CKEN19_KEYPAD, 0);
+	pxa_set_cken(CKEN_KEYPAD, 0);
 	return 0;
 }
 

@@ -24,10 +24,10 @@
 #include <asm/arch/ssp.h>
 
 #if defined (CONFIG_PXA27x) || defined (CONFIG_PXA26x)
-#define CKEN_SSP(x) (((x) == 1) ? CKEN23_SSP1 : ((x) == 2) ? CKEN3_SSP2 : ((x) == 3) ? CKEN4_SSP3 : 0)
+#define CKEN_SSP(x) (((x) == 1) ? CKEN_SSP1 : ((x) == 2) ? CKEN_SSP2 : ((x) == 3) ? CKEN_SSP3 : 0)
 #define SSP_DIVISOR(freq) (13000000/freq - 1)
 #else
-#define CKEN_SSP(x) (((x) == 1) ? CKEN3_SSP : ((x) == 2) ? CKEN9_NSSP : 0)
+#define CKEN_SSP(x) (((x) == 1) ? CKEN_SSP : ((x) == 2) ? CKEN_NSSP : 0)
 #define SSP_DIVISOR(freq) ((3686400/2)/freq - 1)
 #endif
 

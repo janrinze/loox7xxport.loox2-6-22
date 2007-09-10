@@ -222,7 +222,7 @@ static struct resource pxa_spi_nssp_resources[] = {
 
 static struct pxa2xx_spi_master pxa_nssp_master_info = {
 	.ssp_type = PXA27x_SSP, /* Type of SSP */
-	.clock_enable = CKEN23_SSP1, /* NSSP Peripheral clock */
+	.clock_enable = CKEN_SSP1, /* NSSP Peripheral clock */
 	.num_chipselect = 1, /* Matches the number of chips attached to NSSP */
 	.enable_dma = 0, /* Enables NSSP DMA */
 };
@@ -256,10 +256,10 @@ static void loox720_set_bl_intensity(int intensity)
 
 	if (intensity > 0) {
 		loox720_egpio_set_bit(LOOX720_CPLD_BACKLIGHT_BIT, 1);
-		pxa_set_cken(CKEN0_PWM0, 1);
+		pxa_set_cken(CKEN_PWM0, 1);
 	} else {
 		loox720_egpio_set_bit(LOOX720_CPLD_BACKLIGHT_BIT, 0);
-                pxa_set_cken(CKEN0_PWM0, 0);
+                pxa_set_cken(CKEN_PWM0, 0);
 	}
 }
 

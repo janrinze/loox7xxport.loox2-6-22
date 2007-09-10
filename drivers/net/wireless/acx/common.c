@@ -2850,7 +2850,7 @@ acx_l_rxmonitor(acx_device_t *adev, const rxbuffer_t *rxbuf)
 	skb->dev = adev->ndev;
 	skb->dev->last_rx = jiffies;
 
-	skb->mac.raw = skb->data;
+	skb->mac_header = skb->data;
 	skb->ip_summed = CHECKSUM_NONE;
 	skb->pkt_type = PACKET_OTHERHOST;
 	skb->protocol = htons(ETH_P_80211_RAW);
