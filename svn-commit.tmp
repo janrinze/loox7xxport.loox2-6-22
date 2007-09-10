@@ -1,8 +1,0 @@
-
---Ta linia i nastêpne zostan± zignorowane--
-
-M    arch/arm/mach-pxa/loox720/loox720_cpld.c
-M    arch/arm/mach-pxa/loox720/loox720_pcmcia.c
-M    drivers/net/wireless/acx/Kconfig
-M    drivers/net/wireless/acx/cs.c
-M    drivers/net/wireless/acx/Makefile
