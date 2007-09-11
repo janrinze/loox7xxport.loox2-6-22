@@ -47,7 +47,6 @@ static int loox_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_codec_dai *codec_dai = rtd->dai->codec_dai;
 	struct snd_soc_cpu_dai *cpu_dai = rtd->dai->cpu_dai;
-	struct snd_soc_codec *codec = rtd->socdev->codec;
 	unsigned int clk = 0;
 	int ret = 0;
 
@@ -91,12 +90,6 @@ static int loox_hw_params(struct snd_pcm_substream *substream,
 		return ret;
 
 	pxa_gpio_mode(GPIO_NR_LOOX720_I2S_SYSCLK_MD);
-
-/*
-	snd_soc_write(codec, WM8750_ADCDAC, 0x00);
-	snd_soc_write(codec, WM8750_IFACE, 0x02);
-	snd_soc_write(codec, WM8750_SRATE, 0x20);
-*/
 
 	return 0;
 }
