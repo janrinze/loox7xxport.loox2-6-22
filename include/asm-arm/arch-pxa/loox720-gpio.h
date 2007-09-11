@@ -6,6 +6,17 @@
  *            Reused the h2200-gpio.h file as a template.
  */
 
+/*
+ * !!! ATTENTION !!!
+ *
+ * Following GPIOs definitions are taken from another PDA header (hx4700).
+ * We should check them all, to make sure that they aren't misused.
+ * My suggestion is to mark all GPIOs that we are sure or unsure with some comment
+ * so if you are sure of some GPIO, please add some comment after its definition!
+ *
+ * THANKS!
+ */
+
 #ifndef _LOOX720_GPIO_H_
 #define _LOOX720_GPIO_H_
 
@@ -33,8 +44,8 @@ else \
 #define LOOX720_IRQ(gpio) \
 	IRQ_GPIO(GPIO_NR_LOOX720_ ## gpio)
 
-#define GPIO_NR_LOOX720_KEY_ON			0
-#define GPIO_NR_LOOX720_GP_RST_N		1
+#define GPIO_NR_LOOX720_KEY_ON			0 // sure - not machine specific
+#define GPIO_NR_LOOX720_GP_RST_N		1 // sure - not machine specific
 
 #define GPIO_NR_LOOX720_PWR_SCL			3
 #define GPIO_NR_LOOX720_PWR_SDA			4
@@ -42,24 +53,21 @@ else \
 #define GPIO_NR_LOOX720_PWR_CAP1		6
 #define GPIO_NR_LOOX720_PWR_CAP2		7
 #define GPIO_NR_LOOX720_PWR_CAP3		8
-//#define GPIO_NR_LOOX720_CLK_PIO_CPU_13MHz 	9
-#define GPIO_NR_LOOX720_AC_IN_N			9
+#define GPIO_NR_LOOX720_AC_IN_N			9 // sure - low when AC Adapter is connected
 #define GPIO_NR_LOOX720_CLK_TOUT_32KHz		10
-//#define GPIO_NR_LOOX720_CPU_BF_DOOR_N		11
-#define GPIO_NR_LOOX720_BATTERY_FULL_N		11
-#define GPIO_NR_LOOX720_CPLD_INT		12
-//#define GPIO_NR_LOOX720_W3220_INT		13
-#define GPIO_NR_LOOX720_USB_DETECT_N	13
-#define GPIO_NR_LOOX720_WIFI_PWR		14
+#define GPIO_NR_LOOX720_BATTERY_FULL_N		11 // sure - low when battery is full
+#define GPIO_NR_LOOX720_CPLD_INT		12 // sure - CPLD external interrupt pin used by IRQ demuxer
+#define GPIO_NR_LOOX720_USB_DETECT_N	13 // not 100% sure - detects connection to USB client controller
+#define GPIO_NR_LOOX720_WIFI_PWR		14 // sure - CF WIFI power pin - high to enable ACX100 (must be used in pair with CPLD bit)
 #define GPIO_NR_LOOX720_CS1_N			15
 
-#define GPIO_NR_LOOX720_BACKLIGHT		17                      /* Tied to PWM0 when Alt function == 2 */
+#define GPIO_NR_LOOX720_BACKLIGHT		17 // unsure -> old comment: Tied to PWM0 when Alt function == 2
 
 #define GPIO_NR_LOOX720_RDY				18
-#define GPIO_NR_LOOX720_WIFI_RST	 	19
+#define GPIO_NR_LOOX720_WIFI_RST	 	19 // sure - CF WIFI reset pin - high to enable ACX100 reset state, low to disable
 #define GPIO_NR_LOOX720_SDCS2_N			20
 #define GPIO_NR_LOOX720_SDCS3_N			21
-#define GPIO_NR_LOOX720_LCD_RL			22
+#define GPIO_NR_LOOX720_CPU_BT_RESET_N	22 // sure - Bluetooth chip reset pin - low to enable BRF6150 reset state, low to disable
 #define GPIO_NR_LOOX720_SPI_CLK			23
 #define GPIO_NR_LOOX720_SPI_CS_N		24
 #define GPIO_NR_LOOX720_SPI_DO			25
@@ -97,11 +105,11 @@ else \
 #define GPIO_NR_LOOX720_PREG_N			55
 #define GPIO_NR_LOOX720_PWAIT_N			56
 
-#define GPIO_NR_LOOX720_CF_DETECT_N		57
+#define GPIO_NR_LOOX720_CF_DETECT_N		57 // INVALID -> please detect correct function!
 
 //#define GPIO_NR_LOOX720_TOUCHPANEL_IRQ_N	58
 #define GPIO_NR_LOOX720_LCD_PC1			59
-#define GPIO_NR_LOOX720_CF_RNB			60	/* HaRET: I 1 0 FE */
+#define GPIO_NR_LOOX720_CF_RNB			60
 #define GPIO_NR_LOOX720_W3220_RESET_N		61
 #define GPIO_NR_LOOX720_LCD_RESET_N		62
 #define GPIO_NR_LOOX720_CPU_SS_RESET_N		63
@@ -111,12 +119,12 @@ else \
 #define GPIO_NR_LOOX720_EUART_PS		67
 
 #define GPIO_NR_LOOX720_LCD_SLIN1		70
-#define GPIO_NR_LOOX720_ASIC3_RESET_N		71
-//#define GPIO_NR_LOOX720_CHARGE_EN_N		72
+#define GPIO_NR_LOOX720_ASIC3_RESET_N		71 // INVALID (we don't have ASIC) -> please detect correct function!
+//#define GPIO_NR_LOOX720_CHARGE_EN_N		72 // INVALID -> please detect correct function!
 #define GPIO_NR_LOOX720_LCD_UD_1		73
 
-#define GPIO_NR_LOOX720_EARPHONE_DET_N		75
-#define GPIO_NR_LOOX720_USB_PUEN		76
+#define GPIO_NR_LOOX720_EARPHONE_DET_N		75 // INVALID -> please detect correct function!
+#define GPIO_NR_LOOX720_USB_PUEN		76 // INVALID -> please detect correct function!
 
 #define GPIO_NR_LOOX720_CS2_N			78
 #define GPIO_NR_LOOX720_CS3_N			79
@@ -147,16 +155,13 @@ else \
 //#define GPIO_NR_LOOX720_PSKTSEL		104
 //#define GPIO_NR_LOOX720_IR_ON_N		105
 
-#define GPIO_NR_LOOX720_CPU_BT_RESET_N		22
-
-//#define GPIO_NR_LOOX720_SPK_SD_N		107
-#define GPIO_NR_LOOX720_CHARGE_EN_N		107
+#define GPIO_NR_LOOX720_CHARGE_EN_N		107 // sure - set low to disable battery charging
 
 #define GPIO_NR_LOOX720_CODEC_ON_N		109
 #define GPIO_NR_LOOX720_LCD_LVDD_3V3_ON		110
 #define GPIO_NR_LOOX720_LCD_AVDD_3V3_ON		111
 #define GPIO_NR_LOOX720_LCD_N2V7_7V3_ON		112
-#define GPIO_NR_LOOX720_I2S_SYSCLK		113
+#define GPIO_NR_LOOX720_I2S_SYSCLK		113 // sure - I2S System Clock used by sound codec
 #define GPIO_NR_LOOX720_CF_RESET		114	/* HaRET: O 0 0 */
 #define GPIO_NR_LOOX720_USB2_DREQ		115
 #define GPIO_NR_LOOX720_CPU_HW_RESET_N		116
@@ -210,9 +215,6 @@ else \
 #define GPIO_NR_LOOX720_PIOIS16_N_MD		(57 | GPIO_ALT_FN_1_IN | GPIO_DFLT_HIGH)
 #define GPIO_NR_LOOX720_PCE1_N_MD		(85 | GPIO_ALT_FN_1_OUT | GPIO_DFLT_HIGH)
 #define GPIO_NR_LOOX720_PSKTSEL_MD		(104 | GPIO_ALT_FN_1_OUT)
-#define GPIO_NR_LOOX720_I2S_SYSCLK_MD		(113 | GPIO_ALT_FN_1_OUT)
-
-void loox720_egpio_enable( unsigned long bits );
-void loox720_egpio_disable( unsigned long bits );
+#define GPIO_NR_LOOX720_I2S_SYSCLK_MD		(113 | GPIO_ALT_FN_1_OUT) // sure, look at GPIO 113 definition
 
 #endif /* _LOOX720_GPIO_H */
