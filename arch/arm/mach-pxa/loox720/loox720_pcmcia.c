@@ -26,8 +26,9 @@
 #include <asm/irq.h>
 
 #include <asm/arch/pxa-regs.h>
-#include <asm/arch/loox720.h>
+#include <asm/arch/loox720-gpio.h>
 #include <asm/arch/loox720-cpld.h>
+#include <asm/arch/loox720.h>
 #include <linux/platform_device.h>
 
 #include "../../../../drivers/pcmcia/soc_common.h"
@@ -103,12 +104,12 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 		if(skt->nr == 1)
 			loox720_egpio_set_bit(LOOX720_CPLD_CF_RESET_N, 0);
 		else
-			GPSR_BIT(LOOX720_GPIO_CF0_RESET);//loox720_set_egpio(LOOX720_EGPIO_CF1_RESET);
+			SET_LOOX720_GPIO(WIFI_RST, 1);//loox720_set_egpio(LOOX720_EGPIO_CF1_RESET);
 	} else {
 		if(skt->nr == 1)
 			loox720_egpio_set_bit(LOOX720_CPLD_CF_RESET_N, 1);
 		else
-			GPCR_BIT(LOOX720_GPIO_CF0_RESET);//loox720_clear_egpio(LOOX720_EGPIO_CF1_RESET);
+			SET_LOOX720_GPIO(WIFI_RST, 0);//loox720_clear_egpio(LOOX720_EGPIO_CF1_RESET);
 	}
 
 	/* Apply socket voltage */
@@ -122,7 +123,7 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 			else
 			{
 				loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 0);
-				GPCR_BIT(LOOX720_GPIO_CF_PWR);//loox720_clear_egpio(LOOX720_EGPIO_WIFI_PWR);
+				SET_LOOX720_GPIO(WIFI_PWR, 0);//loox720_clear_egpio(LOOX720_EGPIO_WIFI_PWR);
 				loox720_disable_led(LOOX720_LED_LEFT, LOOX720_LED_COLOR_B);
 			}
 			break;
@@ -137,7 +138,7 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 			else
 			{
 				loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 1);
-				GPSR_BIT(LOOX720_GPIO_CF_PWR);//loox720_set_egpio(LOOX720_EGPIO_WIFI_PWR);
+				SET_LOOX720_GPIO(WIFI_PWR, 1);//loox720_set_egpio(LOOX720_EGPIO_WIFI_PWR);
 				loox720_enable_led(LOOX720_LED_LEFT, LOOX720_LED_COLOR_B | LOOX720_LED_BLINK);
 			}
 			break;
