@@ -405,7 +405,7 @@ MACHINE_START(LOOX720, "FSC Loox 720")
 //	BOOT_MEM(0xaa000000, 0x40000000, io_p2v(0x40000000))
 	.phys_io = 0x40000000,
 	.io_pg_offst = (io_p2v(0x40000000) >> 18) & 0xfffc,
-	.boot_params	= 0xaa000100,
+	.boot_params	= CONFIG_DRAM_BASE + 0x100,
 	.map_io		= pxa_map_io,
 	.init_irq	= pxa_init_irq,
 	.timer =	&pxa_timer,
