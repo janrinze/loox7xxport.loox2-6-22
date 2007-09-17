@@ -42,6 +42,14 @@ config DRAM_BASE
 		On the Loox 720, RAM starts at 0xaa000000. You should not
 		need to modify this value.
 
+config DRAM_SIZE
+        hex '(S)DRAM Size'
+        depends on MACH_LOOX720
+        default 0x6000000
+        help
+		The loox has 128 MB memory but due to some problems we set
+		the value to 96 MB. You should not need to modify this value.
+
 config LOOX720_LIMIT_CPUFREQ
 	bool 'Limit high CPU frequency to 520MHz'
 	depends on MACH_LOOX720

@@ -196,6 +196,15 @@ static /*unsigned int*/ void loox720_cpld_irq_demux(unsigned int irq, struct irq
 	}
 }
 
+void loox720_cpld_resume(void)
+{
+	int i = 4;
+	for(i = 4; i < 8; i++) {
+		loox720_cpld_reg_write(i, reg_cache[i]);
+	}
+}
+EXPORT_SYMBOL(loox720_cpld_resume);
+
 static int __init loox720_cpld_init(void)
 {
     int i;
