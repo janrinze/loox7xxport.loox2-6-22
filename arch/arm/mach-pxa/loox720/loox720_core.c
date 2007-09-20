@@ -27,9 +27,7 @@
 
 #include "loox720_core.h"
 
-#define LOOX720_RESUME_STRUCT 0xA8024000
-#define LOOX720_RESUME_STRUCT_SIZE 0xd8
-static u32 save[54];
+static u32 save[4];
 
 static unsigned int ac_irq = 0xffffffff;
 static unsigned int battery_irq = 0xffffffff;
@@ -96,7 +94,6 @@ ac_isr(int irq, void *data)
 	return IRQ_HANDLED;
 }
 
-#ifdef CONFIG_PM
 static int loox720_suspend(struct platform_device *pdev, pm_message_t state)
 {
 	/* 0x20c2 is HTC clock value
@@ -126,9 +123,10 @@ static int loox720_suspend(struct platform_device *pdev, pm_message_t state)
 	 * Note that WEP1 wake up event is used by bootldr to set the
 	 * LEDS when power is applied/removed for charging.
 	 */
-	PWER = PWER_RTC | PWER_GPIO0 | PWER_GPIO1 | PWER_GPIO12 | PWER_WEP1;	// rtc + power + reset + asic3 + wep1
-	PFER = PWER_GPIO1;				// Falling Edge Detect
-	PRER = PWER_GPIO0 | PWER_GPIO12;		// Rising Edge Detect
+	PWER = PWER_RTC | PWER_GPIO0 | PWER_GPIO1 | PWER_GPIO9 | PWER_GPIO11 | PWER_GPIO12 | PWER_GPIO13;
+	PFER = PWER_GPIO0 | PWER_GPIO1 | PWER_GPIO9 | PWER_GPIO11 | PWER_GPIO13;				// Falling Edge Detect
+	PRER = PWER_GPIO0 | PWER_GPIO1 | PWER_GPIO9 | PWER_GPIO12 | PWER_GPIO13;		// Rising Edge Detect
+	PKWR = PWER_GPIO0;
 
 	PGSR0 = 0x01308018; // hx4700: 0x080DC01C
 	PGSR1 = 0x008F0112; // hx4700: 0x34CF0002
@@ -154,15 +152,16 @@ static int loox720_suspend(struct platform_device *pdev, pm_message_t state)
 //		PGSR3 &= ~(1U << 0);
 //	}
 
-	PCFR = PCFR_GPROD|PCFR_DC_EN|PCFR_GPR_EN|PCFR_OPDE
-		|PCFR_FP|PCFR_PI2CEN; /* was 0x1091; */
+	PCFR = PCFR_GPROD|PCFR_GPR_EN|PCFR_OPDE|PCFR_PI2CEN; /* was 0x1091; */
 	/* The 2<<2 below turns on the Power Island state preservation
 	 * and counters.  This allows us to wake up bootldr after a
 	 * period of time, and it can set the LEDs correctly based on
 	 * the power state.  The bootldr turns it off when it's
 	 * charged.
-	 */
+z	 */
 	PSLR=0xc8000000 | (2 << 2);
+
+	loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_A | LOOX720_LED_BLINK_ALT);
 
 	return 0;
 }
@@ -172,19 +171,34 @@ static int loox720_resume(struct platform_device *pdev)
 	loox720_cpld_resume();
 	return 0;
 }
-#else
-	#define loox720_suspend NULL
-	#define loox720_resume NULL
-#endif
 
 static void
 loox720_pxa_ll_pm_suspend(unsigned long resume_addr)
 {
 	int i;
-	u32 csum, tmp, *p;
+	u32 csum, tmp;
+	u32 * p;
 
-	/* Save the first 64 words at 0xa8024000. */
-	for (p = phys_to_virt(0xa8024000), i = 0; i < 54; i++)
+	/* Make sure that bootloader will not found reset pattern
+	 * by setting special memory places to 0x00 */
+
+	p = phys_to_virt(0xA8025304);
+	if(!p)
+		panic("Tried to put sleep informations into unmapped memory!");
+	if(*p == 0x1A2B3C4D)
+		*p = 0;
+
+	p = phys_to_virt(0xA8025314);
+    if(!p)
+        panic("Tried to put sleep informations into unmapped memory!");
+	if(*p == 0x1A2B3C4D)
+		*p = 0;
+
+	/* Save the first 4 words from 0xa8024000. */
+	p = phys_to_virt(0xA8024000);
+    if(!p)
+        panic("Tried to put sleep informations into unmapped memory!");
+	for (i = 0; i < 4; i++)
 		save[i] = p[i];
 
 	/* Set the first four words at 0xa8024000 to:
@@ -192,23 +206,27 @@ loox720_pxa_ll_pm_suspend(unsigned long resume_addr)
 	p[0] = resume_addr;
 
 	asm( "mrc\tp15, 0, %0, c1, c0, 0" : "=r" (tmp) );
-	p[1] = tmp & ~(0x3987);	    /* mmu off */
+	p[1] = tmp & (~0xFFFF3987);	    /* mmu off */
 
 	asm( "mrc\tp15, 0, %0, c2, c0, 0" : "=r" (tmp) );
-	p[2] = tmp;	/* Shouldn't matter, since MMU will be off. */
+	p[2] = tmp & 0xFFFFC000;	/* Shouldn't matter, since MMU will be off. */
 
 	asm( "mrc\tp15, 0, %0, c3, c0, 0" : "=r" (tmp) );
 	p[3] = tmp;	/* Shouldn't matter, since MMU will be off. */
 
 	/* Set PSPR to the checksum the HTC bootloader wants to see. */
+	printk(KERN_ERR "loox720_pxa_ll_pm_resume: Saving system state...\n");
 	for (csum = 0, i = 0; i < 54; i++) {
 		tmp = p[i] & 0x1;
 		tmp = tmp << 31;
 		tmp |= tmp >> 1;
 		csum += tmp;
+		printk(KERN_ERR "offset: %2x - value: %8x - checksum: %8x", i*4, p[i], csum);
 	}
 
 	PSPR = csum;
+
+	loox720_enable_led(LOOX720_LED_LEFT, LOOX720_LED_COLOR_B | LOOX720_LED_BLINK_ALT);
 }
 
 static void
