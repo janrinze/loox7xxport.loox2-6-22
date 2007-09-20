@@ -112,8 +112,9 @@ CPLD interrupt multiplexer definitions
 
 #define LOOX720_CPLD_IRQ_COUNT 16
 
-#define LOOX720_CPLD_IRQ_WIFI 		5
-#define LOOX720_CPLD_IRQ_CF 		4
+#define LOOX720_CPLD_IRQ_WIFI_DETECT	6
+#define LOOX720_CPLD_IRQ_WIFI 			5
+#define LOOX720_CPLD_IRQ_CF 			4
 #define LOOX720_CPLD_IRQ_CARD_DETECT 	2
 
 /*

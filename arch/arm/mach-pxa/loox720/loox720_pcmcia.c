@@ -34,6 +34,7 @@
 #include "../../../../drivers/pcmcia/soc_common.h"
 
 static struct pcmcia_irqs irqs[] = {
+	{ 0, LOOX720_CPLD_IRQ(WIFI_DETECT), "PCMCIA0 CD" },
 	{ 1, LOOX720_CPLD_IRQ(CARD_DETECT), "PCMCIA1 CD" }
 };
 
@@ -84,9 +85,8 @@ static void loox720_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
 		state->ready  = loox720_cpld_reg_test(2,LOOX720_CPLD_CF_READY) ? 1 : 0;
 	}
 	else{
-		state->detect = 1;
-		state->ready  = (loox720_cpld_reg_test(2,(LOOX720_CPLD_WIFI_ENABLED | LOOX720_CPLD_WIFI_READY)) 
-				== (LOOX720_CPLD_WIFI_ENABLED | LOOX720_CPLD_WIFI_READY)) ? 1 : 0;
+		state->detect = (loox720_cpld_reg_test(2, LOOX720_CPLD_WIFI_ENABLED)) ? 1 : 0;
+		state->ready  = (loox720_cpld_reg_test(2, LOOX720_CPLD_WIFI_READY)) ? 1 : 0;
 	}
 
 	state->bvd1   = 1;  /* not available */
@@ -123,9 +123,7 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 			}
 			else
 			{
-				loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 0);
 				SET_LOOX720_GPIO(WIFI_PWR, 0);//loox720_clear_egpio(LOOX720_EGPIO_WIFI_PWR);
-				loox720_disable_led(LOOX720_LED_LEFT, LOOX720_LED_COLOR_B);
 			}
 			break;
 		case 50:
@@ -138,9 +136,7 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 			}
 			else
 			{
-				loox720_egpio_set_bit(LOOX720_CPLD_WIFI_POWER, 1);
 				SET_LOOX720_GPIO(WIFI_PWR, 1);//loox720_set_egpio(LOOX720_EGPIO_WIFI_PWR);
-				loox720_enable_led(LOOX720_LED_LEFT, LOOX720_LED_COLOR_B | LOOX720_LED_BLINK);
 			}
 			break;
 		default:
