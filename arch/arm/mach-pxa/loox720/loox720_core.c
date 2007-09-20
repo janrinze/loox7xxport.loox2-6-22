@@ -37,24 +37,26 @@ static void update_battery_charging(void)
     int connected = GET_LOOX720_GPIO(AC_IN_N) == 0;
     if (connected)
     {
+		loox720_egpio_set_bit(LOOX720_CPLD_BATTERY_BIT, 1);
         int battery_full = GET_LOOX720_GPIO(BATTERY_FULL_N) == 0;
-	printk(KERN_INFO "battery: external power: %d; battery_full: %d\n", connected, battery_full);
-	if (!battery_full)
-	{
-	    SET_LOOX720_GPIO_N( CHARGE_EN, 1 );
-	    loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_C | LOOX720_LED_BLINK);
-	}
-	else
-	{
-	    SET_LOOX720_GPIO_N( CHARGE_EN, 0 );
-	    loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_C);
-	}
+		printk(KERN_INFO "battery: external power: %d; battery_full: %d\n", connected, battery_full);
+		if (!battery_full)
+		{
+		    SET_LOOX720_GPIO_N( CHARGE_EN, 1 );
+		    loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_C | LOOX720_LED_BLINK);
+		}
+		else
+		{
+		    SET_LOOX720_GPIO_N( CHARGE_EN, 0 );
+		    loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_C);
+		}
     }
     else
     {
-	printk(KERN_INFO "battery: external power is disconnected.\n");
-	SET_LOOX720_GPIO_N( CHARGE_EN, 0 );
-        loox720_disable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_C);
+		printk(KERN_INFO "battery: external power is disconnected.\n");
+		SET_LOOX720_GPIO_N( CHARGE_EN, 0 );
+		loox720_egpio_set_bit(LOOX720_CPLD_BATTERY_BIT, 0);
+	    loox720_disable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_C);
     }
 }
 
@@ -161,8 +163,6 @@ static int loox720_suspend(struct platform_device *pdev, pm_message_t state)
 z	 */
 	PSLR=0xc8000000 | (2 << 2);
 
-	loox720_enable_led(LOOX720_LED_RIGHT, LOOX720_LED_COLOR_A | LOOX720_LED_BLINK_ALT);
-
 	return 0;
 }
 
@@ -225,8 +225,6 @@ loox720_pxa_ll_pm_suspend(unsigned long resume_addr)
 	}
 
 	PSPR = csum;
-
-	loox720_enable_led(LOOX720_LED_LEFT, LOOX720_LED_COLOR_B | LOOX720_LED_BLINK_ALT);
 }
 
 static void
