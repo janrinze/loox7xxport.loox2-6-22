@@ -80,12 +80,13 @@ static void loox720_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
 				    struct pcmcia_state *state)
 {
 	if(skt->nr == 1){
-		state->detect = (loox720_cpld_reg_read(1) & LOOX720_CPLD_CF_DETECT_N) ? 0 : 1;
-		state->ready  = (loox720_cpld_reg_read(1) & LOOX720_CPLD_CF_READY) ? 1 : 0;
+		state->detect = loox720_cpld_reg_test(2,LOOX720_CPLD_CF_DETECT_N) ? 0 : 1;
+		state->ready  = loox720_cpld_reg_test(2,LOOX720_CPLD_CF_READY) ? 1 : 0;
 	}
 	else{
 		state->detect = 1;
-		state->ready  = ((loox720_cpld_reg_read(1) & (LOOX720_CPLD_WIFI_ENABLED | LOOX720_CPLD_WIFI_READY)) == (LOOX720_CPLD_WIFI_ENABLED | LOOX720_CPLD_WIFI_READY)) ? 1 : 0;
+		state->ready  = (loox720_cpld_reg_test(2,(LOOX720_CPLD_WIFI_ENABLED | LOOX720_CPLD_WIFI_READY)) 
+				== (LOOX720_CPLD_WIFI_ENABLED | LOOX720_CPLD_WIFI_READY)) ? 1 : 0;
 	}
 
 	state->bvd1   = 1;  /* not available */

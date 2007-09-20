@@ -4,9 +4,10 @@
 #include <asm/arch/loox720-cpld.h>
 #include <asm/arch/loox720.h>
 
-extern void loox720_cpld_reg_write(int regno, u32 value);
-extern u32 loox720_egpio_cache_get(int regno);
-extern void loox720_egpio_cache_set(int regno, u32 value);
+//extern void loox720_cpld_write_masked(int regno,u32 mask, u32 value);
+//extern void loox720_cpld_reg_write(int regno, u32 value);
+//extern u32 loox720_egpio_cache_get(int regno);
+//extern void loox720_egpio_cache_set(int regno, u32 value);
 
 static u8 loox720_leds_cache = 0x00;
 
@@ -68,8 +69,11 @@ loox720_leds_cache structure:
 
 static void	loox720_update_leds( void )
 {
-	u32 v = 0;
-	u32 mask = 0x03500000;
+	u32 mask = 0;
+	/*
+	    originally	0x03500000;
+	    but since cpld has become 16 bit we will do 0x0350 separately
+	*/
 	
 	// LED1 (left one)
 	switch (loox720_leds_cache & 0x0F)
@@ -110,9 +114,29 @@ static void	loox720_update_leds( void )
 	    default: mask |= 0x30; break;
 	}
 	
-	v = (loox720_egpio_cache_get(4) & ~(0x0370CFF0)) | mask;
-	loox720_egpio_cache_set(4, v);
-	loox720_cpld_reg_write(4, v);
+	/*
+	    Due to conversion of the cpld to 16bit this code
+	    is marked for deletion.
+	    
+	    v = (loox720_egpio_cache_get(4) & ~(0x0370CFF0)) | mask;
+	    loox720_egpio_cache_set(4, v);
+	    loox720_cpld_reg_write(4, v);
+	    
+	    below a method suitable for updating bits in bulk on the cpld
+	    
+	    32 bit -> reg 4
+	    16 bit -> reg 8 and reg 9
+	    
+	    loox720_cpld_write_masked( <reg> , <bit mask> , <new value>);
+	    
+	    this will change only the corresponding bits in the bitmask
+	    other bits of <new value> will be ignored. 
+	    
+	    
+	*/
+	
+	loox720_cpld_write_masked(8,0xCFF0,mask);
+	loox720_cpld_write_masked(9,0x0370,0x0350);
 }
 
 void loox720_set_leds_cache(u8 value)
