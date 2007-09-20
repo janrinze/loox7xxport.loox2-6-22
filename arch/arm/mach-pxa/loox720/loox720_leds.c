@@ -150,14 +150,14 @@ void	loox720_enable_led(int led, int mode)
 {
 	led &= 0x01;
 	mode &= 0x0F;
-	if(mode & LOOX720_LED_BLINK_ALT)
+	if(mode & LOOX720_LED_BLINK2)
 	{
 		mode |= LOOX720_LED_BLINK;
 		loox720_leds_cache &= (0xF0 >> (4*led));
 	}
 	if(!(mode & LOOX720_LED_BLINK))
 		loox720_leds_cache &= (0xF0 >> (4*led));
-	if(((loox720_leds_cache >> (4*led)) & (LOOX720_LED_BLINK | LOOX720_LED_BLINK_ALT)) != (mode & (LOOX720_LED_BLINK | LOOX720_LED_BLINK_ALT)))
+	if(((loox720_leds_cache >> (4*led)) & LOOX720_LED_BLINK_ALT) != (mode & LOOX720_LED_BLINK_ALT))
 		loox720_leds_cache &= (0xF0 >> (4*led));
 	loox720_leds_cache |= (mode << (4*led));
 	loox720_update_leds();
@@ -170,7 +170,7 @@ void    loox720_disable_led(int led, int mode)
     mode &= 0x03;
 	mode = mode << (4*led);
     loox720_leds_cache &= ~mode;
-	if(!(loox720_leds_cache & ((LOOX720_LED_COLOR_A | LOOX720_LED_COLOR_B) << (4*led))))
+	if(!(loox720_leds_cache & (LOOX720_LED_COLOR_C << (4*led))))
 		loox720_leds_cache &= (0xF0 >> (4*led));
     loox720_update_leds();
 }
