@@ -67,30 +67,6 @@ static struct cpld_bit loox720_cpld_bits[] =
     {
 	.bit   = LOOX720_CPLD_SD_BIT,
 	.value = 1
-    },
-    {	
-	.bit   = LOOX720_CPLD_BATTERY_BIT,
-	.value = 1    
-    },
-    {
-	.bit   = LOOX720_CPLD_LED1_EN_1,
-	.value = 1
-    },
-    {
-	.bit   = LOOX720_CPLD_LED1_EN_2,
-	.value = 1
-    },
-    {
-	.bit   = LOOX720_CPLD_LED2_EN_1,
-	.value = 1
-    },
-    {
-	.bit   = LOOX720_CPLD_LED2_EN_2,
-	.value = 1
-    },
-    {
-	.bit   = LOOX720_CPLD_LED2_EN_3,
-	.value = 1
     }
 };
 
@@ -334,6 +310,7 @@ static int __init loox720_cpld_init(void)
 
     for (i=0;i<ARRAY_SIZE(loox720_cpld_bits);i++)
     	loox720_egpio_set_bit( loox720_cpld_bits[i].bit, loox720_cpld_bits[i].value);
+	loox720_cpld_resume();
     
     loox720_cpld_irq_data = kmalloc(sizeof(struct loox720_irq_data), GFP_KERNEL);
     if(!loox720_cpld_irq_data)

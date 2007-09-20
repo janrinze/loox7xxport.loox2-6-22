@@ -118,7 +118,7 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 		case 0:
 			if(skt->nr == 1)
 			{
-                loox720_egpio_set_bit(LOOX720_CPLD_CF_3V3_BIT, 0);
+				loox720_egpio_set_bit(LOOX720_CPLD_CF_3V3_BIT, 0);
                 loox720_egpio_set_bit(LOOX720_CPLD_CF_5V_BIT, 0);
 			}
 			else
@@ -133,8 +133,8 @@ static int loox720_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 			/* Apply power to socket */
 			if(skt->nr == 1)
 			{
+				loox720_egpio_set_bit(LOOX720_CPLD_CF_3V3_BIT, 1);
                 loox720_egpio_set_bit(LOOX720_CPLD_CF_5V_BIT, 1);
-                loox720_egpio_set_bit(LOOX720_CPLD_CF_3V3_BIT, 1);
 			}
 			else
 			{

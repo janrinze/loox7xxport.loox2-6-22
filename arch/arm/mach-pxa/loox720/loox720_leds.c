@@ -80,16 +80,16 @@ static void	loox720_update_leds( void )
 	{
 	    // blue
 	    case 0x1: mask |= 0xE00; break;
-	    case 0x5: mask |= 0x8A00; break;
+	    case 0x5: mask |= 0x8A04; break;
 	    case 0xD: mask |= 0x8E00; break;
 	    
 	    // green
 	    case 0x2: mask |= 0xF00; break;
-	    case 0x6: mask |= 0x8900; break;
+	    case 0x6: mask |= 0xA908; break;
 	    case 0xE: mask |= 0x8F00; break;
 	    
 	    // both
-	    case 0x7: mask |= 0x8800; break;
+	    case 0x7: mask |= 0xA80C; break;
 	    
 	    default: mask |= 0x300; break;
 	}
@@ -99,16 +99,17 @@ static void	loox720_update_leds( void )
 	{
 	    // green
 	    case 0x1: mask |= 0x40; break;
-	    case 0x5: mask |= 0x4020; break;
+	    case 0x5: mask |= 0x5020; break;
 	    case 0xD: mask |= 0x4040; break;
 	    
 	    // red
 	    case 0x2: mask |= 0x50; break;
+		case 0x6: mask |= 0x5030; break;
 	    case 0xE: mask |= 0x4050; break;
 	    
 	    // orange
 	    case 0x3: mask |= 0x10; break;
-	    case 0x7: mask |= 0x4070; break;
+	    case 0x7: mask |= 0x5070; break;
 	    case 0xF: mask |= 0x4010; break;
 	    
 	    default: mask |= 0x30; break;
@@ -135,8 +136,7 @@ static void	loox720_update_leds( void )
 	    
 	*/
 	
-	loox720_cpld_write_masked(8,0xCFF0,mask);
-	loox720_cpld_write_masked(9,0x0370,0x0350);
+	loox720_cpld_write_masked(8,0xEFFC,mask);
 }
 
 void loox720_set_leds_cache(u8 value)
