@@ -14,5 +14,6 @@ obj-$(CONFIG_LOOX720_BT)	+= loox720_bt.o
 obj-$(CONFIG_MACH_LOOX720)	+= gpioed-ng.o
 obj-$(CONFIG_LOOX720_CPLD_EDIT)	+= cpld_edit.o
 obj-$(CONFIG_LOOX720_PCMCIA)	+= loox720_pcmcia.o
+obj-$(CONFIG_LOOX720_WIFI)		+= loox720_acx.o
 
 #obj-m				+= loox720_test.o

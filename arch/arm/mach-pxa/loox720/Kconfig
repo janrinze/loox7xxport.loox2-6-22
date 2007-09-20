@@ -77,3 +77,10 @@ config LOOX720_PCMCIA
 	default m
 	help
 		Enable CF/PC Card controller in Loox 720
+
+config LOOX720_WIFI
+	tristate 'FSC Loox 720 Wifi Power Control'
+	depends on MACH_LOOX720 && LOOX720_PCMCIA && ACX_CS
+	default m
+	help
+		Load module to enable wifi power, unload to disable.

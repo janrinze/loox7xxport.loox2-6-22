@@ -220,12 +220,13 @@ void 	loox720_cpld_mask_irq(unsigned int irq)
 	struct loox720_irq_data * irq_data = get_irq_chip_data(irq);
 	/* masking like this is racy.. */
 	irq_data->irq_mask |= 1 << (irq - irq_data->irq_base);
-	/* 
+	/*
 	    NOTE:
 	    since the isr only uses the copy we might try and
 	    really disable this irq in the cpld:
-	   
-	    cpld_mem[1] = irq_data->irq_mask;
+	*/
+	cpld_mem[1] = irq_data->irq_mask;
+	/*
 	*/
 }
 
@@ -238,15 +239,16 @@ void	loox720_cpld_unmask_irq(unsigned int irq)
 	    NOTE:
 	    should we bother to clear the irq first?
 	    for the people who like to know how:
-	    
+
 	    cpld_mem[0] = 1 << (irq - irq_data->irq_base;
 	*/
-	/* 
+	/*
 	    NOTE:
 	    since the isr only uses the copy we might try and
 	    really disable this irq in the cpld:
-	   
-	    cpld_mem[1] = irq_data->irq_mask;
+	*/
+	cpld_mem[1] = irq_data->irq_mask;
+	/*
 	*/
 }
 
@@ -277,6 +279,8 @@ static /*unsigned int*/ void loox720_cpld_irq_demux(unsigned int irq, struct irq
                 mask >>= 1;
             } while (mask);
 	}
+	cpld_mem[1] = 0x03FF;
+	cpld_mem[1] = irq_data->irq_mask;
 }
 
 void loox720_cpld_resume(void)
@@ -322,12 +326,12 @@ static int __init loox720_cpld_init(void)
     }
     
     loox720_cpld_irq_data->irq_base = loox720_cpld_irq_base;
-    loox720_cpld_irq_data->irq_mask = 0xFFFF;
+    loox720_cpld_irq_data->irq_mask = 0x03FF;
     loox720_cpld_irq_data->in_service_loop = 0;
     spin_lock_init(&loox720_cpld_irq_data->lock);
     spin_lock_init(&loox720_cpld_irq_data->masklock);
     
-    cpld_mem[1] = 0xFFFF; // Mask all interrupts
+    cpld_mem[1] = 0x03FF; // Mask all interrupts
 
     for (i=0; i<LOOX720_CPLD_IRQ_COUNT; i++)
     {
@@ -342,8 +346,7 @@ static int __init loox720_cpld_init(void)
     set_irq_type(LOOX720_IRQ(CPLD_INT), IRQT_RISING);
     set_irq_chained_handler(LOOX720_IRQ(CPLD_INT), loox720_cpld_irq_demux);
     
-    cpld_mem[0] = 0x0FFF; // clear interrupts
-    cpld_mem[1] = 0x0FCB; // enable interrupts for CFcard and Wifi
+    cpld_mem[0] = 0x03FF; // clear interrupts
     return 0;
 }
 
@@ -351,8 +354,8 @@ static void __exit loox720_cpld_exit(void)
 {
     if (cpld_mem)
     {
-	cpld_mem[1] = 0x0FFF; // Mask and all interrupts
-	cpld_mem[0] = 0x0FFF; // Clear all interrupts
+	cpld_mem[1] = 0x03FF; // Mask all interrupts
+	cpld_mem[0] = 0x03FF; // Clear all interrupts
     }
 	
     if (loox720_cpld_irq_base!=-1)
